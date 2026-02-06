@@ -129,7 +129,7 @@ export default function CreatedList({ title, initialData, onSave }: CreatedListP
           <div className="space-y-3">
             <label className="text-sm font-medium text-gray-400 flex items-center gap-2">
                 {searchType === 'track' ? <Music size={16} /> : <Disc size={16} />}
-                {searchType === 'track' ? '사연의 주인공이 될 곡' : '사연의 주인공이 될 앨범'}
+                {searchType === 'track' ? '노래를 추가해주세요' : '앨범을 추가해주세요'}
             </label>
 
             <div className="relative">
