@@ -1,11 +1,12 @@
 interface IconButtonProps {
     variant?: 'primary' | 'bg';
-    icon : React.ReactNode;
-    onClick? : () => void;
+    icon: React.ReactNode;
+    onClick?: () => void;
     as?: 'button' | 'span';
+    disabled?: boolean;
 }
 
-export default function IconButton ({variant = 'primary', icon, onClick, as = 'button',} : IconButtonProps) {
+export default function IconButton({ variant = 'primary', icon, disabled = false, onClick, as = 'button', }: IconButtonProps) {
 
     const variantStyles = {
         primary: 'text-slate-400 hover:text-white',
@@ -17,13 +18,13 @@ export default function IconButton ({variant = 'primary', icon, onClick, as = 'b
     if (as === 'span') {
         return (
             <span onClick={onClick} className={className}>
-            {icon}
+                {icon}
             </span>
         );
     }
 
     return (
-        <button type="button" onClick={onClick} className={className}>
+        <button type="button" disabled={disabled} onClick={onClick} className={className}>
             {icon}
         </button>
     )
