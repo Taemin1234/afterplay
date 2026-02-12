@@ -68,35 +68,31 @@ export default function CreatedList({ title, initialData }: CreatedListProps) {
     setSelectedMusic((prev) => (prev ? prev.filter((item) => item.id !== id) : null));
   };
 
-  // 검색 로직 (iTunes API 활용)
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
       if (searchQuery.length > 1) {
         try {
-          // searchType이 track이면 song, 아니면 album으로 검색
-          const entity = searchType === 'track' ? 'song' : 'album';
+          // 1. 우리 앱의 내부 API Route 호출
+          // type은 'track' 또는 'album' (Spotify 표준 파라미터)
           const res = await fetch(
-            `https://itunes.apple.com/search?term=${encodeURIComponent(searchQuery)}&entity=${entity}`
+            `/api/music/search?q=${encodeURIComponent(searchQuery)}&type=${searchType}`
           );
-          const data: { results: ItunesResult[] } = await res.json();
-
-          const mapped: MusicItem[] = data.results.map((item) => ({
-            // 앨범일 경우 collectionId, 곡일 경우 trackId 사용
-            id: String(searchType === 'track' ? item.trackId : item.collectionId),
-            // 앨범일 경우 collectionName, 곡일 경우 trackName 사용
-            name: searchType === 'track' ? (item.trackName ?? '') : (item.collectionName ?? ''),
-            artist: item.artistName ?? '',
-            albumImageUrl: item.artworkUrl100 ?? '',
-          }));
+          
+          if (!res.ok) throw new Error('Network response was not ok');
+  
+          // 2. 서버에서 이미 MusicItem[] 형태로 가공해준 데이터를 받음
+          const mapped: MusicItem[] = await res.json();
+  
           setSearchResults(mapped);
         } catch (error) {
-          console.error("Search error:", error);
+          console.error("Spotify Search error:", error);
+          setSearchResults([]);
         }
       } else {
         setSearchResults([]);
       }
     }, 500);
-
+  
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery, searchType]);
 

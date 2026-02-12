@@ -10,9 +10,12 @@ const nextConfig: NextConfig = {
         hostname: 'www.google.com',
         pathname: '/favicon.ico',
       },
-      { protocol: 'https', hostname: 'is1-ssl.mzstatic.com' },
-      { protocol: 'https', hostname: 'is2-ssl.mzstatic.com' },
-      { protocol: 'https', hostname: 'is3-ssl.mzstatic.com' },
+      {
+        protocol: 'https',
+        hostname: 'i.scdn.co',
+        port: '',
+        pathname: '/image/**',
+      },
     ],
   },
 };
