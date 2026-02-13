@@ -21,15 +21,6 @@ interface MusicItem {
   albumImageUrl: string;
 }
 
-interface ItunesResult {
-  trackId?: number;
-  collectionId?: number;
-  trackName?: string;
-  collectionName?: string;
-  artistName?: string;
-  artworkUrl100?: string;
-}
-
 type SearchType = 'track' | 'album';
 
 interface CreatedListProps {
@@ -68,11 +59,28 @@ export default function CreatedList({ title, initialData }: CreatedListProps) {
     setSelectedMusic((prev) => (prev ? prev.filter((item) => item.id !== id) : null));
   };
 
+  const onSelectItem = (item:MusicItem) => {
+    setSelectedMusic((prev) => {
+      const current = prev ?? [];
+  
+      const isAlreadySelected = current.some(
+        (music) => music.id === item.id
+      );
+  
+      if (isAlreadySelected) return current; // 이미 있으면 그대로 반환
+  
+      return [...current, item]; // 없으면 추가
+    });
+  
+    onHandleModal();
+  }
+
   useEffect(() => {
+    //debounce로 spoitfy에 폭발적 요청 억제
     const delayDebounceFn = setTimeout(async () => {
-      if (searchQuery.length > 1) {
+      if (searchQuery.length > 1) { // 검색어 2글자 이상
         try {
-          // 1. 우리 앱의 내부 API Route 호출
+          // 우리 앱의 내부 API Route 호출(spotify 직접 호출 X)
           // type은 'track' 또는 'album' (Spotify 표준 파라미터)
           const res = await fetch(
             `/api/music/search?q=${encodeURIComponent(searchQuery)}&type=${searchType}`
@@ -183,10 +191,7 @@ export default function CreatedList({ title, initialData }: CreatedListProps) {
             searchResults={searchResults}
             setSearchResults={setSearchResults}
             onClose={onHandleModal}
-            onSelect={(item) => {
-              setSelectedMusic([...(selectedMusic ?? []), item]);
-              onHandleModal();
-            }}
+            onSelect={onSelectItem}
           />
         </ModalWrap>}
     </div>

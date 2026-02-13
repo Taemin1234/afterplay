@@ -3,6 +3,7 @@ import Button from '@/components/ui/atoms/Button'
 import NicknameEditor from '@/components/ui/organisms/NicknameEditor';
 import { createSupabaseServerClient } from '@/utils/supabase/server';
 import prisma from '@/lib/prisma';
+import { redirect } from 'next/navigation';
 
 import { Plus } from 'lucide-react';
 
@@ -13,6 +14,10 @@ interface TabProps {
 export default async function MyPage({ searchParams }: TabProps) {
     const supabase = await createSupabaseServerClient();
     const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        redirect('/auth/login?next=/mypage');
+    }
 
     // Prisma에서 유저 정보(닉네임 포함) 가져오기
     const dbUser = await prisma.user.findUnique({

@@ -2,12 +2,14 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  // 기본 응답 객체 생성
   let response = NextResponse.next({
     request: {
       headers: request.headers,
     },
   })
 
+  // supabse 클라이언트 초기화
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLIC_KEY!,
@@ -30,8 +32,24 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // 세션을 새로고침합니다. (로그인 유지의 핵심)
-  await supabase.auth.getUser()
+  // 현재 유저 정보 가져오기 (세션 갱신 포함)
+  const { data: { user } } = await supabase.auth.getUser()
+
+  // 로그인 체크 로직 추가
+  const { pathname } = request.nextUrl;
+  
+  // 비로그인 시 보호가 필요한 경로들
+  const PROTECTED_ROUTES = ['/mypage', '/createList'];
+  const isProtected = PROTECTED_ROUTES.some(route => pathname.startsWith(route));
+
+  // 로그인이 안 되었는데 보호된 경로에 접근하려 할 때
+  if (isProtected && !user) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/auth/login';
+    // 로그인 후 다시 이 페이지로 돌아오게 'next' 파라미터 추가
+    url.searchParams.set('next', pathname); 
+    return NextResponse.redirect(url);
+  }
 
   return response
 }

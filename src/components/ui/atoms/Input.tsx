@@ -1,12 +1,8 @@
-interface InputProps {
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
     variant?: 'form' | 'none';
-    placeholder?: string;
-    value: string;
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    readOnly?: boolean;
-  }
+}
 
-export default function Input({variant='form', placeholder, value, onChange, readOnly } : InputProps) {
+export default function Input({variant='form', ...props } : InputProps) {
 
     const variantStyles = {
         form: 'bg-black border border-gray-800 p-3 rounded-md outline-none focus:border-neon-green',
@@ -18,11 +14,8 @@ export default function Input({variant='form', placeholder, value, onChange, rea
     return (
         <input 
             type="text"
-            value={value}
-            placeholder={placeholder ? placeholder : '검색어를 입력하세요'}
-            onChange={onChange}
-            readOnly={readOnly}
             className={className}
+            {...props}
         />
     )
 }

@@ -45,6 +45,7 @@ export default function SearchMusic({ searchQuery, setSearchQuery, searchType, s
                     placeholder={searchType === 'track' ? '어떤 곡을 추가할까요?' : '어떤 앨범을 추가할까요?'}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     value={searchQuery}
+                    autoFocus={true}
                 />
             </div>
             {/* 검색 결과 리스트 */}
