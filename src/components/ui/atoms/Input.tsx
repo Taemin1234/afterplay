@@ -15,6 +15,7 @@ export default function Input({variant='form', ...props } : InputProps) {
         <input 
             type="text"
             className={className}
+            autoFocus={false}
             {...props}
         />
     )

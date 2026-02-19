@@ -4,7 +4,7 @@ interface ButtonProps {
     rounded?: 'none' | 'md' | 'full';
     children: React.ReactNode;
     icon? : React.ReactNode;
-    onClick?: () => void;
+    onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
     as?: 'button' | 'span';
   }
   

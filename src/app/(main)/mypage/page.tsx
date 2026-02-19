@@ -24,6 +24,10 @@ export default async function MyPage({ searchParams }: TabProps) {
         where: { id: user?.id }
     });
 
+    //닉네임 우선순위 결정
+    const googleName = user.user_metadata?.full_name || user.user_metadata?.name;
+    const initialNickname = dbUser?.nickname || googleName || '익명';
+
     const { tab } = await searchParams
 
     const activeTab = tab === 'liked' ? 'liked' : 'created';
@@ -36,7 +40,7 @@ export default async function MyPage({ searchParams }: TabProps) {
     return (
         <section className="max-w-7xl">
             <div className='flex justify-between items-center rounded-2xl border border-[#39ff14]/20 bg-black/40 px-8 p-10 shadow-xl'>
-                <NicknameEditor initialNickname={dbUser?.nickname || '익명'} />
+                <NicknameEditor initialNickname={initialNickname} />
                 <Link href="/createList" scroll={false}>
                     <Button rounded={'full'} as="span" icon={<Plus className="w-4 h-4" />}>플레이리스트 만들기</Button>
                 </Link>

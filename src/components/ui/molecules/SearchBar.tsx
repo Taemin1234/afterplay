@@ -13,6 +13,7 @@ interface SearchBarProps {
     value?:string;
     onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
     onClick? : () => void;
+    onKeyDown? : (e: React.KeyboardEvent<HTMLInputElement>) => void
     autoFocus?:boolean;
 }
 
@@ -43,7 +44,8 @@ export default function SearchBar({
     value,
     onChange,
     onClick,
-    autoFocus
+    onKeyDown,
+    autoFocus = false,
     } : SearchBarProps) {
 
 
@@ -54,7 +56,7 @@ export default function SearchBar({
 
     return (
         <div onClick={isModalMode ? onClick : undefined} className={className}>
-            <Input variant='none' placeholder={placeholder} value={value} onChange={isModalMode ? () => {} : onChange!} readOnly={isModalMode} autoFocus/>
+            <Input variant='none' placeholder={placeholder} value={value} onChange={isModalMode ? () => {} : onChange!} readOnly={isModalMode} onKeyDown={onKeyDown} autoFocus={autoFocus}/>
             <IconButton icon={<Search className='h-5 w-5' />} onClick={onClick}/>
         </div>
     )
