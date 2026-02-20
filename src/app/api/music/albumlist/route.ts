@@ -37,8 +37,8 @@ export async function POST(req: Request) {
     if (!Array.isArray(musicItems) || musicItems.length === 0) {
         return NextResponse.json({ error: "musicItems가 필요합니다." }, { status: 400 });
     }
-    if (type !== "track") {
-        return NextResponse.json({ error: "현재 route는 track만 처리합니다." }, { status: 400 });
+    if (type !== "album") {
+        return NextResponse.json({ error: "현재 route는 album만 처리합니다." }, { status: 400 });
     }
 
     // 중복 곡 제거(클라에서 막아도 서버에서 한번 더 방어)
@@ -52,30 +52,31 @@ export async function POST(req: Request) {
      : [];
 
     const result = await prisma.$transaction(async (tx) => {
-        // 1) Playlist 생성
-        const playlist = await tx.playlist.create({
+        // 1) Albumlist 생성
+        const albumlist = await tx.albumList.create({
             data: {
                 title: title.trim(),
                 story: story.trim(),
                 visibility: visibility,
                 authorId: user.id,
-                tracks: {
+                // AlbumEntry 생성 + Album connectOrCreate + order 저장
+                albums: {
                     create: uniqueItems.map((item, i) => ({
                         order: i,
-                        track: {
+                        album: {
                             connectOrCreate: {
                                 where: { spotifyId: item.id },
                                 create: {
                                     spotifyId: item.id,
                                     title: item.name,
                                     artist: item.artist,
-                                    albumCover: item.albumImageUrl ?? "",
+                                    coverImage: item.albumImageUrl ?? "",
                                 }
                             }
                         }
                     }))
                 },
-                // PlaylistTag 생성 + Tag connectOrCreate
+                // AlbumlistTag 생성 + Tag connectOrCreate
                 tags: {
                     create: cleanedTags.map((tagName) => ({
                     tag: {
@@ -89,13 +90,13 @@ export async function POST(req: Request) {
             }
         });
   
-        return playlist;
+        return albumlist;
       });
   
-      return NextResponse.json({ ok: true, playlistId: result.id }, { status: 201 });
+      return NextResponse.json({ ok: true, albumlistId: result.id }, { status: 201 });
 
   } catch (error) {
-    console.error('Playlist Save Error:', error);
+    console.error('Albumlist Save Error:', error);
     return NextResponse.json(
       { error: '서버 오류로 인해 저장에 실패했습니다.' },
       { status: 500 }

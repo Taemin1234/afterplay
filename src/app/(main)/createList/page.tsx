@@ -135,9 +135,11 @@ export default function CreatedList({ title, initialData }: CreatedListProps) {
     }
   
     setIsLoading(true);
+
+    const endpoint = searchType === "track" ? "/api/music/playlist" : "/api/music/albumlist";
   
     try {
-      const response = await fetch('/api/music/playlist', {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
