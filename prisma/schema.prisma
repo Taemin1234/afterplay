@@ -16,6 +16,11 @@ enum Visibility {
   PRIVATE
 }
 
+enum FeedKind {
+  PLAYLIST
+  ALBUM_LIST
+}
+
 // --------------------------------------------------------
 // User (Supabase Auth user.id = UUID)
 // --------------------------------------------------------
@@ -277,4 +282,19 @@ model AlbumListComment {
 
   @@index([albumListId, createdAt])
   @@index([userId])
+}
+
+// --------------------------------------------------------
+// ListFeed - 전체 피드
+// --------------------------------------------------------
+model ListFeed {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  kind      FeedKind
+  refId     String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  @@unique([userId, kind, refId])
+  @@index([userId, createdAt(sort: Desc), id(sort: Desc)])
+  @@index([kind, refId]) // (선택) 삭제/조회 보조용
 }
