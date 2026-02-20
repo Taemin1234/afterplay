@@ -88,7 +88,17 @@ export async function POST(req: Request) {
                 },
             }
         });
-  
+        
+        // ListFeed 추가
+        await tx.listFeed.create({
+            data: {
+                userId: user.id,
+                kind: 'PLAYLIST',
+                refId: playlist.id,
+                createdAt: playlist.createdAt,
+            }
+        });
+        
         return playlist;
       });
   

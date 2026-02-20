@@ -89,6 +89,15 @@ export async function POST(req: Request) {
                 },
             }
         });
+
+        await tx.listFeed.create({
+            data: {
+                userId: user.id,
+                kind: 'ALBUM_LIST',
+                refId: albumlist.id,
+                createdAt: albumlist.createdAt,
+            }
+        });
   
         return albumlist;
       });
