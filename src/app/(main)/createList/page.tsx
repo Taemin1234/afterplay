@@ -165,7 +165,7 @@ export default function CreatedList({ title, initialData }: CreatedListProps) {
   useEffect(() => {
     //debounce로 spoitfy에 폭발적 요청 억제
     const delayDebounceFn = setTimeout(async () => {
-      if (searchQuery.length > 1) { // 검색어 2글자 이상
+      if (searchQuery.length > 0) { // 검색어 1글자 이상
         try {
           // 우리 앱의 내부 API Route 호출(spotify 직접 호출 X)
           // type은 'track' 또는 'album' (Spotify 표준 파라미터)
