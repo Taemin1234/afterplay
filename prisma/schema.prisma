@@ -1,14 +1,10 @@
-// prisma/schema.prisma
-
-// Prisma Client(타입 안전 쿼리 API) 생성기
-generator client {
+﻿generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
 }
 
-// Prisma가 어떤 DB를 쓸지 + 어떤 연결 문자열로 접속할지 정하는 설정
 datasource db {
-  provider  = "postgresql"
+  provider = "postgresql"
 }
 
 enum Visibility {
@@ -21,12 +17,18 @@ enum FeedKind {
   ALBUM_LIST
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
 // --------------------------------------------------------
 // User (Supabase Auth user.id = UUID)
 // --------------------------------------------------------
 model User {
-  id        String   @id @db.Uuid // Supabase user.id 그대로 저장
+  id        String   @id @db.Uuid
   email     String   @unique
+  role  Role   @default(USER)
   nickname  String?  @unique
   avatarUrl String?
 
@@ -39,55 +41,72 @@ model User {
   albumLists AlbumList[]
 
   // 내가 좋아요한 리스트
-  playlistLikes  PlaylistLike[]
-  albumListLikes AlbumListLike[]
+  playlistLikes      PlaylistLike[]
+  albumListLikes     AlbumListLike[]
+
+  // 내가 한 북마크
+  playlistBookmarks  PlaylistBookmark[]
+  albumListBookmarks AlbumListBookmark[]
 
   // 내가 쓴 댓글들
-  playlistComments  PlaylistComment[]
+  playlistComments PlaylistComment[]
   albumListComments AlbumListComment[]
+
+  // 로그인 비로그인 조회 추적
+  playlistViews  PlaylistViewEvent[]
+  albumListViews AlbumListViewEvent[]
 
   // 팔로우
   following Follow[] @relation("UserFollows")
   followers Follow[] @relation("UserFollowers")
+
+  // 관리자 추천 게시물
+  featuredPlaylists  FeaturedPlaylist[]  @relation("FeaturedPlaylistSetBy")
+  featuredAlbumLists FeaturedAlbumList[] @relation("FeaturedAlbumListSetBy")
 }
 
 // --------------------------------------------------------
 // follow 팔로우
 // --------------------------------------------------------
 model Follow {
-  followerId  String   @db.Uuid   // 나(팔로우 하는 쪽)
-  followingId String   @db.Uuid   // 상대(팔로우 당하는 쪽)
+  followerId  String   @db.Uuid
+  followingId String   @db.Uuid
   createdAt   DateTime @default(now())
 
-  follower    User @relation("UserFollows", fields: [followerId], references: [id], onDelete: Cascade)
-  following   User @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+  follower  User @relation("UserFollows", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
 
   @@id([followerId, followingId]) // 중복 팔로우 방지
-  @@index([followingId])          // 팔로워 목록 빠르게
-  @@index([followerId])           // 팔로잉 목록 빠르게
+  @@index([followingId])
+  @@index([followerId])
 }
 
 // --------------------------------------------------------
 // Playlist (곡 단위)
 // --------------------------------------------------------
 model Playlist {
-  id         String      @id @default(uuid()) @db.Uuid
+  id         String     @id @default(uuid()) @db.Uuid
   title      String
-  story      String      @db.Text
-  visibility Visibility  @default(PUBLIC)
+  story      String     @db.Text
+  visibility Visibility @default(PUBLIC)
+  viewCount  Int        @default(0)
 
-  authorId   String      @db.Uuid
-  author     User        @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  authorId String @db.Uuid
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Restrict)
 
-  tracks     PlaylistTrack[]
-  tags       PlaylistTag[]
+  tracks PlaylistTrack[]
+  tags   PlaylistTag[]
 
-  likes      PlaylistLike[]
-  comments   PlaylistComment[]
+  likes     PlaylistLike[]
+  bookmarks PlaylistBookmark[]
+  comments  PlaylistComment[]
+  views     PlaylistViewEvent[]
 
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-  deletedAt  DateTime?
+  featuredSetting FeaturedPlaylist?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   @@index([authorId])
   @@index([createdAt])
@@ -96,29 +115,29 @@ model Playlist {
 
 // Spotify Track 캐시 테이블(Spotify 트랙 정보를 서비스 DB에 캐시)
 model Track {
-  id         String   @id @default(uuid()) @db.Uuid
-  spotifyId  String   @unique
+  id        String @id @default(uuid()) @db.Uuid
+  spotifyId String @unique
 
   title      String
   artist     String
   albumCover String
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  playlists  PlaylistTrack[]
+  playlists PlaylistTrack[]
 }
 
 model PlaylistTrack {
-  id         String   @id @default(uuid()) @db.Uuid
-  playlistId String   @db.Uuid
-  trackId    String   @db.Uuid
+  id         String @id @default(uuid()) @db.Uuid
+  playlistId String @db.Uuid
+  trackId    String @db.Uuid
 
-  order      Int
-  addedAt    DateTime @default(now())
+  order   Int
+  addedAt DateTime @default(now())
 
-  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
-  track      Track    @relation(fields: [trackId], references: [id], onDelete: Restrict)
+  playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  track    Track    @relation(fields: [trackId], references: [id], onDelete: Restrict)
 
   @@unique([playlistId, order])   // 같은 플레이리스트에서 순서 중복 금지
   @@unique([playlistId, trackId]) // 같은 곡 중복 비허용
@@ -130,23 +149,28 @@ model PlaylistTrack {
 // AlbumList (앨범 단위) - Playlist와 동일 시스템
 // --------------------------------------------------------
 model AlbumList {
-  id         String      @id @default(uuid()) @db.Uuid
+  id         String     @id @default(uuid()) @db.Uuid
   title      String
-  story      String      @db.Text
-  visibility Visibility  @default(PUBLIC)
+  story      String     @db.Text
+  visibility Visibility @default(PUBLIC)
+  viewCount  Int        @default(0)
 
-  authorId   String      @db.Uuid
-  author     User        @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  authorId String @db.Uuid
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Restrict)
 
-  albums     AlbumEntry[]
-  tags       AlbumListTag[]
+  albums AlbumEntry[]
+  tags   AlbumListTag[]
 
-  likes      AlbumListLike[]
-  comments   AlbumListComment[]
+  likes     AlbumListLike[]
+  bookmarks AlbumListBookmark[]
+  comments  AlbumListComment[]
+  views     AlbumListViewEvent[]
 
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-  deletedAt  DateTime?
+  featuredSetting FeaturedAlbumList?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   @@index([authorId])
   @@index([createdAt])
@@ -155,29 +179,29 @@ model AlbumList {
 
 // Spotify Album 캐시 테이블(Spotify 앨범 정보를 서비스 DB에 캐시)
 model Album {
-  id         String   @id @default(uuid()) @db.Uuid
-  spotifyId  String   @unique
+  id        String @id @default(uuid()) @db.Uuid
+  spotifyId String @unique
 
   title      String
   artist     String
   coverImage String
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   albumLists AlbumEntry[]
 }
 
 model AlbumEntry {
-  id          String   @id @default(uuid()) @db.Uuid
-  albumListId String   @db.Uuid
-  albumId     String   @db.Uuid
+  id          String @id @default(uuid()) @db.Uuid
+  albumListId String @db.Uuid
+  albumId     String @db.Uuid
 
-  order       Int
-  addedAt     DateTime @default(now())
+  order   Int
+  addedAt DateTime @default(now())
 
-  albumList   AlbumList @relation(fields: [albumListId], references: [id], onDelete: Cascade)
-  album       Album     @relation(fields: [albumId], references: [id], onDelete: Restrict)
+  albumList AlbumList @relation(fields: [albumListId], references: [id], onDelete: Cascade)
+  album     Album     @relation(fields: [albumId], references: [id], onDelete: Restrict)
 
   @@unique([albumListId, order])
   @@unique([albumListId, albumId]) // 같은 앨범 중복 비허용
@@ -197,22 +221,22 @@ model Tag {
 }
 
 model PlaylistTag {
-  playlistId String   @db.Uuid
+  playlistId String @db.Uuid
   tagId      Int
 
-  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
-  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  tag      Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([playlistId, tagId])
   @@index([tagId])
 }
 
 model AlbumListTag {
-  albumListId String   @db.Uuid
+  albumListId String @db.Uuid
   tagId       Int
 
-  albumList   AlbumList @relation(fields: [albumListId], references: [id], onDelete: Cascade)
-  tag         Tag       @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  albumList AlbumList @relation(fields: [albumListId], references: [id], onDelete: Cascade)
+  tag       Tag       @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([albumListId, tagId])
   @@index([tagId])
@@ -226,8 +250,8 @@ model PlaylistLike {
   playlistId String   @db.Uuid
   createdAt  DateTime @default(now())
 
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
 
   @@id([userId, playlistId]) // 중복 좋아요 완벽 방지
   @@index([playlistId])
@@ -238,47 +262,159 @@ model AlbumListLike {
   albumListId String   @db.Uuid
   createdAt   DateTime @default(now())
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  albumList   AlbumList @relation(fields: [albumListId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  albumList AlbumList @relation(fields: [albumListId], references: [id], onDelete: Cascade)
 
   @@id([userId, albumListId])
   @@index([albumListId])
 }
 
 // --------------------------------------------------------
-// Comments - Playlist / AlbumList 분리 + soft delete
+// 북마크
 // --------------------------------------------------------
-model PlaylistComment {
-  id         String   @id @default(uuid()) @db.Uuid
-  content    String
-
+model PlaylistBookmark {
   userId     String   @db.Uuid
   playlistId String   @db.Uuid
-
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
-
   createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  deletedAt  DateTime?
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+
+  @@id([userId, playlistId])
+  @@index([playlistId])
+}
+
+model AlbumListBookmark {
+  userId      String   @db.Uuid
+  albumListId String   @db.Uuid
+  createdAt   DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  albumList AlbumList @relation(fields: [albumListId], references: [id], onDelete: Cascade)
+
+  @@id([userId, albumListId])
+  @@index([albumListId])
+}
+
+// --------------------------------------------------------
+// 조회수
+// --------------------------------------------------------
+model PlaylistViewEvent {
+  id            String   @id @default(uuid()) @db.Uuid
+  playlistId    String   @db.Uuid
+  userId        String?  @db.Uuid
+  deviceId      String?
+  lastCountedAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  user     User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([playlistId, userId])
+  @@unique([playlistId, deviceId])
+  @@index([playlistId, lastCountedAt])
+  @@index([userId])
+  @@index([deviceId])
+}
+
+model AlbumListViewEvent {
+  id            String   @id @default(uuid()) @db.Uuid
+  albumListId   String   @db.Uuid
+  userId        String?  @db.Uuid
+  deviceId      String?
+  lastCountedAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  albumList AlbumList @relation(fields: [albumListId], references: [id], onDelete: Cascade)
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([albumListId, userId])
+  @@unique([albumListId, deviceId])
+  @@index([albumListId, lastCountedAt])
+  @@index([userId])
+  @@index([deviceId])
+}
+
+
+// --------------------------------------------------------
+// 관리자 추천 게시물
+// --------------------------------------------------------
+model FeaturedPlaylist {
+  id          String   @id @default(uuid()) @db.Uuid
+  playlistId  String   @unique @db.Uuid
+  setByUserId String?  @db.Uuid
+  note        String?  @db.Text
+  priority    Int      @default(0)
+  isActive    Boolean  @default(true)
+  startsAt    DateTime?
+  endsAt      DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  playlist  Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  setByUser User?    @relation("FeaturedPlaylistSetBy", fields: [setByUserId], references: [id], onDelete: SetNull)
+
+  @@index([isActive, priority, createdAt(sort: Desc)])
+  @@index([startsAt, endsAt])
+  @@index([setByUserId])
+}
+
+model FeaturedAlbumList {
+  id          String   @id @default(uuid()) @db.Uuid
+  albumListId String   @unique @db.Uuid
+  setByUserId String?  @db.Uuid
+  note        String?  @db.Text
+  priority    Int      @default(0)
+  isActive    Boolean  @default(true)
+  startsAt    DateTime?
+  endsAt      DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  albumList AlbumList @relation(fields: [albumListId], references: [id], onDelete: Cascade)
+  setByUser User?     @relation("FeaturedAlbumListSetBy", fields: [setByUserId], references: [id], onDelete: SetNull)
+
+  @@index([isActive, priority, createdAt(sort: Desc)])
+  @@index([startsAt, endsAt])
+  @@index([setByUserId])
+}
+
+// --------------------------------------------------------
+// 댓글
+// --------------------------------------------------------
+model PlaylistComment {
+  id      String @id @default(uuid()) @db.Uuid
+  content String
+
+  userId     String @db.Uuid
+  playlistId String @db.Uuid
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   @@index([playlistId, createdAt])
   @@index([userId])
 }
 
 model AlbumListComment {
-  id          String   @id @default(uuid()) @db.Uuid
-  content     String
+  id      String @id @default(uuid()) @db.Uuid
+  content String
 
-  userId      String   @db.Uuid
-  albumListId String   @db.Uuid
+  userId      String @db.Uuid
+  albumListId String @db.Uuid
 
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  albumList   AlbumList @relation(fields: [albumListId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  albumList AlbumList @relation(fields: [albumListId], references: [id], onDelete: Cascade)
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  deletedAt   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   @@index([albumListId, createdAt])
   @@index([userId])
@@ -296,5 +432,5 @@ model ListFeed {
 
   @@unique([userId, kind, refId])
   @@index([userId, createdAt(sort: Desc), id(sort: Desc)])
-  @@index([kind, refId]) // (선택) 삭제/조회 보조용
+  @@index([kind, refId])
 }
