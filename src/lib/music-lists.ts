@@ -26,6 +26,8 @@ type ResponseItem = {
   visibility: 'PUBLIC' | 'PRIVATE';
   authorId: string;
   createdAt: string;
+  likesCount: number;
+  commentsCount: number;
   tags: string[];
   previewImages: string[];
 };
@@ -169,77 +171,89 @@ export async function fetchListItems(options: QueryOptions): Promise<ResponsePay
     const [playlists, albumLists] = await Promise.all([
       playlistIds.length
         ? prisma.playlist.findMany({
-            where: {
-              id: { in: playlistIds },
-              deletedAt: null,
-              ...visibilityPlaylist,
-            },
-            select: {
-              id: true,
-              title: true,
-              story: true,
-              visibility: true,
-              authorId: true,
-              createdAt: true,
-              tags: {
-                select: {
-                  tag: {
-                    select: {
-                      name: true,
-                    },
-                  },
-                },
+          where: {
+            id: { in: playlistIds },
+            deletedAt: null,
+            ...visibilityPlaylist,
+          },
+          select: {
+            id: true,
+            title: true,
+            story: true,
+            visibility: true,
+            authorId: true,
+            createdAt: true,
+            _count: {
+              select: {
+                likes: true,
+                comments: true,
               },
-              tracks: {
-                orderBy: { order: 'asc' },
-                take: 3,
-                select: {
-                  track: {
-                    select: {
-                      albumCover: true,
-                    },
+            },
+            tags: {
+              select: {
+                tag: {
+                  select: {
+                    name: true,
                   },
                 },
               },
             },
-          })
+            tracks: {
+              orderBy: { order: 'asc' },
+              take: 3,
+              select: {
+                track: {
+                  select: {
+                    albumCover: true,
+                  },
+                },
+              },
+            },
+          },
+        })
         : [],
       albumListIds.length
         ? prisma.albumList.findMany({
-            where: {
-              id: { in: albumListIds },
-              deletedAt: null,
-              ...visibilityAlbumList,
-            },
-            select: {
-              id: true,
-              title: true,
-              story: true,
-              visibility: true,
-              authorId: true,
-              createdAt: true,
-              tags: {
-                select: {
-                  tag: {
-                    select: {
-                      name: true,
-                    },
-                  },
-                },
+          where: {
+            id: { in: albumListIds },
+            deletedAt: null,
+            ...visibilityAlbumList,
+          },
+          select: {
+            id: true,
+            title: true,
+            story: true,
+            visibility: true,
+            authorId: true,
+            createdAt: true,
+            _count: {
+              select: {
+                likes: true,
+                comments: true,
               },
-              albums: {
-                orderBy: { order: 'asc' },
-                take: 3,
-                select: {
-                  album: {
-                    select: {
-                      coverImage: true,
-                    },
+            },
+            tags: {
+              select: {
+                tag: {
+                  select: {
+                    name: true,
                   },
                 },
               },
             },
-          })
+            albums: {
+              orderBy: { order: 'asc' },
+              take: 3,
+              select: {
+                album: {
+                  select: {
+                    coverImage: true,
+                  },
+                },
+              },
+            },
+          },
+        })
         : [],
     ]);
 
@@ -259,6 +273,8 @@ export async function fetchListItems(options: QueryOptions): Promise<ResponsePay
           visibility: playlist.visibility,
           authorId: playlist.authorId,
           createdAt: playlist.createdAt.toISOString(),
+          likesCount: playlist._count.likes,
+          commentsCount: playlist._count.comments,
           tags: playlist.tags.map((tagRow) => tagRow.tag.name),
           previewImages: playlist.tracks
             .map((entry) => entry.track.albumCover)
@@ -279,6 +295,8 @@ export async function fetchListItems(options: QueryOptions): Promise<ResponsePay
         visibility: albumList.visibility,
         authorId: albumList.authorId,
         createdAt: albumList.createdAt.toISOString(),
+        likesCount: albumList._count.likes,
+        commentsCount: albumList._count.comments,
         tags: albumList.tags.map((tagRow) => tagRow.tag.name),
         previewImages: albumList.albums
           .map((entry) => entry.album.coverImage)
@@ -304,6 +322,8 @@ export async function fetchListItems(options: QueryOptions): Promise<ResponsePay
       visibility: item.visibility,
       authorId: item.authorId,
       createdAt: item.createdAt,
+      likesCount: item.likesCount,
+      commentsCount: item.commentsCount,
       tags: item.tags,
       previewImages: item.previewImages,
     })),
@@ -356,8 +376,8 @@ export async function fetchPlaylistDetail(id: string, viewerUserId?: string): Pr
       deletedAt: null,
       ...(viewerUserId
         ? {
-            OR: [{ visibility: 'PUBLIC' }, { authorId: viewerUserId }],
-          }
+          OR: [{ visibility: 'PUBLIC' }, { authorId: viewerUserId }],
+        }
         : { visibility: 'PUBLIC' }),
     },
     select: {
@@ -423,8 +443,8 @@ export async function fetchAlbumListDetail(id: string, viewerUserId?: string): P
       deletedAt: null,
       ...(viewerUserId
         ? {
-            OR: [{ visibility: 'PUBLIC' }, { authorId: viewerUserId }],
-          }
+          OR: [{ visibility: 'PUBLIC' }, { authorId: viewerUserId }],
+        }
         : { visibility: 'PUBLIC' }),
     },
     select: {
