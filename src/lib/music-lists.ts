@@ -26,6 +26,8 @@ type ResponseItem = {
   visibility: 'PUBLIC' | 'PRIVATE';
   authorId: string;
   createdAt: string;
+  tags: string[];
+  previewImages: string[];
 };
 
 type ResponsePayload = {
@@ -179,6 +181,26 @@ export async function fetchListItems(options: QueryOptions): Promise<ResponsePay
               visibility: true,
               authorId: true,
               createdAt: true,
+              tags: {
+                select: {
+                  tag: {
+                    select: {
+                      name: true,
+                    },
+                  },
+                },
+              },
+              tracks: {
+                orderBy: { order: 'asc' },
+                take: 3,
+                select: {
+                  track: {
+                    select: {
+                      albumCover: true,
+                    },
+                  },
+                },
+              },
             },
           })
         : [],
@@ -196,6 +218,26 @@ export async function fetchListItems(options: QueryOptions): Promise<ResponsePay
               visibility: true,
               authorId: true,
               createdAt: true,
+              tags: {
+                select: {
+                  tag: {
+                    select: {
+                      name: true,
+                    },
+                  },
+                },
+              },
+              albums: {
+                orderBy: { order: 'asc' },
+                take: 3,
+                select: {
+                  album: {
+                    select: {
+                      coverImage: true,
+                    },
+                  },
+                },
+              },
             },
           })
         : [],
@@ -217,6 +259,10 @@ export async function fetchListItems(options: QueryOptions): Promise<ResponsePay
           visibility: playlist.visibility,
           authorId: playlist.authorId,
           createdAt: playlist.createdAt.toISOString(),
+          tags: playlist.tags.map((tagRow) => tagRow.tag.name),
+          previewImages: playlist.tracks
+            .map((entry) => entry.track.albumCover)
+            .filter((image): image is string => Boolean(image)),
           _cursor: { createdAt: row.createdAt.toISOString(), id: row.id },
         });
         continue;
@@ -233,6 +279,10 @@ export async function fetchListItems(options: QueryOptions): Promise<ResponsePay
         visibility: albumList.visibility,
         authorId: albumList.authorId,
         createdAt: albumList.createdAt.toISOString(),
+        tags: albumList.tags.map((tagRow) => tagRow.tag.name),
+        previewImages: albumList.albums
+          .map((entry) => entry.album.coverImage)
+          .filter((image): image is string => Boolean(image)),
         _cursor: { createdAt: row.createdAt.toISOString(), id: row.id },
       });
     }
@@ -254,7 +304,181 @@ export async function fetchListItems(options: QueryOptions): Promise<ResponsePay
       visibility: item.visibility,
       authorId: item.authorId,
       createdAt: item.createdAt,
+      tags: item.tags,
+      previewImages: item.previewImages,
     })),
     nextCursor,
+  };
+}
+
+export type PlaylistDetail = {
+  kind: 'PLAYLIST';
+  id: string;
+  title: string;
+  story: string;
+  visibility: 'PUBLIC' | 'PRIVATE';
+  authorId: string;
+  createdAt: string;
+  updatedAt: string;
+  tags: string[];
+  musicItems: Array<{
+    id: string;
+    order: number;
+    title: string;
+    artist: string;
+    albumImageUrl: string;
+  }>;
+};
+
+export type AlbumListDetail = {
+  kind: 'ALBUM_LIST';
+  id: string;
+  title: string;
+  story: string;
+  visibility: 'PUBLIC' | 'PRIVATE';
+  authorId: string;
+  createdAt: string;
+  updatedAt: string;
+  tags: string[];
+  musicItems: Array<{
+    id: string;
+    order: number;
+    title: string;
+    artist: string;
+    albumImageUrl: string;
+  }>;
+};
+
+export async function fetchPlaylistDetail(id: string, viewerUserId?: string): Promise<PlaylistDetail | null> {
+  const playlist = await prisma.playlist.findFirst({
+    where: {
+      id,
+      deletedAt: null,
+      ...(viewerUserId
+        ? {
+            OR: [{ visibility: 'PUBLIC' }, { authorId: viewerUserId }],
+          }
+        : { visibility: 'PUBLIC' }),
+    },
+    select: {
+      id: true,
+      title: true,
+      story: true,
+      visibility: true,
+      authorId: true,
+      createdAt: true,
+      updatedAt: true,
+      tags: {
+        select: {
+          tag: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
+      tracks: {
+        orderBy: { order: 'asc' },
+        select: {
+          order: true,
+          track: {
+            select: {
+              spotifyId: true,
+              title: true,
+              artist: true,
+              albumCover: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!playlist) return null;
+
+  return {
+    kind: 'PLAYLIST',
+    id: playlist.id,
+    title: playlist.title,
+    story: playlist.story,
+    visibility: playlist.visibility,
+    authorId: playlist.authorId,
+    createdAt: playlist.createdAt.toISOString(),
+    updatedAt: playlist.updatedAt.toISOString(),
+    tags: playlist.tags.map((tagRow) => tagRow.tag.name),
+    musicItems: playlist.tracks.map((entry) => ({
+      id: entry.track.spotifyId,
+      order: entry.order,
+      title: entry.track.title,
+      artist: entry.track.artist,
+      albumImageUrl: entry.track.albumCover,
+    })),
+  };
+}
+
+export async function fetchAlbumListDetail(id: string, viewerUserId?: string): Promise<AlbumListDetail | null> {
+  const albumList = await prisma.albumList.findFirst({
+    where: {
+      id,
+      deletedAt: null,
+      ...(viewerUserId
+        ? {
+            OR: [{ visibility: 'PUBLIC' }, { authorId: viewerUserId }],
+          }
+        : { visibility: 'PUBLIC' }),
+    },
+    select: {
+      id: true,
+      title: true,
+      story: true,
+      visibility: true,
+      authorId: true,
+      createdAt: true,
+      updatedAt: true,
+      tags: {
+        select: {
+          tag: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
+      albums: {
+        orderBy: { order: 'asc' },
+        select: {
+          order: true,
+          album: {
+            select: {
+              spotifyId: true,
+              title: true,
+              artist: true,
+              coverImage: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!albumList) return null;
+
+  return {
+    kind: 'ALBUM_LIST',
+    id: albumList.id,
+    title: albumList.title,
+    story: albumList.story,
+    visibility: albumList.visibility,
+    authorId: albumList.authorId,
+    createdAt: albumList.createdAt.toISOString(),
+    updatedAt: albumList.updatedAt.toISOString(),
+    tags: albumList.tags.map((tagRow) => tagRow.tag.name),
+    musicItems: albumList.albums.map((entry) => ({
+      id: entry.album.spotifyId,
+      order: entry.order,
+      title: entry.album.title,
+      artist: entry.album.artist,
+      albumImageUrl: entry.album.coverImage,
+    })),
   };
 }
