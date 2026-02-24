@@ -25,7 +25,7 @@ export default function TypeSelector<T extends string>({
 }: TypeSelectorProps<T>) {
   return (
     <div
-      className={`flex w-fit gap-4 rounded-lg border border-gray-800 bg-black p-1 ${className}`.trim()}
+      className={`flex w-fit gap-4 rounded-lg border border-gray-800 p-1 ${className}`.trim()}
       role="radiogroup"
       aria-label={ariaLabel}
     >
@@ -40,11 +40,10 @@ export default function TypeSelector<T extends string>({
             onChange={() => onChange(option.value)}
           />
           <span
-            className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all ${
-              value === option.value
+            className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all ${value === option.value
                 ? "bg-[#39FF14] text-black"
                 : "text-gray-500 hover:text-white"
-            }`}
+              }`}
           >
             {option.icon}
             {option.label}

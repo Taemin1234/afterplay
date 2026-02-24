@@ -69,35 +69,35 @@ export default function CreatedList({ title, initialData }: CreatedListProps) {
     setSelectedMusic((prev) => (prev ? prev.filter((item) => item.id !== id) : null));
   };
 
-  const onSelectItem = (item:MusicItem) => {
+  const onSelectItem = (item: MusicItem) => {
     setSelectedMusic((prev) => {
       const current = prev ?? [];
-  
+
       const isAlreadySelected = current.some(
         (music) => music.id === item.id
       );
-  
+
       if (isAlreadySelected) return current; // 이미 있으면 그대로 반환
-  
+
       return [...current, item]; // 없으면 추가
     });
-  
+
     onHandleModal();
   }
 
   // 태그 추가 함수
   const handleAddTag = () => {
     const trimmedTag = tagInput.trim();
-  
+
     if (!trimmedTag) return;
-      
+
     setForm(prev => {
       if (prev.tags.includes(trimmedTag)) return prev;
       if (prev.tags.length >= 5) {
         alert("태그는 최대 5개까지 가능합니다.");
         return prev;
       }
-  
+
       return {
         ...prev,
         tags: [...prev.tags, trimmedTag],
@@ -133,17 +133,17 @@ export default function CreatedList({ title, initialData }: CreatedListProps) {
   // 내용 저장
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault(); // 폼 제출 기본 동작 방지
-  
+
     // 유효성 검사
     if (!form.title || !form.story || !selectedMusic || selectedMusic.length === 0) {
       alert("내용을 모두 추가해주세요!");
       return;
     }
-  
+
     setIsLoading(true);
 
     const endpoint = searchType === "track" ? "/api/music/playlist" : "/api/music/albumlist";
-  
+
     try {
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -154,9 +154,9 @@ export default function CreatedList({ title, initialData }: CreatedListProps) {
           musicItems: selectedMusic, // 선택한 음악 배열 전체
         }),
       });
-  
+
       if (!response.ok) throw new Error('저장에 실패했습니다.');
-  
+
       alert('성공적으로 저장되었습니다! 🎧');
       router.push('/mypage'); // 저장 후 마이페이지로 이동
       router.refresh(); // 데이터 최신화를 위해 페이지 갱신
@@ -178,12 +178,12 @@ export default function CreatedList({ title, initialData }: CreatedListProps) {
           const res = await fetch(
             `/api/music/search?q=${encodeURIComponent(searchQuery)}&type=${searchType}`
           );
-          
+
           if (!res.ok) throw new Error('Network response was not ok');
-  
+
           // 2. 서버에서 이미 MusicItem[] 형태로 가공해준 데이터를 받음
           const mapped: MusicItem[] = await res.json();
-  
+
           setSearchResults(mapped);
         } catch (error) {
           console.error("Spotify Search error:", error);
@@ -193,7 +193,7 @@ export default function CreatedList({ title, initialData }: CreatedListProps) {
         setSearchResults([]);
       }
     }, 500);
-  
+
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery, searchType]);
 
@@ -206,51 +206,6 @@ export default function CreatedList({ title, initialData }: CreatedListProps) {
         <h2 className="text-2xl font-bold font-sans text-neon-green mb-6">{title} 제목을 입력해주세요</h2>
 
         <div className='flex justify-between items-center'>
-          {/* <div
-            className="flex gap-4 p-1 bg-black rounded-lg border border-gray-800 w-fit"
-            role="radiogroup"
-            aria-label="검색 타입 선택"
-          >
-            <label className="cursor-pointer">
-              <input
-                type="radio"
-                name="searchType"
-                value="track"
-                className="sr-only"
-                checked={searchType === "track"}
-                onChange={() => handleTypeChange("track")}
-              />
-              <span
-                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                  searchType === "track"
-                    ? "bg-[#39FF14] text-black"
-                    : "text-gray-500 hover:text-white"
-                }`}
-              >
-                <Music size={16} /> 플레이리스트
-              </span>
-            </label>
-
-            <label className="cursor-pointer">
-              <input
-                type="radio"
-                name="searchType"
-                value="album"
-                className="sr-only"
-                checked={searchType === "album"}
-                onChange={() => handleTypeChange("album")}
-              />
-              <span
-                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                  searchType === "album"
-                    ? "bg-[#39FF14] text-black"
-                    : "text-gray-500 hover:text-white"
-                }`}
-              >
-                <Disc size={16} /> 앨범리스트
-              </span>
-            </label>
-          </div> */}
           <TypeSelector
             name="searchType"
             ariaLabel="타입 선택"
@@ -277,15 +232,13 @@ export default function CreatedList({ title, initialData }: CreatedListProps) {
 
               {/* 토글 트랙 */}
               <div
-                className={`relative w-14 h-8 flex items-center rounded-full p-1 transition-colors duration-300 ${
-                  form.visibility === "PUBLIC" ? "bg-gray-800" : "bg-neon-green/30"
-                }`}
+                className={`relative w-14 h-8 flex items-center rounded-full p-1 transition-colors duration-300 ${form.visibility === "PUBLIC" ? "bg-gray-800" : "bg-neon-green/30"
+                  }`}
               >
                 {/* 움직이는 노브 */}
                 <motion.div
-                  className={`w-6 h-6 rounded-full shadow-md flex items-center justify-center ${
-                    form.visibility === "PUBLIC" ? "bg-gray-600" : "bg-neon-green/30"
-                  }`}
+                  className={`w-6 h-6 rounded-full shadow-md flex items-center justify-center ${form.visibility === "PUBLIC" ? "bg-gray-600" : "bg-neon-green/30"
+                    }`}
                   layout
                   transition={{ type: "spring", stiffness: 500, damping: 30 }}
                   initial={false}
@@ -309,9 +262,9 @@ export default function CreatedList({ title, initialData }: CreatedListProps) {
             <label className="text-sm font-medium text-gray-400">태그 (최대 5개)</label>
 
             <div className='mt-3'>
-              <SearchBar variant='form' placeholder='태그를 입력해주세요' value={tagInput} onChange={(e) => setTagInput(e.target.value)} onClick={handleAddTag} onKeyDown={handleKeyDown}/>
+              <SearchBar variant='form' placeholder='태그를 입력해주세요' value={tagInput} onChange={(e) => setTagInput(e.target.value)} onClick={handleAddTag} onKeyDown={handleKeyDown} />
             </div>
-            
+
             <div className="flex flex-wrap gap-2 mb-2">
               <AnimatePresence>
                 {form.tags.map((tag, index) => (
