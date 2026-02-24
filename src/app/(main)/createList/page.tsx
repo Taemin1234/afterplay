@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Music, Trash2, Disc, LockKeyhole, LockKeyholeOpen } from 'lucide-react';
 import Image from 'next/image';
+import TypeSelector from '@/components/ui/molecules/TypeSelector';
 
 import ModalWrap from '@/components/ui/molecules/ModalWrap';
 import Button from '@/components/ui/atoms/Button';
@@ -28,6 +29,11 @@ interface CreatedListProps {
   initialData?: { title: string; content: string }; // 수정 시 데이터
   onSave?: (data: unknown) => void;
 }
+
+const searchTypeOptions = [
+  { value: 'track', label: '플레이리스트', icon: <Music size={16} /> },
+  { value: 'album', label: '앨범리스트', icon: <Disc size={16} /> },
+] as const;
 
 export default function CreatedList({ title, initialData }: CreatedListProps) {
   const router = useRouter();
@@ -200,7 +206,7 @@ export default function CreatedList({ title, initialData }: CreatedListProps) {
         <h2 className="text-2xl font-bold font-sans text-neon-green mb-6">{title} 제목을 입력해주세요</h2>
 
         <div className='flex justify-between items-center'>
-          <div
+          {/* <div
             className="flex gap-4 p-1 bg-black rounded-lg border border-gray-800 w-fit"
             role="radiogroup"
             aria-label="검색 타입 선택"
@@ -244,7 +250,14 @@ export default function CreatedList({ title, initialData }: CreatedListProps) {
                 <Disc size={16} /> 앨범리스트
               </span>
             </label>
-          </div>
+          </div> */}
+          <TypeSelector
+            name="searchType"
+            ariaLabel="타입 선택"
+            value={searchType}
+            options={searchTypeOptions}
+            onChange={handleTypeChange}
+          />
 
           {/* 비밀글 설정 */}
           <div className="flex items-center justify-between mb-6 px-1 gap-1.5">
