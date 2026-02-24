@@ -1,8 +1,5 @@
 import prisma from '@/lib/prisma';
-
-export type ListType = 'all' | 'playlist' | 'albumlist';
-export type VisibilityScope = 'all' | 'public' | 'private';
-type FeedKind = 'PLAYLIST' | 'ALBUM_LIST';
+import type { FeedKind, ListType, VisibilityScope } from "@/types";
 
 type FeedCursor = {
   createdAt: string;
