@@ -3,111 +3,133 @@ import { createSupabaseServerClient } from '@/utils/supabase/server';
 import prisma from '@/lib/prisma';
 
 interface MusicItem {
-    id: string;
-    name: string;
-    artist: string;
-    albumImageUrl: string;
+  id: string;
+  name: string;
+  artist: string;
+  albumImageUrl: string;
 }
 
 export async function POST(req: Request) {
   try {
     // Supabase를 통해 현재 로그인한 유저 확인
     const supabase = await createSupabaseServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return NextResponse.json({ error: '인증되지 않은 사용자입니다.' }, { status: 401 });
     }
 
-    // 클라이언트에서 보낸 데이터 받아오기
+    const email = user.email?.trim();
+    if (!email) {
+      return NextResponse.json({ error: '이메일이 필요합니다.' }, { status: 400 });
+    }
+
+    // FK로 연결된 레코드를 생성하기 전에, Prisma의 User 테이블에 해당 사용자 행(row)이 존재하는지 확인하라(없으면 먼저 만들어라).
+    await prisma.user.upsert({
+      where: { id: user.id },
+      update: {
+        email,
+        avatarUrl: user.user_metadata?.avatar_url ?? null,
+      },
+      create: {
+        id: user.id,
+        email,
+        avatarUrl: user.user_metadata?.avatar_url ?? null,
+        nickname: null,
+      },
+    });
+
+     // 클라이언트에서 보낸 데이터 받아오기
     const body = await req.json();
     const { title, story, visibility, type, musicItems, tags } = body as {
-        title: string;
-        story: string;
-        visibility: "PRIVATE" | "PUBLIC";
-        type: "track" | "album";
-        musicItems: MusicItem[];
-        tags: string[];
-      };
+      title: string;
+      story: string;
+      visibility: 'PRIVATE' | 'PUBLIC';
+      type: 'track' | 'album';
+      musicItems: MusicItem[];
+      tags: string[];
+    };
 
     // 기본 검증
     if (!title?.trim() || !story?.trim()) {
-        return NextResponse.json({ error: "title/story가 필요합니다." }, { status: 400 });
+      return NextResponse.json({ error: 'title/story가 필요합니다.' }, { status: 400 });
     }
     if (!Array.isArray(musicItems) || musicItems.length === 0) {
-        return NextResponse.json({ error: "musicItems가 필요합니다." }, { status: 400 });
+      return NextResponse.json({ error: 'musicItems가 필요합니다.' }, { status: 400 });
     }
-    if (type !== "track") {
-        return NextResponse.json({ error: "현재 route는 track만 처리합니다." }, { status: 400 });
+    if (type !== 'track') {
+      return NextResponse.json({ error: '현재 route는 노래만 처리합니다.' }, { status: 400 });
     }
 
-    // 중복 곡 제거(클라에서 막아도 서버에서 한번 더 방어)
-    const uniqueItems = Array.from(
-    new Map(musicItems.map((m) => [m.id, m])).values()
-    );
+    // 중복곡 제거(클라이언트 서버 이중 방어)
+    const uniqueItems = Array.from(new Map(musicItems.map((m) => [m.id, m])).values());
 
-    // 태그 정리: trim + 빈값 제거 + 중복 제거 + 최대 5개
+    // 태그 정리 : trim + 빈값 제거 + 중복제거 + 최대 5개
     const cleanedTags = Array.isArray(tags)
-     ? [...new Set(tags.map((t) => t.trim()).filter(Boolean))].slice(0, 5)
-     : [];
+      ? [...new Set(tags.map((t) => t.trim()).filter(Boolean))].slice(0, 5)
+      : [];
 
     const result = await prisma.$transaction(async (tx) => {
-        // 1) Playlist 생성
-        const playlist = await tx.playlist.create({
-            data: {
-                title: title.trim(),
-                story: story.trim(),
-                visibility: visibility,
-                authorId: user.id,
-                tracks: {
-                    create: uniqueItems.map((item, i) => ({
-                        order: i,
-                        track: {
-                            connectOrCreate: {
-                                where: { spotifyId: item.id },
-                                create: {
-                                    spotifyId: item.id,
-                                    title: item.name,
-                                    artist: item.artist,
-                                    albumCover: item.albumImageUrl ?? "",
-                                }
-                            }
-                        }
-                    }))
+      const playlist = await tx.playlist.create({
+        data: {
+          title: title.trim(),
+          story: story.trim(),
+          visibility,
+          authorId: user.id,
+          tracks: {
+            create: uniqueItems.map((item, i) => ({
+              order: i,
+              track: {
+                connectOrCreate: {
+                  where: { spotifyId: item.id },
+                  create: {
+                    spotifyId: item.id,
+                    title: item.name,
+                    artist: item.artist,
+                    albumCover: item.albumImageUrl ?? '',
+                  },
                 },
-                // PlaylistTag 생성 + Tag connectOrCreate
-                tags: {
-                    create: cleanedTags.map((tagName) => ({
-                    tag: {
-                        connectOrCreate: {
-                        where: { name: tagName },
-                        create: { name: tagName },
-                        },
-                    },
-                    })),
+              },
+            })),
+          },
+          tags: {
+            create: cleanedTags.map((tagName) => ({
+              tag: {
+                connectOrCreate: {
+                  where: { name: tagName },
+                  create: { name: tagName },
                 },
-            }
-        });
-        
-        // ListFeed 추가
-        await tx.listFeed.create({
-            data: {
-                userId: user.id,
-                kind: 'PLAYLIST',
-                refId: playlist.id,
-                createdAt: playlist.createdAt,
-            }
-        });
-        
-        return playlist;
+              },
+            })),
+          },
+        },
       });
-  
-      return NextResponse.json({ ok: true, playlistId: result.id }, { status: 201 });
 
+      // ListFeed 추가
+      await tx.listFeed.create({
+        data: {
+          userId: user.id,
+          kind: 'PLAYLIST',
+          refId: playlist.id,
+          createdAt: playlist.createdAt,
+        },
+      });
+
+      return playlist;
+    });
+
+    return NextResponse.json({ ok: true, playlistId: result.id }, { status: 201 });
   } catch (error) {
-    console.error('Playlist Save Error:', error);
+    console.error('플레이리스트 저장에 실패했습니다:', error);
+    const detail = error instanceof Error ? error.message : '알수없는 에러';
+
     return NextResponse.json(
-      { error: '서버 오류로 인해 저장에 실패했습니다.' },
+      {
+        error: '플레이리스트 저장에 실패했습니다.',
+        ...(process.env.NODE_ENV !== 'production' ? { detail } : {}),
+      },
       { status: 500 }
     );
   }
