@@ -190,41 +190,42 @@ export default function ListDetailClient({ item, isLoggedIn, isOwner }: ListDeta
             ))}
           </div>
 
-          <div className="flex flex-wrap items-center gap-4 text-xs text-gray-400">
-            <span>작성일 {formatDate(item.createdAt)}</span>
-            <span className="inline-flex items-center gap-1">
-              <User size={14} />
-              {item.author.nickname ?? '익명'}
-            </span>
+          <div className='flex items-center justify-between'>
+            <div className="flex flex-wrap items-center gap-4 text-xs text-gray-400">
+              <span>작성일 {formatDate(item.createdAt)}</span>
+              <span className="inline-flex items-center gap-1">
+                <User size={14} />
+                {item.author.nickname ?? '익명'}
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleToggleLike}
+                disabled={!isLoggedIn || isLiking}
+                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm transition-colors bg-white/5 text-gray-300 hover:bg-white/10 ${!isLoggedIn ? 'cursor-not-allowed opacity-50' : ''}`}
+              >
+                {viewerHasLiked ? <Heart size={16} fill="red" strokeWidth={0} /> : <Heart size={16} />}
+                좋아요 {likesCount}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleToggleBookmark}
+                disabled={!isLoggedIn || isBookmarking}
+                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm transition-colors bg-white/5 text-gray-300 hover:bg-white/10 ${!isLoggedIn ? 'cursor-not-allowed opacity-50' : ''}`}
+              >
+                {viewerHasBookmarked ? <Bookmark size={16} fill="currentColor" strokeWidth={0} /> : <Bookmark size={16} />}
+                북마크 {bookmarksCount}
+              </button>
+
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-4 py-2 text-sm text-gray-300">
+                <MessageCircle size={16} />
+                댓글 {commentsCount}
+              </div>
+            </div>
           </div>
         </header>
-
-        <div className="mt-4 flex flex-wrap items-center gap-2 border-b border-slate-800/70 pb-4">
-          <button
-            type="button"
-            onClick={handleToggleLike}
-            disabled={!isLoggedIn || isLiking}
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm transition-colors bg-white/5 text-gray-300 hover:bg-white/10 ${!isLoggedIn ? 'cursor-not-allowed opacity-50' : ''}`}
-          >
-            {viewerHasLiked ? <Heart size={16} fill="red" strokeWidth={0} /> : <Heart size={16} />}
-            좋아요 {likesCount}
-          </button>
-
-          <button
-            type="button"
-            onClick={handleToggleBookmark}
-            disabled={!isLoggedIn || isBookmarking}
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm transition-colors bg-white/5 text-gray-300 hover:bg-white/10 ${!isLoggedIn ? 'cursor-not-allowed opacity-50' : ''}`}
-          >
-            {viewerHasBookmarked ? <Bookmark size={16} fill="currentColor" strokeWidth={0} /> : <Bookmark size={16} />}
-            북마크 {bookmarksCount}
-          </button>
-
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-4 py-2 text-sm text-gray-300">
-            <MessageCircle size={16} />
-            댓글 {commentsCount}
-          </div>
-        </div>
 
         <ol className="mt-4 space-y-2">
           {item.musicItems.map((music) => (
@@ -288,7 +289,7 @@ export default function ListDetailClient({ item, isLoggedIn, isOwner }: ListDeta
               <p className="mt-2 whitespace-pre-wrap text-sm text-gray-100">{comment.content}</p>
             </li>
           ))}
-          {comments.length === 0 && <li className="text-sm text-gray-500">아직 댓글이 없습니다.</li>}
+          {comments.length === 0 && <li className="text-center text-sm text-gray-500">아직 댓글이 없습니다.</li>}
         </ul>
       </section>
     </section>

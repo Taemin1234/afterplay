@@ -155,7 +155,9 @@ export default function CreatedList({ title, initialData }: CreatedListProps) {
         }),
       });
 
-      if (!response.ok) throw new Error('저장에 실패했습니다.');
+      const text = await response.text();
+
+      if (!response.ok) throw new Error('저장에 실패했습니다.' + text);
 
       alert('성공적으로 저장되었습니다! 🎧');
       router.push('/mypage'); // 저장 후 마이페이지로 이동

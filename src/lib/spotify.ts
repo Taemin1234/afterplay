@@ -16,7 +16,7 @@ export const getAccessToken = async () => {
       grant_type: 'client_credentials',
     }),
     // 넥스트js의 캐싱 기능을 활용해 1시간(3600초) 동안 토큰 재사용
-    next: { revalidate: 3600 }, 
+    next: { revalidate: 3600 },
   });
 
   return response.json();
@@ -27,7 +27,7 @@ export const searchSpotify = async (query: string, type: 'track' | 'album') => {
   const { access_token } = await getAccessToken();
 
   const response = await fetch(
-    `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=${type}&limit=10`,
+    `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=${type}&limit=10&market=KR&locale=ko-KR,ko;q%3D0.9`,
     {
       headers: {
         Authorization: `Bearer ${access_token}`,
