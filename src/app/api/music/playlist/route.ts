@@ -66,9 +66,9 @@ export async function POST(req: Request) {
     // 중복곡 제거(클라이언트 서버 이중 방어)
     const uniqueItems = Array.from(new Map(musicItems.map((m) => [m.id, m])).values());
 
-    // 태그 정리 : trim + 빈값 제거 + 중복제거 + 최대 5개
+    // 태그 정리 : trim + 빈값 제거 + 중복제거 + 최대 10개
     const cleanedTags = Array.isArray(tags)
-      ? [...new Set(tags.map((t) => t.trim()).filter(Boolean))].slice(0, 5)
+      ? [...new Set(tags.map((t) => t.trim()).filter(Boolean))].slice(0, 10)
       : [];
 
     const result = await prisma.$transaction(async (tx) => {

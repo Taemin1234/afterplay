@@ -93,8 +93,8 @@ export default function CreatedList({ title, initialData }: CreatedListProps) {
 
     setForm(prev => {
       if (prev.tags.includes(trimmedTag)) return prev;
-      if (prev.tags.length >= 5) {
-        alert("태그는 최대 5개까지 가능합니다.");
+      if (prev.tags.length >= 10) {
+        alert("태그는 최대 10개까지 가능합니다.");
         return prev;
       }
 
@@ -259,7 +259,7 @@ export default function CreatedList({ title, initialData }: CreatedListProps) {
           <Textarea value={form.story} placeholder="이야기를 들려주세요" onChange={(e) => setForm((prev) => ({ ...prev, story: e.target.value }))} />
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-400">태그 (최대 5개)</label>
+            <label className="text-sm font-medium text-gray-400">태그 (최대 10개)</label>
 
             <div className='mt-3'>
               <SearchBar variant='form' placeholder='태그를 입력해주세요' value={tagInput} onChange={(e) => setTagInput(e.target.value)} onClick={handleAddTag} onKeyDown={handleKeyDown} />
