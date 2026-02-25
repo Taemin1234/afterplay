@@ -1,7 +1,7 @@
 import { createSupabaseServerClient } from '@/utils/supabase/server';
 import { notFound } from "next/navigation";
 import { fetchPlaylistDetail } from '@/lib/music-lists';
-import PlaylistDetailClient from '@/components/ui/organisms/PlaylistDetailClient';
+import ListDetailClient from '@/components/ui/organisms/ListDetailClient';
 
 export default async function PlaylistPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -19,5 +19,5 @@ export default async function PlaylistPage({ params }: { params: Promise<{ id: s
   const isLoggedIn = Boolean(user);
   const isOwner = isLoggedIn && playlist.author.id === user?.id;
 
-  return <PlaylistDetailClient playlist={playlist} isLoggedIn={isLoggedIn} isOwner={isOwner} />;
+  return <ListDetailClient item={playlist} isLoggedIn={isLoggedIn} isOwner={isOwner} />;
 }

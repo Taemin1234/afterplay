@@ -372,10 +372,29 @@ export type AlbumListDetail = {
   title: string;
   story: string;
   visibility: 'PUBLIC' | 'PRIVATE';
-  authorId: string;
+  author: {
+    id: string;
+    nickname: string | null;
+    avatarUrl: string | null;
+  };
   createdAt: string;
   updatedAt: string;
   tags: string[];
+  likesCount: number;
+  commentsCount: number;
+  bookmarksCount: number;
+  viewerHasLiked: boolean;
+  viewerHasBookmarked: boolean;
+  comments: Array<{
+    id: string;
+    content: string;
+    createdAt: string;
+    user: {
+      id: string;
+      nickname: string | null;
+      avatarUrl: string | null;
+    };
+  }>;
   musicItems: Array<{
     id: string;
     order: number;
@@ -527,6 +546,34 @@ export async function fetchAlbumListDetail(id: string, viewerUserId?: string): P
       authorId: true,
       createdAt: true,
       updatedAt: true,
+      _count: {
+        select: {
+          likes: true,
+        },
+      },
+      likes: viewerUserId
+        ? {
+          where: { userId: viewerUserId },
+          select: { userId: true },
+          take: 1,
+        }
+        : false,
+      comments: {
+        where: { deletedAt: null },
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          content: true,
+          createdAt: true,
+          user: {
+            select: {
+              id: true,
+              nickname: true,
+              avatarUrl: true,
+            },
+          },
+        },
+      },
       tags: {
         select: {
           tag: {
@@ -555,16 +602,57 @@ export async function fetchAlbumListDetail(id: string, viewerUserId?: string): P
 
   if (!albumList) return null;
 
+  const [author, bookmarksCount, viewerHasBookmarked] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: albumList.authorId },
+      select: {
+        id: true,
+        nickname: true,
+        avatarUrl: true,
+      },
+    }),
+    prisma.$queryRawUnsafe<Array<{ count: bigint }>>(
+      'SELECT COUNT(*)::bigint AS "count" FROM "AlbumListBookmark" WHERE "albumListId" = $1',
+      albumList.id
+    ),
+    viewerUserId
+      ? prisma.$queryRawUnsafe<Array<{ count: bigint }>>(
+        'SELECT COUNT(*)::bigint AS "count" FROM "AlbumListBookmark" WHERE "albumListId" = $1 AND "userId" = $2',
+        albumList.id,
+        viewerUserId
+      )
+      : Promise.resolve([{ count: BigInt(0) }]),
+  ]);
+
   return {
     kind: 'ALBUM_LIST',
     id: albumList.id,
     title: albumList.title,
     story: albumList.story,
     visibility: albumList.visibility,
-    authorId: albumList.authorId,
+    author: {
+      id: author?.id ?? albumList.authorId,
+      nickname: author?.nickname ?? null,
+      avatarUrl: author?.avatarUrl ?? null,
+    },
     createdAt: albumList.createdAt.toISOString(),
     updatedAt: albumList.updatedAt.toISOString(),
     tags: albumList.tags.map((tagRow) => tagRow.tag.name),
+    likesCount: albumList._count.likes,
+    commentsCount: albumList.comments.length,
+    bookmarksCount: Number(bookmarksCount[0]?.count ?? 0),
+    viewerHasLiked: viewerUserId ? (albumList.likes?.length ?? 0) > 0 : false,
+    viewerHasBookmarked: Number(viewerHasBookmarked[0]?.count ?? 0) > 0,
+    comments: albumList.comments.map((comment) => ({
+      id: comment.id,
+      content: comment.content,
+      createdAt: comment.createdAt.toISOString(),
+      user: {
+        id: comment.user.id,
+        nickname: comment.user.nickname,
+        avatarUrl: comment.user.avatarUrl,
+      },
+    })),
     musicItems: albumList.albums.map((entry) => ({
       id: entry.album.spotifyId,
       order: entry.order,

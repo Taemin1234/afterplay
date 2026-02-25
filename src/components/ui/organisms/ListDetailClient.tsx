@@ -6,15 +6,17 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Bookmark, Heart, MessageCircle, Pencil, Trash2, User } from 'lucide-react';
 import Tag from '@/components/ui/atoms/tag';
-import type { PlaylistDetail } from '@/lib/music-lists';
+import type { AlbumListDetail, PlaylistDetail } from '@/lib/music-lists';
 
-interface PlaylistDetailClientProps {
-  playlist: PlaylistDetail;
+type DetailItem = PlaylistDetail | AlbumListDetail;
+
+interface ListDetailClientProps {
+  item: DetailItem;
   isLoggedIn: boolean;
   isOwner: boolean;
 }
 
-type CommentItem = PlaylistDetail['comments'][number];
+type CommentItem = DetailItem['comments'][number];
 
 function formatDate(value: string) {
   return new Date(value).toLocaleDateString('ko-KR', {
@@ -24,14 +26,17 @@ function formatDate(value: string) {
   });
 }
 
-export default function PlaylistDetailClient({ playlist, isLoggedIn, isOwner }: PlaylistDetailClientProps) {
+export default function ListDetailClient({ item, isLoggedIn, isOwner }: ListDetailClientProps) {
   const router = useRouter();
-  const [likesCount, setLikesCount] = useState(playlist.likesCount);
-  const [bookmarksCount, setBookmarksCount] = useState(playlist.bookmarksCount);
-  const [commentsCount, setCommentsCount] = useState(playlist.commentsCount);
-  const [viewerHasLiked, setViewerHasLiked] = useState(playlist.viewerHasLiked);
-  const [viewerHasBookmarked, setViewerHasBookmarked] = useState(playlist.viewerHasBookmarked);
-  const [comments, setComments] = useState<CommentItem[]>(playlist.comments);
+  const apiSegment = item.kind === 'PLAYLIST' ? 'playlist' : 'albumlist';
+  const listLabel = item.kind === 'PLAYLIST' ? '플레이리스트' : '앨범리스트';
+
+  const [likesCount, setLikesCount] = useState(item.likesCount);
+  const [bookmarksCount, setBookmarksCount] = useState(item.bookmarksCount);
+  const [commentsCount, setCommentsCount] = useState(item.commentsCount);
+  const [viewerHasLiked, setViewerHasLiked] = useState(item.viewerHasLiked);
+  const [viewerHasBookmarked, setViewerHasBookmarked] = useState(item.viewerHasBookmarked);
+  const [comments, setComments] = useState<CommentItem[]>(item.comments);
   const [commentInput, setCommentInput] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -39,8 +44,8 @@ export default function PlaylistDetailClient({ playlist, isLoggedIn, isOwner }: 
   const [isBookmarking, setIsBookmarking] = useState(false);
 
   const loginHref = useMemo(
-    () => `/auth/login?next=${encodeURIComponent(`/playlist/${playlist.id}`)}`,
-    [playlist.id]
+    () => `/auth/login?next=${encodeURIComponent(`/${apiSegment}/${item.id}`)}`,
+    [apiSegment, item.id]
   );
 
   const requireLogin = () => {
@@ -55,7 +60,7 @@ export default function PlaylistDetailClient({ playlist, isLoggedIn, isOwner }: 
     setIsLiking(true);
 
     try {
-      const res = await fetch(`/api/music/playlist/${playlist.id}`, {
+      const res = await fetch(`/api/music/${apiSegment}/${item.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'toggle-like' }),
@@ -78,7 +83,7 @@ export default function PlaylistDetailClient({ playlist, isLoggedIn, isOwner }: 
     setIsBookmarking(true);
 
     try {
-      const res = await fetch(`/api/music/playlist/${playlist.id}`, {
+      const res = await fetch(`/api/music/${apiSegment}/${item.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'toggle-bookmark' }),
@@ -105,7 +110,7 @@ export default function PlaylistDetailClient({ playlist, isLoggedIn, isOwner }: 
 
     setIsSubmittingComment(true);
     try {
-      const res = await fetch(`/api/music/playlist/${playlist.id}`, {
+      const res = await fetch(`/api/music/${apiSegment}/${item.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'comment', content }),
@@ -132,9 +137,9 @@ export default function PlaylistDetailClient({ playlist, isLoggedIn, isOwner }: 
 
     setIsDeleting(true);
     try {
-      const res = await fetch(`/api/music/playlist/${playlist.id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/music/${apiSegment}/${item.id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('failed');
-      alert('플레이리스트가 삭제되었습니다.');
+      alert(`${listLabel}가 삭제되었습니다.`);
       router.push('/');
       router.refresh();
     } catch (error) {
@@ -150,8 +155,8 @@ export default function PlaylistDetailClient({ playlist, isLoggedIn, isOwner }: 
         <header className="space-y-3 border-b border-slate-800/70 pb-4">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-white md:text-3xl">{playlist.title}</h1>
-              <p className="mt-2 text-sm text-gray-400">{playlist.story}</p>
+              <h1 className="text-2xl font-bold text-white md:text-3xl">{item.title}</h1>
+              <p className="mt-2 text-sm text-gray-400">{item.story}</p>
             </div>
             {isOwner && (
               <div className="flex items-center gap-2">
@@ -178,7 +183,7 @@ export default function PlaylistDetailClient({ playlist, isLoggedIn, isOwner }: 
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {playlist.tags.map((tag) => (
+            {item.tags.map((tag) => (
               <Tag key={tag} variant="neon">
                 #{tag}
               </Tag>
@@ -186,10 +191,10 @@ export default function PlaylistDetailClient({ playlist, isLoggedIn, isOwner }: 
           </div>
 
           <div className="flex flex-wrap items-center gap-4 text-xs text-gray-400">
-            <span>작성일 {formatDate(playlist.createdAt)}</span>
+            <span>작성일 {formatDate(item.createdAt)}</span>
             <span className="inline-flex items-center gap-1">
               <User size={14} />
-              {playlist.author.nickname ?? '익명'}
+              {item.author.nickname ?? '익명'}
             </span>
           </div>
         </header>
@@ -201,7 +206,7 @@ export default function PlaylistDetailClient({ playlist, isLoggedIn, isOwner }: 
             disabled={!isLoggedIn || isLiking}
             className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm transition-colors bg-white/5 text-gray-300 hover:bg-white/10 ${!isLoggedIn ? 'cursor-not-allowed opacity-50' : ''}`}
           >
-           {viewerHasLiked ? <Heart size={16} fill='red' strokeWidth={0} /> : <Heart size={16} />}
+            {viewerHasLiked ? <Heart size={16} fill="red" strokeWidth={0} /> : <Heart size={16} />}
             좋아요 {likesCount}
           </button>
 
@@ -211,7 +216,7 @@ export default function PlaylistDetailClient({ playlist, isLoggedIn, isOwner }: 
             disabled={!isLoggedIn || isBookmarking}
             className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm transition-colors bg-white/5 text-gray-300 hover:bg-white/10 ${!isLoggedIn ? 'cursor-not-allowed opacity-50' : ''}`}
           >
-            {viewerHasBookmarked ? <Bookmark size={16} fill='text-neon-green' strokeWidth={0} />  : <Bookmark size={16} />}
+            {viewerHasBookmarked ? <Bookmark size={16} fill="currentColor" strokeWidth={0} /> : <Bookmark size={16} />}
             북마크 {bookmarksCount}
           </button>
 
@@ -222,7 +227,7 @@ export default function PlaylistDetailClient({ playlist, isLoggedIn, isOwner }: 
         </div>
 
         <ol className="mt-4 space-y-2">
-          {playlist.musicItems.map((music) => (
+          {item.musicItems.map((music) => (
             <li
               key={`${music.id}-${music.order}`}
               className="flex items-center gap-3 rounded-lg border border-slate-800/70 bg-black/15 p-2"
