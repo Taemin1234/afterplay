@@ -17,7 +17,7 @@ export default function ListItem({ item }: ListItemProps) {
     >
       {/* 1. Link 연결: 종류에 따라 상세 페이지 주소 분기 */}
       <Link
-        href={item.kind === 'PLAYLIST' ? `/playlist/${item.id}` : `/album/${item.id}`}
+        href={item.kind === 'PLAYLIST' ? `/playlist/${item.id}` : `/albumlist/${item.id}`}
         className="group block relative h-full"
       >
         <Tag variant="subtle">

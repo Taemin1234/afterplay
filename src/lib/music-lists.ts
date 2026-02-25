@@ -334,10 +334,29 @@ export type PlaylistDetail = {
   title: string;
   story: string;
   visibility: 'PUBLIC' | 'PRIVATE';
-  authorId: string;
+  author: {
+    id: string;
+    nickname: string | null;
+    avatarUrl: string | null;
+  };
   createdAt: string;
   updatedAt: string;
   tags: string[];
+  likesCount: number;
+  commentsCount: number;
+  bookmarksCount: number;
+  viewerHasLiked: boolean;
+  viewerHasBookmarked: boolean;
+  comments: Array<{
+    id: string;
+    content: string;
+    createdAt: string;
+    user: {
+      id: string;
+      nickname: string | null;
+      avatarUrl: string | null;
+    };
+  }>;
   musicItems: Array<{
     id: string;
     order: number;
@@ -385,6 +404,34 @@ export async function fetchPlaylistDetail(id: string, viewerUserId?: string): Pr
       authorId: true,
       createdAt: true,
       updatedAt: true,
+      _count: {
+        select: {
+          likes: true,
+        },
+      },
+      likes: viewerUserId
+        ? {
+          where: { userId: viewerUserId },
+          select: { userId: true },
+          take: 1,
+        }
+        : false,
+      comments: {
+        where: { deletedAt: null },
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          content: true,
+          createdAt: true,
+          user: {
+            select: {
+              id: true,
+              nickname: true,
+              avatarUrl: true,
+            },
+          },
+        },
+      },
       tags: {
         select: {
           tag: {
@@ -413,16 +460,44 @@ export async function fetchPlaylistDetail(id: string, viewerUserId?: string): Pr
 
   if (!playlist) return null;
 
+  const author = await prisma.user.findUnique({
+    where: { id: playlist.authorId },
+    select: {
+      id: true,
+      nickname: true,
+      avatarUrl: true,
+    },
+  });
+
   return {
     kind: 'PLAYLIST',
     id: playlist.id,
     title: playlist.title,
     story: playlist.story,
     visibility: playlist.visibility,
-    authorId: playlist.authorId,
+    author: {
+      id: author?.id ?? playlist.authorId,
+      nickname: author?.nickname ?? null,
+      avatarUrl: author?.avatarUrl ?? null,
+    },
     createdAt: playlist.createdAt.toISOString(),
     updatedAt: playlist.updatedAt.toISOString(),
     tags: playlist.tags.map((tagRow) => tagRow.tag.name),
+    likesCount: playlist._count.likes,
+    commentsCount: playlist.comments.length,
+    bookmarksCount: 0,
+    viewerHasLiked: viewerUserId ? (playlist.likes?.length ?? 0) > 0 : false,
+    viewerHasBookmarked: false,
+    comments: playlist.comments.map((comment) => ({
+      id: comment.id,
+      content: comment.content,
+      createdAt: comment.createdAt.toISOString(),
+      user: {
+        id: comment.user.id,
+        nickname: comment.user.nickname,
+        avatarUrl: comment.user.avatarUrl,
+      },
+    })),
     musicItems: playlist.tracks.map((entry) => ({
       id: entry.track.spotifyId,
       order: entry.order,
