@@ -1,8 +1,8 @@
 // Spotify API는 보안을 위해 1시간마다 만료되는 Access Token을 요구. 토큰을 자동으로 갱신하고 검색을 수행하는 유틸리티 생성
-const client_id = process.env.SPOTIFY_CLIENT_ID;
-const client_secret = process.env.SPOTIFY_CLIENT_SECRET;
-const basic = Buffer.from(`${client_id}:${client_secret}`).toString('base64');
-const TOKEN_ENDPOINT = `https://accounts.spotify.com/api/token`;
+const clientId = process.env.SPOTIFY_CLIENT_ID;
+const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+const basic = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+const TOKEN_ENDPOINT = 'https://accounts.spotify.com/api/token';
 
 // 1. 액세스 토큰 가져오기
 export const getAccessToken = async () => {
@@ -19,10 +19,20 @@ export const getAccessToken = async () => {
     next: { revalidate: 3600 },
   });
 
-  return response.json();
+  // 2. 검색 함수 (곡 또는 앨범)
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(`Spotify token request failed: ${response.status} ${detail}`);
+  }
+
+  const data = await response.json();
+  if (!data?.access_token) {
+    throw new Error('Spotify token response missing access_token');
+  }
+
+  return data as { access_token: string };
 };
 
-// 2. 검색 함수 (곡 또는 앨범)
 export const searchSpotify = async (query: string, type: 'track' | 'album') => {
   const { access_token } = await getAccessToken();
 
@@ -34,6 +44,11 @@ export const searchSpotify = async (query: string, type: 'track' | 'album') => {
       },
     }
   );
+
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(`Spotify search failed: ${response.status} ${detail}`);
+  }
 
   return response.json();
 };
