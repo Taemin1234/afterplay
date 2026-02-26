@@ -1,22 +1,21 @@
 'use client';
-
-import { useMemo, useState, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bookmark, Heart, MessageCircle, Pencil, Trash2, User, Share2 } from 'lucide-react';
+import { Bookmark, Heart, MessageCircle, Pencil, Share2, Trash2, User } from 'lucide-react';
 import Tag from '@/components/ui/atoms/tag';
+import Button from '@/components/ui/atoms/Button';
 import type { AlbumListDetail, PlaylistDetail } from '@/lib/music-lists';
 
 type DetailItem = PlaylistDetail | AlbumListDetail;
+type CommentItem = DetailItem['comments'][number];
 
 interface ListDetailClientProps {
   item: DetailItem;
   isLoggedIn: boolean;
   isOwner: boolean;
 }
-
-type CommentItem = DetailItem['comments'][number];
 
 function formatDate(value: string) {
   return new Date(value).toLocaleDateString('ko-KR', {
@@ -30,6 +29,7 @@ export default function ListDetailClient({ item, isLoggedIn, isOwner }: ListDeta
   const router = useRouter();
   const apiSegment = item.kind === 'PLAYLIST' ? 'playlist' : 'albumlist';
   const listLabel = item.kind === 'PLAYLIST' ? '플레이리스트' : '앨범리스트';
+  const targetRef = useRef<HTMLElement | null>(null);
 
   const [likesCount, setLikesCount] = useState(item.likesCount);
   const [bookmarksCount, setBookmarksCount] = useState(item.bookmarksCount);
@@ -42,7 +42,6 @@ export default function ListDetailClient({ item, isLoggedIn, isOwner }: ListDeta
   const [isDeleting, setIsDeleting] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
   const [isBookmarking, setIsBookmarking] = useState(false);
-  const targetRef = useRef<HTMLElement | null>(null);
 
   const loginHref = useMemo(
     () => `/auth/login?next=${encodeURIComponent(`/${apiSegment}/${item.id}`)}`,
@@ -140,6 +139,7 @@ export default function ListDetailClient({ item, isLoggedIn, isOwner }: ListDeta
     try {
       const res = await fetch(`/api/music/${apiSegment}/${item.id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('failed');
+
       alert(`${listLabel}가 삭제되었습니다.`);
       router.push('/');
       router.refresh();
@@ -151,56 +151,60 @@ export default function ListDetailClient({ item, isLoggedIn, isOwner }: ListDeta
   };
 
   const goToTarget = () => {
-    targetRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    targetRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const handleShare = async () => {
     const url = window.location.href;
 
-    // 지원되면 네이티브 공유창
     if (navigator.share) {
       try {
         await navigator.share({ title: document.title, url });
         return;
       } catch {
-        // 사용자가 취소한 경우도 여기로 올 수 있음
+        // no-op
       }
     }
 
     await navigator.clipboard.writeText(url);
-    alert("링크가 복사됐어요!");
+    alert('링크가 복사되었습니다.');
   };
 
   return (
     <section className="mx-auto w-full max-w-5xl space-y-6">
-      <article className="overflow-hidden rounded-2xl border border-slate-800/70 bg-gradient-to-b from-[#131c31] to-[#070c18] p-6 shadow-[0_24px_60px_rgba(0,0,0,0.45)]">
+      <article className="overflow-hidden rounded-2xl border border-slate-800/70 bg-gradient-to-b from-[#131c31] to-[#070c18] px-6 py-8 shadow-[0_24px_60px_rgba(0,0,0,0.45)]">
         <header className="space-y-3 border-b border-slate-800/70 pb-4">
           <div>
             <div className="flex items-start justify-between gap-4">
               <h1 className="text-2xl font-bold text-white md:text-3xl">{item.title}</h1>
+
               {isOwner && (
                 <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-1 rounded-md border border-white/15 px-3 py-1.5 text-sm text-gray-200"
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    icon={<Pencil size={14} />}
                     disabled
                     title="수정 기능은 추후 연결 예정입니다."
+                    className="border-white/15 text-gray-200 hover:bg-white/10"
                   >
-                    <Pencil size={14} />
                     수정
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    icon={<Trash2 size={14} />}
                     onClick={handleDelete}
                     disabled={isDeleting}
-                    className="inline-flex items-center gap-1 rounded-md border border-red-400/40 px-3 py-1.5 text-sm text-red-300"
+                    title="삭제 버튼"
                   >
-                    <Trash2 size={14} />
                     삭제
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
+
             <p className="mt-2 text-base text-gray-300">{item.story}</p>
           </div>
 
@@ -212,7 +216,7 @@ export default function ListDetailClient({ item, isLoggedIn, isOwner }: ListDeta
             ))}
           </div>
 
-          <div className='flex items-center justify-between'>
+          <div className="flex items-center justify-between">
             <div className="flex flex-wrap items-center gap-4 text-xs text-gray-400">
               <span>작성일 {formatDate(item.createdAt)}</span>
               <span className="inline-flex items-center gap-1">
@@ -220,39 +224,53 @@ export default function ListDetailClient({ item, isLoggedIn, isOwner }: ListDeta
                 {item.author.nickname ?? '익명'}
               </span>
             </div>
+
             <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
+              <Button
+                variant="outline"
+                size="sm"
+                rounded="full"
                 onClick={handleToggleLike}
                 disabled={!isLoggedIn || isLiking}
-                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm transition-colors bg-white/5 hover:bg-white/10 ${viewerHasLiked ? 'text-red-300' : 'text-gray-300'} ${!isLoggedIn ? 'cursor-not-allowed opacity-50' : ''}`}
+                icon={viewerHasLiked ? <Heart size={16} fill="red" strokeWidth={0} /> : <Heart size={16} />}
+                className={`border-0 bg-white/5 hover:bg-white/10 ${viewerHasLiked ? 'text-red-300' : 'text-gray-300'}`}
               >
-                {viewerHasLiked ? <Heart size={16} fill="red" strokeWidth={0} /> : <Heart size={16} />}
                 좋아요 {likesCount}
-              </button>
+              </Button>
 
-              <button
-                type="button"
+              <Button
+                variant="outline"
+                size="sm"
+                rounded="full"
                 onClick={handleToggleBookmark}
                 disabled={!isLoggedIn || isBookmarking}
-                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm transition-colors bg-white/5 hover:bg-white/10 ${viewerHasBookmarked ? 'text-neon-green' : 'text-gray-300'} ${!isLoggedIn ? 'cursor-not-allowed opacity-50' : ''}`}
+                icon={viewerHasBookmarked ? <Bookmark size={16} fill="#39ff14" strokeWidth={0} /> : <Bookmark size={16} />}
+                className={`border-0 bg-white/5 hover:bg-white/10 ${viewerHasBookmarked ? 'text-neon-green' : 'text-gray-300'}`}
               >
-                {viewerHasBookmarked ? <Bookmark size={16} fill="#39ff14" strokeWidth={0} /> : <Bookmark size={16} />}
                 북마크 {bookmarksCount}
-              </button>
+              </Button>
 
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-4 py-2 text-sm text-gray-300" onClick={goToTarget}>
-                <MessageCircle size={16} />
-                댓글 {commentsCount}
-              </div>
-
-              <button
-                type="button"
-                onClick={handleShare}
-                className='inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm transition-colors bg-white/5 text-gray-300 hover:bg-white/10'
+              <Button
+                variant="outline"
+                size="sm"
+                rounded="full"
+                onClick={goToTarget}
+                icon={<MessageCircle size={16} />}
+                className="border-0 bg-white/5 text-gray-300 hover:bg-white/10"
               >
-                <Share2 size={16} /> 공유하기
-              </button>
+                댓글 {commentsCount}
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                rounded="full"
+                onClick={handleShare}
+                icon={<Share2 size={16} />}
+                className="border-0 bg-white/5 text-gray-300 hover:bg-white/10"
+              >
+                공유하기
+              </Button>
             </div>
           </div>
         </header>
@@ -285,7 +303,10 @@ export default function ListDetailClient({ item, isLoggedIn, isOwner }: ListDeta
 
         {!isLoggedIn && (
           <p className="mt-2 text-sm text-gray-400">
-            댓글 작성은 로그인 후 가능합니다. <Link href={loginHref} className="text-neon-green">로그인하기</Link>
+            댓글 작성은 로그인이 필요합니다.{' '}
+            <Link href={loginHref} className="text-neon-green">
+              로그인하기
+            </Link>
           </p>
         )}
 
@@ -299,13 +320,14 @@ export default function ListDetailClient({ item, isLoggedIn, isOwner }: ListDeta
             className="h-24 w-full resize-none rounded-md border border-slate-700 bg-[#070b16] px-3 py-2 text-sm text-white outline-none focus:border-neon-green disabled:cursor-not-allowed disabled:opacity-60"
           />
           <div className="flex justify-end">
-            <button
+            <Button
               type="submit"
+              size="sm"
               disabled={!isLoggedIn || isSubmittingComment || !commentInput.trim()}
-              className="rounded-md bg-neon-green px-4 py-2 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-50"
+              className="font-semibold"
             >
               댓글 등록
-            </button>
+            </Button>
           </div>
         </form>
 
