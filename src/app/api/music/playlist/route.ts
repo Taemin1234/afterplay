@@ -72,8 +72,9 @@ export async function POST(req: Request) {
     const uniqueItems = Array.from(new Map(musicItems.map((m) => [m.id, m])).values());
 
     // 태그 정리 : trim + 빈값 제거 + 중복제거 + 최대 10개
-    const cleanedTags = Array.isArray(tags)
-      ? [...new Set(tags.map((t) => t.trim()).filter(Boolean))].slice(0, 10) : [];
+    const cleanedTags = Array.isArray(tags) 
+    ? [...new Set(tags.map((t) => t.trim()).filter(Boolean))].slice(0, 10) 
+    : [];
 
     const tagRows =
       cleanedTags.length > 0
@@ -90,43 +91,55 @@ export async function POST(req: Request) {
         : [];
 
     const result = await prisma.$transaction(async (tx) => {
-      const playlist = await tx.playlist.create({
-        data: {
-          title: title.trim(),
-          story: story.trim(),
-          visibility,
-          authorId: user.id,
-          tracks: {
-            create: uniqueItems.map((item, i) => ({
-              order: i,
-              track: {
-                connectOrCreate: {
-                  where: { spotifyId: item.id },
-                  create: {
-                    spotifyId: item.id,
-                    title: item.name,
-                    artist: item.artist,
-                    albumCover: item.albumImageUrl ?? '',
+        const playlist = await tx.playlist.create({
+          data: {
+            title: title.trim(),
+            story: story.trim(),
+            visibility,
+            authorId: user.id,
+            tracks: {
+              create: uniqueItems.map((item, i) => ({
+                order: i,
+                track: {
+                  connectOrCreate: {
+                    where: { spotifyId: item.id },
+                    create: {
+                      spotifyId: item.id,
+                      title: item.name,
+                      artist: item.artist,
+                      albumCover: item.albumImageUrl ?? '',
+                    },
                   },
                 },
-              },
-            })),
+              })),
+            },
           },
-        },
-      });
+        });
 
-      // ListFeed 추가
-      await tx.listFeed.create({
-        data: {
-          userId: user.id,
-          kind: 'PLAYLIST',
-          refId: playlist.id,
-          createdAt: playlist.createdAt,
-        },
-      });
+        if (tagRows.length > 0) {
+          await tx.playlistTag.createMany({
+            data: tagRows.map((tag) => ({
+              playlistId: playlist.id,
+              tagId: tag.id,
+            })),
+            skipDuplicates: true,
+          });
+        }
 
-      return playlist;
-    }, { timeout: 15000, maxWait: 10000 });
+        // ListFeed 추가
+        await tx.listFeed.create({
+          data: {
+            userId: user.id,
+            kind: 'PLAYLIST',
+            refId: playlist.id,
+            createdAt: playlist.createdAt,
+          },
+        });
+
+        return playlist;
+      },
+      { timeout: 15000, maxWait: 10000 }
+    );
 
     return NextResponse.json({ ok: true, playlistId: result.id }, { status: 201 });
   } catch (error) {
