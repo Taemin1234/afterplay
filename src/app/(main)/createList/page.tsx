@@ -337,7 +337,7 @@ export default function CreatedList({ title, initialData }: CreatedListProps) {
         </form>
       </motion.div>
       {isModalOpen &&
-        <ModalWrap onClose={onHandleModal}>
+        <ModalWrap onClose={onHandleModal} showCloseButton panelClassName='h-full'>
           <SearchMusic
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}

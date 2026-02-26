@@ -2,9 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import IconButton from '../atoms/IconButton';
 import SearchBar from '../molecules/SearchBar';
-import { X } from 'lucide-react';
 
 interface SearchMusicItem {
     id: string;
@@ -35,7 +33,6 @@ export default function SearchMusic({ searchQuery, setSearchQuery, searchType, s
                         검색 후 항목을 클릭하면 리스트에 추가됩니다.
                     </div>
                 </div>
-                <IconButton icon={<X size={20} />} variant='bg' onClick={onClose} />
             </div>
 
             <div className="w-full">

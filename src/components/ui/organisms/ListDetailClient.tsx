@@ -172,7 +172,7 @@ export default function ListDetailClient({ item, isLoggedIn, isOwner }: ListDeta
   };
 
   return (
-    <section className="mx-auto w-full max-w-5xl space-y-6 pb-10">
+    <section className="mx-auto w-full max-w-5xl space-y-6">
       <article className="overflow-hidden rounded-2xl border border-slate-800/70 bg-gradient-to-b from-[#131c31] to-[#070c18] p-6 shadow-[0_24px_60px_rgba(0,0,0,0.45)]">
         <header className="space-y-3 border-b border-slate-800/70 pb-4">
           <div>
