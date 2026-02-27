@@ -71,7 +71,7 @@ export default function ListItem({ item }: ListItemProps) {
         </div>
 
         <div className="border-t border-slate-800/70">
-          <div className="mt-1 flex min-h-[28px] flex-wrap gap-2 pt-1">
+          <div className="mt-1 flex flex-wrap gap-2 pt-1">
             {visible.map((tag) => (
               <Tag key={tag} variant="neon">
                 #{tag}

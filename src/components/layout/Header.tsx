@@ -6,10 +6,19 @@ import LoggedInUI from './LoggedInUI';
 import LoggedOutUI from './LoggedOutUI';
 // 로그인 정보 가져오기
 import { createSupabaseServerClient } from '@/utils/supabase/server';
+import prisma from '@/lib/prisma';
 
 export default async function Header () {
     const supabase = await createSupabaseServerClient();
     const { data: { user } } = await supabase.auth.getUser();
+
+    const dbUser = user
+      ? await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { nickname: true },
+        })
+      : null;
+    const nickname = dbUser?.nickname ?? null;
 
     return (
         <header className="sticky top-0 z-50 w-full border-b border-[#39ff14]/20 bg-[#0a0f1c]/80 backdrop-blur-md">
@@ -29,7 +38,7 @@ export default async function Header () {
           
           <div className="flex items-center gap-4">
             {user ? (
-              <LoggedInUI />
+              <LoggedInUI nickname={nickname}/>
             ) : (
               <LoggedOutUI />
             )}

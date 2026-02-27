@@ -4,11 +4,12 @@ interface ButtonProps {
   rounded?: 'none' | 'md' | 'full';
   children: React.ReactNode;
   icon?: React.ReactNode;
-  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  onClick?: (e: React.MouseEvent<HTMLElement>) => void;
   disabled?: boolean;
   className?: string;
   title?: string;
   type?: 'button' | 'submit' | 'reset';
+  as?: 'button' | 'span';
 }
 
 export default function Button({
@@ -22,6 +23,7 @@ export default function Button({
   className = '',
   title,
   type = 'button',
+  as = 'button',
 }: ButtonProps) {
   const variantStyles = {
     primary: 'bg-[#39ff14] text-black font-bold',
@@ -42,6 +44,15 @@ export default function Button({
   };
 
   const classNames = `inline-flex items-center gap-2 transition-colors ${variantStyles[variant]} ${sizeStyles[size]} ${roundedStyles[rounded]} ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${className}`.trim();
+
+  if (as === 'span') {
+    return (
+      <span onClick={onClick} title={title} className={classNames}>
+        {icon}
+        {children}
+      </span>
+    );
+  }
 
   return (
     <button type={type} onClick={onClick} disabled={disabled} title={title} className={classNames}>

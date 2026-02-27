@@ -28,6 +28,7 @@ export interface NormalizedListPayload {
   tags: string[];
 }
 
+// 현재 요청의 로그인 유저 확인
 export async function getAuthenticatedUser() {
   const supabase = await createSupabaseServerClient();
   const {
@@ -37,6 +38,7 @@ export async function getAuthenticatedUser() {
   return user;
 }
 
+// Supabase Auth 유저를 우리 DB User로 동기화/보장
 export async function upsertDbUser(user: {
   id: string;
   email?: string | null;
@@ -60,15 +62,20 @@ export async function upsertDbUser(user: {
   });
 }
 
+
+// 태그 정리
 export function cleanTags(tags: string[] | undefined): string[] {
   if (!Array.isArray(tags)) return [];
   return [...new Set(tags.map((tag) => tag.trim()).filter(Boolean))].slice(0, 10);
 }
 
+// 중복 곡 제거
 export function uniqueMusicItems(musicItems: MusicItemPayload[]): MusicItemPayload[] {
   return Array.from(new Map(musicItems.map((item) => [item.id, item])).values());
 }
 
+
+// 태그 db 저장
 export async function upsertTags(tags: string[]) {
   if (tags.length === 0) return [];
   return Promise.all(
@@ -83,6 +90,7 @@ export async function upsertTags(tags: string[]) {
   );
 }
 
+// body 요청 검증 / 데이터 정규화
 export function validateAndNormalizeListPayload(
   body: ListPayloadInput,
   options: { expectedType: ListEntityType; requireType: boolean }
