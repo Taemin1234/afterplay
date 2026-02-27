@@ -37,12 +37,12 @@ export default function ListItem({ item }: ListItemProps) {
 
           <div className="relative mb-4 flex h-48 items-center justify-center">
             {item.previewImages[2] && (
-              <div className="absolute left-1/2 z-0 translate-x-4 -translate-x-1/2 scale-80 opacity-40 blur-[1px] transition-transform duration-500 group-hover:translate-x-5">
+              <div className="absolute left-1/2 z-0 translate-x-3 scale-80 opacity-40 blur-[1px] transition-transform duration-500 group-hover:translate-x-5">
                 <Image src={item.previewImages[2]} width={130} height={130} alt="stack-3" className="aspect-square rounded-lg object-cover shadow-2xl" />
               </div>
             )}
             {item.previewImages[1] && (
-              <div className="absolute left-1/2 z-10 translate-x-0 -translate-x-1/2 scale-85 transition-transform duration-500 group-hover:translate-x-2">
+              <div className="absolute left-1/2 z-10 -translate-x-6 scale-90 transition-transform duration-500 group-hover:translate-x-0">
                 <Image src={item.previewImages[1]} width={140} height={140} alt="stack-2" className="aspect-square rounded-lg object-cover shadow-xl" />
               </div>
             )}
@@ -70,8 +70,8 @@ export default function ListItem({ item }: ListItemProps) {
           </div>
         </div>
 
-        <div className="border-t border-slate-800/70">
-          <div className="mt-1 flex flex-wrap gap-2 pt-1">
+        <div>
+          <div className="mt-1 flex flex-wrap gap-2">
             {visible.map((tag) => (
               <Tag key={tag} variant="neon">
                 #{tag}
@@ -80,7 +80,7 @@ export default function ListItem({ item }: ListItemProps) {
             {rest > 0 && <Tag variant="subtle">+{rest}</Tag>}
           </div>
 
-          <div className="mt-2 flex items-center justify-between text-[11px] text-gray-500">
+          <div className="mt-2 pt-2 flex items-center justify-between text-[11px] text-gray-500 border-t border-slate-800/70">
             <span className="text-xs">
               {new Date(item.createdAt).toLocaleDateString('ko-KR', { year: 'numeric', month: 'short', day: 'numeric' })}
             </span>

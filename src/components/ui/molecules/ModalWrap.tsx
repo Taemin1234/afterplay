@@ -51,14 +51,14 @@ export default function ModalWrap({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`relative max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-t-2xl rounded-b-none border border-slate-700/60 bg-[#060b16]/95 pb-2 shadow-[0_30px_80px_rgba(0,0,0,0.55)] [scrollbar-color:#475569_transparent] [scrollbar-width:thin] md:rounded-2xl [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-600/80 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:w-2 ${panelClassName ?? ''}`}
+        className={`relative max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-t-2xl rounded-b-none border border-slate-700/60 bg-[#060b16]/95 shadow-[0_30px_80px_rgba(0,0,0,0.55)] [scrollbar-color:#475569_transparent] [scrollbar-width:thin] md:rounded-2xl [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-600/80 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:w-2 ${panelClassName ?? ''}`}
       >
         {showCloseButton && (
           <IconButton
             icon={<X size={18} />}
             variant="bg"
             onClick={handleClose}
-            className="absolute right-0 top-0 z-20 ml-auto mr-3 mt-3"
+            className="absolute right-0 top-0 z-20 ml-auto"
           />
         )}
         {children}

@@ -191,7 +191,7 @@ export default function ListDetailClient({
         <header className="space-y-3 border-b border-slate-800/70 pb-4">
           <div>
             <div className="flex items-start justify-between gap-4">
-              <h1 className="text-2xl font-bold text-white md:text-3xl">{item.title}</h1>
+              <h1 className="text-2xl font-bold text-white md:text-3xl flex-1">{item.title}</h1>
 
               {isOwner && (
                 <div className="flex items-center gap-2">
@@ -219,10 +219,10 @@ export default function ListDetailClient({
               )}
             </div>
 
-            <p className="mt-2 text-base text-gray-300">{item.story}</p>
+            <p className="mt-8 text-base whitespace-pre-line text-gray-300">{item.story}</p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 mt-8">
             {item.tags.map((tag) => (
               <Tag key={tag} variant="neon">
                 #{tag}
