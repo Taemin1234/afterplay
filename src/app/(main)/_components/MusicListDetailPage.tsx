@@ -8,9 +8,14 @@ type ListKind = 'playlist' | 'albumlist';
 interface MusicListDetailPageProps {
   id: string;
   kind: ListKind;
+  isModalContext?: boolean;
 }
 
-export default async function MusicListDetailPage({ id, kind }: MusicListDetailPageProps) {
+export default async function MusicListDetailPage({
+  id,
+  kind,
+  isModalContext = false,
+}: MusicListDetailPageProps) {
   if (!id) {
     notFound();
   }
@@ -32,5 +37,12 @@ export default async function MusicListDetailPage({ id, kind }: MusicListDetailP
   const isLoggedIn = Boolean(user);
   const isOwner = isLoggedIn && item.author.id === user?.id;
 
-  return <ListDetailClient item={item} isLoggedIn={isLoggedIn} isOwner={isOwner} />;
+  return (
+    <ListDetailClient
+      item={item}
+      isLoggedIn={isLoggedIn}
+      isOwner={isOwner}
+      isModalContext={isModalContext}
+    />
+  );
 }

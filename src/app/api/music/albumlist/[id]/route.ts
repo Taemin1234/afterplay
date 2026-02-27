@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server';
-import { createSupabaseServerClient } from '@/utils/supabase/server';
 import { fetchAlbumListDetail } from '@/lib/music-lists';
 import prisma from '@/lib/prisma';
+import {
+  getAuthenticatedUser,
+  type ListPayloadInput,
+  upsertDbUser,
+  upsertTags,
+  validateAndNormalizeListPayload,
+} from '@/lib/music-list-api';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -16,34 +22,6 @@ type AlbumListActionPayload = {
   action?: 'toggle-like' | 'toggle-bookmark' | 'comment';
   content?: string;
 };
-
-async function getAuthenticatedUser() {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  return user;
-}
-
-async function upsertDbUser(user: { id: string; email?: string; user_metadata?: { avatar_url?: string } }) {
-  const email = user.email?.trim();
-  if (!email) return;
-
-  await prisma.user.upsert({
-    where: { id: user.id },
-    update: {
-      email,
-      avatarUrl: user.user_metadata?.avatar_url ?? null,
-    },
-    create: {
-      id: user.id,
-      email,
-      avatarUrl: user.user_metadata?.avatar_url ?? null,
-      nickname: null,
-    },
-  });
-}
 
 async function toggleAlbumListBookmark(userId: string, albumListId: string) {
   const existingRows = await prisma.$queryRawUnsafe<Array<{ exists: boolean }>>(
@@ -255,6 +233,108 @@ export async function DELETE(_request: Request, context: RouteContext) {
         },
       }),
     ]);
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: Request, context: RouteContext) {
+  try {
+    const { id } = await context.params;
+    if (!id) {
+      return NextResponse.json({ error: 'id is required' }, { status: 400 });
+    }
+
+    const user = await getAuthenticatedUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const albumList = await prisma.albumList.findFirst({
+      where: { id, deletedAt: null },
+      select: { authorId: true },
+    });
+
+    if (!albumList) {
+      return NextResponse.json({ error: 'Album list not found' }, { status: 404 });
+    }
+    if (albumList.authorId !== user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const body = (await request.json()) as ListPayloadInput;
+    const parsed = validateAndNormalizeListPayload(body, {
+      expectedType: 'album',
+      requireType: false,
+    });
+    if (!parsed.data) {
+      return NextResponse.json({ error: parsed.error ?? 'Bad request' }, { status: 400 });
+    }
+
+    const { title, story, visibility, musicItems, tags } = parsed.data;
+    const tagRows = await upsertTags(tags);
+
+    await prisma.$transaction(async (tx) => {
+      await tx.albumList.update({
+        where: { id },
+        data: { title, story, visibility },
+      });
+
+      await Promise.all(
+        musicItems.map((item) =>
+          tx.album.upsert({
+            where: { spotifyId: item.id },
+            update: {
+              title: item.name,
+              artist: item.artist,
+              coverImage: item.albumImageUrl ?? '',
+            },
+            create: {
+              spotifyId: item.id,
+              title: item.name,
+              artist: item.artist,
+              coverImage: item.albumImageUrl ?? '',
+            },
+            select: { id: true, spotifyId: true },
+          })
+        )
+      );
+
+      const albums = await tx.album.findMany({
+        where: { spotifyId: { in: musicItems.map((item) => item.id) } },
+        select: { id: true, spotifyId: true },
+      });
+      const albumIdBySpotifyId = new Map(albums.map((album) => [album.spotifyId, album.id]));
+
+      await tx.albumEntry.deleteMany({ where: { albumListId: id } });
+      await tx.albumEntry.createMany({
+        data: musicItems
+          .map((item, index) => {
+            const albumId = albumIdBySpotifyId.get(item.id);
+            if (!albumId) return null;
+            return {
+              albumListId: id,
+              albumId,
+              order: index,
+            };
+          })
+          .filter((row): row is { albumListId: string; albumId: string; order: number } => row !== null),
+      });
+
+      await tx.albumListTag.deleteMany({ where: { albumListId: id } });
+      if (tagRows.length > 0) {
+        await tx.albumListTag.createMany({
+          data: tagRows.map((tag) => ({
+            albumListId: id,
+            tagId: tag.id,
+          })),
+          skipDuplicates: true,
+        });
+      }
+    });
 
     return NextResponse.json({ ok: true });
   } catch (error) {

@@ -15,6 +15,7 @@ interface ListDetailClientProps {
   item: DetailItem;
   isLoggedIn: boolean;
   isOwner: boolean;
+  isModalContext?: boolean;
 }
 
 function formatDate(value: string) {
@@ -25,7 +26,12 @@ function formatDate(value: string) {
   });
 }
 
-export default function ListDetailClient({ item, isLoggedIn, isOwner }: ListDetailClientProps) {
+export default function ListDetailClient({
+  item,
+  isLoggedIn,
+  isOwner,
+  isModalContext = false,
+}: ListDetailClientProps) {
   const router = useRouter();
   const apiSegment = item.kind === 'PLAYLIST' ? 'playlist' : 'albumlist';
   const listLabel = item.kind === 'PLAYLIST' ? '플레이리스트' : '앨범리스트';
@@ -154,6 +160,15 @@ export default function ListDetailClient({ item, isLoggedIn, isOwner }: ListDeta
     targetRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
+  const handleGoEdit = () => {
+    const editPath = `/${apiSegment}/${item.id}/edit`;
+    if (isModalContext) {
+      window.location.assign(editPath);
+      return;
+    }
+    router.push(editPath);
+  };
+
   const handleShare = async () => {
     const url = window.location.href;
 
@@ -184,8 +199,7 @@ export default function ListDetailClient({ item, isLoggedIn, isOwner }: ListDeta
                     variant="outline"
                     size="sm"
                     icon={<Pencil size={14} />}
-                    disabled
-                    title="수정 기능은 추후 연결 예정입니다."
+                    onClick={handleGoEdit}
                     className="border-white/15 text-gray-200 hover:bg-white/10"
                   >
                     수정

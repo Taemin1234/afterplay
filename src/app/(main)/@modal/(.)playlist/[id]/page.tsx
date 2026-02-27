@@ -6,7 +6,7 @@ export default async function PlaylistModalPage({ params }: { params: { id: stri
 
     return (
       <ModalWrap showCloseButton>
-        <MusicListDetailPage id={id} kind="playlist" />
+        <MusicListDetailPage id={id} kind="playlist" isModalContext />
       </ModalWrap>
     );
   }

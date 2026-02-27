@@ -6,7 +6,7 @@ export default async function AlbumlistModalPage({ params }: { params: { id: str
 
     return (
       <ModalWrap showCloseButton>
-        <MusicListDetailPage id={id} kind="albumlist" />
+        <MusicListDetailPage id={id} kind="albumlist" isModalContext />
       </ModalWrap>
     );
   }
