@@ -36,7 +36,7 @@ export default async function MyPage({ searchParams }: TabProps) {
 
     return (
         <section className="max-w-7xl">
-            <ProfileInfo initialNickname={initialNickname}/>
+            <ProfileInfo initialNickname={initialNickname} isOwner={true} />
             <div className="mt-8">
                 <nav className="flex gap-8 border-b border-gray-800 mb-8">
                     {tabMenu.map((menu) => (
