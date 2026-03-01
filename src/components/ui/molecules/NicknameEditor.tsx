@@ -7,9 +7,10 @@ import IconButton from '@/components/ui/atoms/IconButton';
 
 interface NicknameEditorProps {
     initialNickname: string;
+    isOwner?: boolean;
 }
 
-export default function NicknameEditor({ initialNickname }: NicknameEditorProps) {
+export default function NicknameEditor({ initialNickname, isOwner = false }: NicknameEditorProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [nickname, setNickname] = useState(initialNickname);
     const [isLoading, setIsLoading] = useState(false);
@@ -65,7 +66,9 @@ export default function NicknameEditor({ initialNickname }: NicknameEditorProps)
             ) : (
                 <>
                     <p className="text-2xl font-bold text-white">{nickname}</p>
-                    <IconButton icon={<Pencil size={18} />} onClick={() => setIsEditing(true)} />
+                    {isOwner && (
+                        <IconButton icon={<Pencil size={18} />} onClick={() => setIsEditing(true)} />
+                    )}
                 </>
             )}
         </div>
