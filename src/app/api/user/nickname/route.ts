@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/utils/supabase/server';
 import prisma from '@/lib/prisma';
+import { generateUniqueNicknameSlug, isReservedNickname } from '@/lib/nickname-slug';
 
 export async function PATCH(request: Request) {
     const supabase = await createSupabaseServerClient();
@@ -10,12 +11,18 @@ export async function PATCH(request: Request) {
 
     const { nickname } = await request.json();
 
+    if (isReservedNickname(nickname)) {
+        return NextResponse.json({ error: 'Nickname is not allowed' }, { status: 400 });
+    }
+
     try {
+        const nicknameSlug = await generateUniqueNicknameSlug(nickname, { excludeUserId: user.id });
+
         await prisma.user.update({
             where: { id: user.id },
-            data: { nickname },
+            data: { nickname, nicknameSlug },
         });
-        return NextResponse.json({ success: true });
+        return NextResponse.json({ success: true, nicknameSlug });
     } catch (error: unknown) {
         const prismaError = error as { code?: string };
         if (prismaError.code === 'P2002') {

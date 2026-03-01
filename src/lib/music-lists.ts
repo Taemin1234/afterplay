@@ -337,6 +337,7 @@ export type PlaylistDetail = {
   author: {
     id: string;
     nickname: string | null;
+    nicknameSlug: string | null;
     avatarUrl: string | null;
   };
   createdAt: string;
@@ -375,6 +376,7 @@ export type AlbumListDetail = {
   author: {
     id: string;
     nickname: string | null;
+    nicknameSlug: string | null;
     avatarUrl: string | null;
   };
   createdAt: string;
@@ -484,6 +486,7 @@ export async function fetchPlaylistDetail(id: string, viewerUserId?: string): Pr
     select: {
       id: true,
       nickname: true,
+      nicknameSlug: true,
       avatarUrl: true,
     },
   });
@@ -497,6 +500,7 @@ export async function fetchPlaylistDetail(id: string, viewerUserId?: string): Pr
     author: {
       id: author?.id ?? playlist.authorId,
       nickname: author?.nickname ?? null,
+      nicknameSlug: author?.nicknameSlug ?? null,
       avatarUrl: author?.avatarUrl ?? null,
     },
     createdAt: playlist.createdAt.toISOString(),
@@ -608,6 +612,7 @@ export async function fetchAlbumListDetail(id: string, viewerUserId?: string): P
       select: {
         id: true,
         nickname: true,
+        nicknameSlug: true,
         avatarUrl: true,
       },
     }),
@@ -633,6 +638,7 @@ export async function fetchAlbumListDetail(id: string, viewerUserId?: string): P
     author: {
       id: author?.id ?? albumList.authorId,
       nickname: author?.nickname ?? null,
+      nicknameSlug: author?.nicknameSlug ?? null,
       avatarUrl: author?.avatarUrl ?? null,
     },
     createdAt: albumList.createdAt.toISOString(),

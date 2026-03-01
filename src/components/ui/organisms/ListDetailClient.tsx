@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -233,10 +233,17 @@ export default function ListDetailClient({
           <div className="flex items-center justify-between">
             <div className="flex flex-wrap items-center gap-4 text-xs text-gray-400">
               <span>작성일 {formatDate(item.createdAt)}</span>
-              <Link href={`/profile/${item.author.nickname}`} className="inline-flex items-center gap-1 underline">
-                <User size={14} />
-                {item.author.nickname ?? '익명'}
-              </Link>
+              {item.author.nicknameSlug ? (
+                <Link href={`/profile/${encodeURIComponent(item.author.nicknameSlug)}`} className="inline-flex items-center gap-1 underline">
+                  <User size={14} />
+                  {item.author.nickname ?? '익명'}
+                </Link>
+              ) : (
+                <span className="inline-flex items-center gap-1">
+                  <User size={14} />
+                  {item.author.nickname ?? '익명'}
+                </span>
+              )}
             </div>
 
             <div className="flex flex-wrap items-center gap-2">

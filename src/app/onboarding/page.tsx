@@ -34,6 +34,12 @@ export default function OnboardingPage() {
   const router = useRouter();
   const nicknameUnits = getNicknameUnits(nickname);
 
+  const getNicknameErrorMessage = (error?: string) => {
+    if (error === 'Duplicate nickname') return '이미 사용 중인 닉네임이에요.';
+    if (error === 'Nickname is not allowed') return '사용할 수 없는 닉네임이에요. 다른 이름을 입력해주세요.';
+    return '닉네임을 저장하지 못했어요. 잠시 후 다시 시도해주세요.';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -50,7 +56,7 @@ export default function OnboardingPage() {
         router.push('/');
       } else {
         const data = await res.json();
-        alert(data.error || '문제가 생겼어요. 다시 시도 해주세요');
+        alert(getNicknameErrorMessage(data?.error));
       }
     } catch (error) {
       console.error(error);
