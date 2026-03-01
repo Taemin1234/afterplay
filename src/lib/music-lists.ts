@@ -22,6 +22,7 @@ type ResponseItem = {
   story: string | null;
   visibility: 'PUBLIC' | 'PRIVATE';
   authorId: string;
+  authorNickname: string | null;
   createdAt: string;
   likesCount: number;
   commentsCount: number;
@@ -269,6 +270,7 @@ export async function fetchListItems(options: QueryOptions): Promise<ResponsePay
           story: playlist.story,
           visibility: playlist.visibility,
           authorId: playlist.authorId,
+          authorNickname: null,
           createdAt: playlist.createdAt.toISOString(),
           likesCount: playlist._count.likes,
           commentsCount: playlist._count.comments,
@@ -291,6 +293,7 @@ export async function fetchListItems(options: QueryOptions): Promise<ResponsePay
         story: albumList.story,
         visibility: albumList.visibility,
         authorId: albumList.authorId,
+        authorNickname: null,
         createdAt: albumList.createdAt.toISOString(),
         likesCount: albumList._count.likes,
         commentsCount: albumList._count.comments,
@@ -307,6 +310,14 @@ export async function fetchListItems(options: QueryOptions): Promise<ResponsePay
 
   const hasNext = collected.length > options.limit;
   const page = hasNext ? collected.slice(0, options.limit) : collected;
+  const authorIds = [...new Set(page.map((item) => item.authorId))];
+  const authors = authorIds.length
+    ? await prisma.user.findMany({
+        where: { id: { in: authorIds } },
+        select: { id: true, nickname: true },
+      })
+    : [];
+  const authorNicknameMap = new Map(authors.map((author) => [author.id, author.nickname]));
 
   const nextCursor = hasNext ? encodeCursor(page[page.length - 1]._cursor) : null;
 
@@ -318,6 +329,7 @@ export async function fetchListItems(options: QueryOptions): Promise<ResponsePay
       story: item.story,
       visibility: item.visibility,
       authorId: item.authorId,
+      authorNickname: authorNicknameMap.get(item.authorId) ?? null,
       createdAt: item.createdAt,
       likesCount: item.likesCount,
       commentsCount: item.commentsCount,

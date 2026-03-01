@@ -8,6 +8,8 @@ export type MusicListItem = {
   title: string;
   story: string | null;
   visibility: "PUBLIC" | "PRIVATE";
+  authorId: string;
+  authorNickname: string | null;
   createdAt: string;
   likesCount: number;
   commentsCount: number;

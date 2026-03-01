@@ -31,9 +31,14 @@ export default function ListItem({ item }: ListItemProps) {
     <li className="list-none rounded-xl border border-slate-800/70 bg-gradient-to-b from-[#101729] to-[#050816] p-4 shadow-[0_18px_45px_rgba(0,0,0,0.55)] transition-transform transition-colors duration-300 hover:-translate-y-1 hover:border-neon-green/40">
       <Link href={href} onClick={handleNavigate} className="group relative flex h-full flex-col justify-between gap-2">
         <div>
-          <Tag variant="subtle">
-            {item.kind === 'PLAYLIST' ? 'PLAYLIST' : 'ALBUMLIST'}
-          </Tag>
+          <div className="flex items-center justify-between gap-2">
+            <Tag variant="subtle">
+              {item.kind === 'PLAYLIST' ? 'PLAYLIST' : 'ALBUMLIST'}
+            </Tag>
+            <span className="text-sm text-gray-400">
+              By {item.authorNickname}
+            </span>
+          </div>
 
           <div className="relative mb-4 flex h-48 items-center justify-center">
             {item.previewImages[2] && (
