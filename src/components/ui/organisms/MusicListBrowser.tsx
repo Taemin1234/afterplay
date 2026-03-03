@@ -104,7 +104,7 @@ export default function MusicListBrowser({
         options={typeOptions}
         onChange={setType}
       />
-      <div className="min-h-8 px-4">{isLoading ? <p className="text-sm text-gray-400">Loading...</p> : null}</div>
+      {isLoading ? <p className="text-sm text-gray-400">Loading...</p> : null}
       {!isLoading && items.length === 0 ? <p className="px-4 py-12 text-sm text-gray-400">리스트가 없습니다</p> : null}
       {items.length > 0 ? <MusicListGrid items={items} /> : null}
     </section>

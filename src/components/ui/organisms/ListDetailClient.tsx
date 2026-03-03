@@ -185,6 +185,12 @@ export default function ListDetailClient({
     alert('링크가 복사되었습니다.');
   };
 
+  const authorHref = isOwner
+    ? '/mypage'
+    : item.author.nicknameSlug
+      ? `/profile/${encodeURIComponent(item.author.nicknameSlug)}`
+      : null;
+
   return (
     <section className="mx-auto w-full max-w-5xl space-y-6">
       <article className="overflow-hidden rounded-2xl border border-slate-800/70 bg-gradient-to-b from-[#131c31] to-[#070c18] px-6 py-8 shadow-[0_24px_60px_rgba(0,0,0,0.45)]">
@@ -233,8 +239,8 @@ export default function ListDetailClient({
           <div className="flex items-center justify-between">
             <div className="flex flex-wrap items-center gap-4 text-xs text-gray-400">
               <span>작성일 {formatDate(item.createdAt)}</span>
-              {item.author.nicknameSlug ? (
-                <Link href={`/profile/${encodeURIComponent(item.author.nicknameSlug)}`} className="inline-flex items-center gap-1 underline">
+              {authorHref ? (
+                <Link href={authorHref} className="inline-flex items-center gap-1 underline">
                   <User size={14} />
                   {item.author.nickname ?? '익명'}
                 </Link>
