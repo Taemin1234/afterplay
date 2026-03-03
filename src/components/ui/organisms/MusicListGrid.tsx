@@ -1,3 +1,5 @@
+'use client';
+
 import ListItem from "@/components/ui/molecules/ListItem";
 import TypeSelector from '@/components/ui/molecules/TypeSelector';
 import type { MusicListItem } from "@/types";

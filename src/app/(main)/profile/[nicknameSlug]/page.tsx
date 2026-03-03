@@ -1,4 +1,6 @@
 import ProfileInfo from '@/components/ui/organisms/ProfileInfo';
+import MusicListGrid from '@/components/ui/organisms/MusicListGrid';
+import { fetchListItems } from '@/lib/music-lists';
 import { createSupabaseServerClient } from '@/utils/supabase/server';
 import prisma from '@/lib/prisma';
 import { notFound } from 'next/navigation';
@@ -34,10 +36,23 @@ export default async function UserProfile({ params }: { params: Promise<{ nickna
   } = await supabase.auth.getUser();
 
   const isOwner = Boolean(user?.id && user.id === profileUser.id);
+  
+  // 유저의 모든 플리 가져오기
+  const { items } = await fetchListItems({
+    type: 'all',
+    limit: 16,
+    cursor: null,
+    feedUserId: profileUser.id,
+    authorId: profileUser.id,
+    visibility: isOwner ? 'all' : 'public',
+  });
 
   return (
     <div>
       <ProfileInfo initialNickname={profileUser.nickname ?? '익명'} isOwner={isOwner} />
+      <section className="mt-8">
+        <MusicListGrid items={items} />
+      </section>
     </div>
   );
 }
