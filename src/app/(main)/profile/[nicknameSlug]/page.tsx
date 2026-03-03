@@ -1,12 +1,11 @@
 import ProfileInfo from '@/components/ui/organisms/ProfileInfo';
-import MusicListGrid from '@/components/ui/organisms/MusicListGrid';
+import MusicListBrowser from '@/components/ui/organisms/MusicListBrowser';
 import { fetchListItems } from '@/lib/music-lists';
 import { createSupabaseServerClient } from '@/utils/supabase/server';
 import prisma from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 
-export default async function UserProfile({ params }: { params: Promise<{ nicknameSlug: string }>; }) {
-  //  URL에 받은 slug rawNicknameSlug에 저장
+export default async function UserProfile({ params }: { params: Promise<{ nicknameSlug: string }> }) {
   const { nicknameSlug: rawNicknameSlug } = await params;
 
   // 퍼센트 인코딩을 한글로 디코딩
@@ -36,7 +35,7 @@ export default async function UserProfile({ params }: { params: Promise<{ nickna
   } = await supabase.auth.getUser();
 
   const isOwner = Boolean(user?.id && user.id === profileUser.id);
-  
+
   // 유저의 모든 플리 가져오기
   const { items } = await fetchListItems({
     type: 'all',
@@ -51,7 +50,7 @@ export default async function UserProfile({ params }: { params: Promise<{ nickna
     <div>
       <ProfileInfo initialNickname={profileUser.nickname ?? '익명'} isOwner={isOwner} />
       <section className="mt-8">
-        <MusicListGrid items={items} />
+        <MusicListBrowser userId={profileUser.id} initialItems={items} initialType="all" limit={16} />
       </section>
     </div>
   );
