@@ -30,7 +30,24 @@ export async function GET(request: Request, context: RouteContext) {
     const cursor = parseCursor(searchParams.get('cursor'));
     const requestedVisibility = parseVisibilityScope(searchParams.get('visibility'));
 
-    // 로그인 유저 가져오기
+    // Public-only requests can skip auth checks.
+    if (requestedVisibility === 'public') {
+      const result = await fetchListItems({
+        type,
+        limit,
+        cursor,
+        feedUserId: userId,
+        authorId: userId,
+        visibility: 'public',
+      });
+
+      return NextResponse.json({
+        ...result,
+        visibilityApplied: 'public',
+        isOwner: false,
+      });
+    }
+
     const supabase = await createSupabaseServerClient();
     const {
       data: { user },

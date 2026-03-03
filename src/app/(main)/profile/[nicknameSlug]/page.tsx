@@ -50,7 +50,13 @@ export default async function UserProfile({ params }: { params: Promise<{ nickna
     <div>
       <ProfileInfo initialNickname={profileUser.nickname ?? '익명'} isOwner={isOwner} />
       <section className="mt-8">
-        <MusicListBrowser userId={profileUser.id} initialItems={items} initialType="all" limit={16} />
+        <MusicListBrowser
+          userId={profileUser.id}
+          initialItems={items}
+          initialType="all"
+          limit={16}
+          visibility={isOwner ? 'all' : 'public'}
+        />
       </section>
     </div>
   );
