@@ -17,6 +17,9 @@ function formatPercent(value: number): string {
 }
 
 export default async function MyPage({ searchParams }: TabProps) {
+  const { tab } = await searchParams;
+  const activeTab = tab === 'liked' || tab === 'bookmarked' ? tab : 'created';
+
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -41,10 +44,8 @@ export default async function MyPage({ searchParams }: TabProps) {
     publicAlbumListCount,
     receivedPlaylistLikeCount,
     receivedAlbumListLikeCount,
-    likedPlaylistRows,
-    likedAlbumListRows,
-    bookmarkedPlaylistRows,
-    bookmarkedAlbumListRows,
+    PlaylistViewCount,
+    AlbumListViewCount,
   ] = await Promise.all([
     prisma.playlist.count({
       where: { authorId: user.id, deletedAt: null },
@@ -64,351 +65,371 @@ export default async function MyPage({ searchParams }: TabProps) {
     prisma.albumListLike.count({
       where: { albumList: { authorId: user.id, deletedAt: null } },
     }),
-    prisma.playlistLike.findMany({
-      where: {
-        userId: user.id,
-        playlist: {
-          deletedAt: null,
-          OR: [{ visibility: 'PUBLIC' }, { authorId: user.id }],
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 12,
-      select: {
-        createdAt: true,
-        playlist: {
-          select: {
-            id: true,
-            title: true,
-            story: true,
-            visibility: true,
-            authorId: true,
-            createdAt: true,
-            _count: {
-              select: {
-                likes: true,
-                comments: true,
-              },
-            },
-            tags: {
-              select: {
-                tag: {
-                  select: {
-                    name: true,
-                  },
-                },
-              },
-            },
-            tracks: {
-              orderBy: { order: 'asc' },
-              take: 3,
-              select: {
-                track: {
-                  select: {
-                    albumCover: true,
-                  },
-                },
-              },
-            },
-            author: {
-              select: {
-                nickname: true,
-              },
-            },
-          },
-        },
-      },
-    }),
-    prisma.albumListLike.findMany({
-      where: {
-        userId: user.id,
-        albumList: {
-          deletedAt: null,
-          OR: [{ visibility: 'PUBLIC' }, { authorId: user.id }],
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 12,
-      select: {
-        createdAt: true,
-        albumList: {
-          select: {
-            id: true,
-            title: true,
-            story: true,
-            visibility: true,
-            authorId: true,
-            createdAt: true,
-            _count: {
-              select: {
-                likes: true,
-                comments: true,
-              },
-            },
-            tags: {
-              select: {
-                tag: {
-                  select: {
-                    name: true,
-                  },
-                },
-              },
-            },
-            albums: {
-              orderBy: { order: 'asc' },
-              take: 3,
-              select: {
-                album: {
-                  select: {
-                    coverImage: true,
-                  },
-                },
-              },
-            },
-            author: {
-              select: {
-                nickname: true,
-              },
-            },
-          },
-        },
-      },
-    }),
-    prisma.playlistBookmark.findMany({
-      where: {
-        userId: user.id,
-        playlist: {
-          deletedAt: null,
-          OR: [{ visibility: 'PUBLIC' }, { authorId: user.id }],
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 12,
-      select: {
-        createdAt: true,
-        playlist: {
-          select: {
-            id: true,
-            title: true,
-            story: true,
-            visibility: true,
-            authorId: true,
-            createdAt: true,
-            _count: {
-              select: {
-                likes: true,
-                comments: true,
-              },
-            },
-            tags: {
-              select: {
-                tag: {
-                  select: {
-                    name: true,
-                  },
-                },
-              },
-            },
-            tracks: {
-              orderBy: { order: 'asc' },
-              take: 3,
-              select: {
-                track: {
-                  select: {
-                    albumCover: true,
-                  },
-                },
-              },
-            },
-            author: {
-              select: {
-                nickname: true,
-              },
-            },
-          },
-        },
-      },
-    }),
-    prisma.albumListBookmark.findMany({
-      where: {
-        userId: user.id,
-        albumList: {
-          deletedAt: null,
-          OR: [{ visibility: 'PUBLIC' }, { authorId: user.id }],
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 12,
-      select: {
-        createdAt: true,
-        albumList: {
-          select: {
-            id: true,
-            title: true,
-            story: true,
-            visibility: true,
-            authorId: true,
-            createdAt: true,
-            _count: {
-              select: {
-                likes: true,
-                comments: true,
-              },
-            },
-            tags: {
-              select: {
-                tag: {
-                  select: {
-                    name: true,
-                  },
-                },
-              },
-            },
-            albums: {
-              orderBy: { order: 'asc' },
-              take: 3,
-              select: {
-                album: {
-                  select: {
-                    coverImage: true,
-                  },
-                },
-              },
-            },
-            author: {
-              select: {
-                nickname: true,
-              },
-            },
-          },
-        },
-      },
+    prisma.playlistViewEvent.count({
+        where: { playlist: { authorId: user.id, deletedAt: null } },
+      }),
+    prisma.albumListViewEvent.count({
+    where: { albumList: { authorId: user.id, deletedAt: null } },
     }),
   ]);
 
   const createdCount = playlistTotalCount + albumListTotalCount;
   const publicCount = publicPlaylistCount + publicAlbumListCount;
-  const publicRatio = createdCount > 0 ? (publicCount / createdCount) * 100 : 0;
   const totalReceivedLikes = receivedPlaylistLikeCount + receivedAlbumListLikeCount;
+  const totalViewCount = PlaylistViewCount + AlbumListViewCount;
 
-  const likedPlaylists = likedPlaylistRows.map(
-    (row): MusicListItem & { likedAt: string } => ({
-      kind: 'PLAYLIST',
-      id: row.playlist.id,
-      title: row.playlist.title,
-      story: row.playlist.story,
-      visibility: row.playlist.visibility,
-      authorId: row.playlist.authorId,
-      authorNickname: row.playlist.author.nickname,
-      createdAt: row.playlist.createdAt.toISOString(),
-      likesCount: row.playlist._count.likes,
-      commentsCount: row.playlist._count.comments,
-      tags: row.playlist.tags.map((tagRow) => tagRow.tag.name),
-      previewImages: row.playlist.tracks
-        .map((entry) => entry.track.albumCover)
-        .filter((image): image is string => Boolean(image)),
-      likedAt: row.createdAt.toISOString(),
-    })
-  );
+  const publicRatio = createdCount > 0 ? (publicCount / createdCount) * 100 : 0;
+  const viewLikedRatio = totalReceivedLikes || totalViewCount > 0 ? (totalReceivedLikes / totalViewCount) * 100 : 0;
 
-  const likedAlbumLists = likedAlbumListRows.map(
-    (row): MusicListItem & { likedAt: string } => ({
-      kind: 'ALBUM_LIST',
-      id: row.albumList.id,
-      title: row.albumList.title,
-      story: row.albumList.story,
-      visibility: row.albumList.visibility,
-      authorId: row.albumList.authorId,
-      authorNickname: row.albumList.author.nickname,
-      createdAt: row.albumList.createdAt.toISOString(),
-      likesCount: row.albumList._count.likes,
-      commentsCount: row.albumList._count.comments,
-      tags: row.albumList.tags.map((tagRow) => tagRow.tag.name),
-      previewImages: row.albumList.albums
-        .map((entry) => entry.album.coverImage)
-        .filter((image): image is string => Boolean(image)),
-      likedAt: row.createdAt.toISOString(),
-    })
-  );
+  let likedItems: MusicListItem[] = [];
+  let bookmarkedItems: MusicListItem[] = [];
 
-  const likedItems = [...likedPlaylists, ...likedAlbumLists]
-    .sort((a, b) => new Date(b.likedAt).getTime() - new Date(a.likedAt).getTime())
-    .slice(0, 16)
-    .map((item) => ({
-      kind: item.kind,
-      id: item.id,
-      title: item.title,
-      story: item.story,
-      visibility: item.visibility,
-      authorId: item.authorId,
-      authorNickname: item.authorNickname,
-      createdAt: item.createdAt,
-      likesCount: item.likesCount,
-      commentsCount: item.commentsCount,
-      tags: item.tags,
-      previewImages: item.previewImages,
-    }));
+  if (activeTab === 'liked') {
+    const [likedPlaylistRows, likedAlbumListRows] = await Promise.all([
+      prisma.playlistLike.findMany({
+        where: {
+          userId: user.id,
+          playlist: {
+            deletedAt: null,
+            OR: [{ visibility: 'PUBLIC' }, { authorId: user.id }],
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 12,
+        select: {
+          createdAt: true,
+          playlist: {
+            select: {
+              id: true,
+              title: true,
+              story: true,
+              visibility: true,
+              authorId: true,
+              createdAt: true,
+              _count: {
+                select: {
+                  likes: true,
+                  comments: true,
+                },
+              },
+              tags: {
+                select: {
+                  tag: {
+                    select: {
+                      name: true,
+                    },
+                  },
+                },
+              },
+              tracks: {
+                orderBy: { order: 'asc' },
+                take: 3,
+                select: {
+                  track: {
+                    select: {
+                      albumCover: true,
+                    },
+                  },
+                },
+              },
+              author: {
+                select: {
+                  nickname: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+      prisma.albumListLike.findMany({
+        where: {
+          userId: user.id,
+          albumList: {
+            deletedAt: null,
+            OR: [{ visibility: 'PUBLIC' }, { authorId: user.id }],
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 12,
+        select: {
+          createdAt: true,
+          albumList: {
+            select: {
+              id: true,
+              title: true,
+              story: true,
+              visibility: true,
+              authorId: true,
+              createdAt: true,
+              _count: {
+                select: {
+                  likes: true,
+                  comments: true,
+                },
+              },
+              tags: {
+                select: {
+                  tag: {
+                    select: {
+                      name: true,
+                    },
+                  },
+                },
+              },
+              albums: {
+                orderBy: { order: 'asc' },
+                take: 3,
+                select: {
+                  album: {
+                    select: {
+                      coverImage: true,
+                    },
+                  },
+                },
+              },
+              author: {
+                select: {
+                  nickname: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+    ]);
 
-  const bookmarkedPlaylists = bookmarkedPlaylistRows.map(
-    (row): MusicListItem & { bookmarkedAt: string } => ({
-      kind: 'PLAYLIST',
-      id: row.playlist.id,
-      title: row.playlist.title,
-      story: row.playlist.story,
-      visibility: row.playlist.visibility,
-      authorId: row.playlist.authorId,
-      authorNickname: row.playlist.author.nickname,
-      createdAt: row.playlist.createdAt.toISOString(),
-      likesCount: row.playlist._count.likes,
-      commentsCount: row.playlist._count.comments,
-      tags: row.playlist.tags.map((tagRow) => tagRow.tag.name),
-      previewImages: row.playlist.tracks
-        .map((entry) => entry.track.albumCover)
-        .filter((image): image is string => Boolean(image)),
-      bookmarkedAt: row.createdAt.toISOString(),
-    })
-  );
+    const likedPlaylists = likedPlaylistRows.map(
+      (row): MusicListItem & { likedAt: string } => ({
+        kind: 'PLAYLIST',
+        id: row.playlist.id,
+        title: row.playlist.title,
+        story: row.playlist.story,
+        visibility: row.playlist.visibility,
+        authorId: row.playlist.authorId,
+        authorNickname: row.playlist.author.nickname,
+        createdAt: row.playlist.createdAt.toISOString(),
+        likesCount: row.playlist._count.likes,
+        commentsCount: row.playlist._count.comments,
+        tags: row.playlist.tags.map((tagRow) => tagRow.tag.name),
+        previewImages: row.playlist.tracks
+          .map((entry) => entry.track.albumCover)
+          .filter((image): image is string => Boolean(image)),
+        likedAt: row.createdAt.toISOString(),
+      })
+    );
 
-  const bookmarkedAlbumLists = bookmarkedAlbumListRows.map(
-    (row): MusicListItem & { bookmarkedAt: string } => ({
-      kind: 'ALBUM_LIST',
-      id: row.albumList.id,
-      title: row.albumList.title,
-      story: row.albumList.story,
-      visibility: row.albumList.visibility,
-      authorId: row.albumList.authorId,
-      authorNickname: row.albumList.author.nickname,
-      createdAt: row.albumList.createdAt.toISOString(),
-      likesCount: row.albumList._count.likes,
-      commentsCount: row.albumList._count.comments,
-      tags: row.albumList.tags.map((tagRow) => tagRow.tag.name),
-      previewImages: row.albumList.albums
-        .map((entry) => entry.album.coverImage)
-        .filter((image): image is string => Boolean(image)),
-      bookmarkedAt: row.createdAt.toISOString(),
-    })
-  );
+    const likedAlbumLists = likedAlbumListRows.map(
+      (row): MusicListItem & { likedAt: string } => ({
+        kind: 'ALBUM_LIST',
+        id: row.albumList.id,
+        title: row.albumList.title,
+        story: row.albumList.story,
+        visibility: row.albumList.visibility,
+        authorId: row.albumList.authorId,
+        authorNickname: row.albumList.author.nickname,
+        createdAt: row.albumList.createdAt.toISOString(),
+        likesCount: row.albumList._count.likes,
+        commentsCount: row.albumList._count.comments,
+        tags: row.albumList.tags.map((tagRow) => tagRow.tag.name),
+        previewImages: row.albumList.albums
+          .map((entry) => entry.album.coverImage)
+          .filter((image): image is string => Boolean(image)),
+        likedAt: row.createdAt.toISOString(),
+      })
+    );
 
-  const bookmarkedItems = [...bookmarkedPlaylists, ...bookmarkedAlbumLists]
-    .sort((a, b) => new Date(b.bookmarkedAt).getTime() - new Date(a.bookmarkedAt).getTime())
-    .slice(0, 16)
-    .map((item) => ({
-      kind: item.kind,
-      id: item.id,
-      title: item.title,
-      story: item.story,
-      visibility: item.visibility,
-      authorId: item.authorId,
-      authorNickname: item.authorNickname,
-      createdAt: item.createdAt,
-      likesCount: item.likesCount,
-      commentsCount: item.commentsCount,
-      tags: item.tags,
-      previewImages: item.previewImages,
-    }));
+    likedItems = [...likedPlaylists, ...likedAlbumLists]
+      .sort((a, b) => new Date(b.likedAt).getTime() - new Date(a.likedAt).getTime())
+      .slice(0, 16)
+      .map((item) => ({
+        kind: item.kind,
+        id: item.id,
+        title: item.title,
+        story: item.story,
+        visibility: item.visibility,
+        authorId: item.authorId,
+        authorNickname: item.authorNickname,
+        createdAt: item.createdAt,
+        likesCount: item.likesCount,
+        commentsCount: item.commentsCount,
+        tags: item.tags,
+        previewImages: item.previewImages,
+      }));
+  }
 
-  const { tab } = await searchParams;
-  const activeTab = tab === 'liked' || tab === 'bookmarked' ? tab : 'created';
+  if (activeTab === 'bookmarked') {
+    const [bookmarkedPlaylistRows, bookmarkedAlbumListRows] = await Promise.all([
+      prisma.playlistBookmark.findMany({
+        where: {
+          userId: user.id,
+          playlist: {
+            deletedAt: null,
+            OR: [{ visibility: 'PUBLIC' }, { authorId: user.id }],
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 12,
+        select: {
+          createdAt: true,
+          playlist: {
+            select: {
+              id: true,
+              title: true,
+              story: true,
+              visibility: true,
+              authorId: true,
+              createdAt: true,
+              _count: {
+                select: {
+                  likes: true,
+                  comments: true,
+                },
+              },
+              tags: {
+                select: {
+                  tag: {
+                    select: {
+                      name: true,
+                    },
+                  },
+                },
+              },
+              tracks: {
+                orderBy: { order: 'asc' },
+                take: 3,
+                select: {
+                  track: {
+                    select: {
+                      albumCover: true,
+                    },
+                  },
+                },
+              },
+              author: {
+                select: {
+                  nickname: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+      prisma.albumListBookmark.findMany({
+        where: {
+          userId: user.id,
+          albumList: {
+            deletedAt: null,
+            OR: [{ visibility: 'PUBLIC' }, { authorId: user.id }],
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 12,
+        select: {
+          createdAt: true,
+          albumList: {
+            select: {
+              id: true,
+              title: true,
+              story: true,
+              visibility: true,
+              authorId: true,
+              createdAt: true,
+              _count: {
+                select: {
+                  likes: true,
+                  comments: true,
+                },
+              },
+              tags: {
+                select: {
+                  tag: {
+                    select: {
+                      name: true,
+                    },
+                  },
+                },
+              },
+              albums: {
+                orderBy: { order: 'asc' },
+                take: 3,
+                select: {
+                  album: {
+                    select: {
+                      coverImage: true,
+                    },
+                  },
+                },
+              },
+              author: {
+                select: {
+                  nickname: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+    ]);
+
+    const bookmarkedPlaylists = bookmarkedPlaylistRows.map(
+      (row): MusicListItem & { bookmarkedAt: string } => ({
+        kind: 'PLAYLIST',
+        id: row.playlist.id,
+        title: row.playlist.title,
+        story: row.playlist.story,
+        visibility: row.playlist.visibility,
+        authorId: row.playlist.authorId,
+        authorNickname: row.playlist.author.nickname,
+        createdAt: row.playlist.createdAt.toISOString(),
+        likesCount: row.playlist._count.likes,
+        commentsCount: row.playlist._count.comments,
+        tags: row.playlist.tags.map((tagRow) => tagRow.tag.name),
+        previewImages: row.playlist.tracks
+          .map((entry) => entry.track.albumCover)
+          .filter((image): image is string => Boolean(image)),
+        bookmarkedAt: row.createdAt.toISOString(),
+      })
+    );
+
+    const bookmarkedAlbumLists = bookmarkedAlbumListRows.map(
+      (row): MusicListItem & { bookmarkedAt: string } => ({
+        kind: 'ALBUM_LIST',
+        id: row.albumList.id,
+        title: row.albumList.title,
+        story: row.albumList.story,
+        visibility: row.albumList.visibility,
+        authorId: row.albumList.authorId,
+        authorNickname: row.albumList.author.nickname,
+        createdAt: row.albumList.createdAt.toISOString(),
+        likesCount: row.albumList._count.likes,
+        commentsCount: row.albumList._count.comments,
+        tags: row.albumList.tags.map((tagRow) => tagRow.tag.name),
+        previewImages: row.albumList.albums
+          .map((entry) => entry.album.coverImage)
+          .filter((image): image is string => Boolean(image)),
+        bookmarkedAt: row.createdAt.toISOString(),
+      })
+    );
+
+    bookmarkedItems = [...bookmarkedPlaylists, ...bookmarkedAlbumLists]
+      .sort((a, b) => new Date(b.bookmarkedAt).getTime() - new Date(a.bookmarkedAt).getTime())
+      .slice(0, 16)
+      .map((item) => ({
+        kind: item.kind,
+        id: item.id,
+        title: item.title,
+        story: item.story,
+        visibility: item.visibility,
+        authorId: item.authorId,
+        authorNickname: item.authorNickname,
+        createdAt: item.createdAt,
+        likesCount: item.likesCount,
+        commentsCount: item.commentsCount,
+        tags: item.tags,
+        previewImages: item.previewImages,
+      }));
+  }
+
   const createdTabHref = '/mypage?tab=created';
   const likedTabHref = '/mypage?tab=liked';
   const bookmarkedTabHref = '/mypage?tab=bookmarked';
@@ -417,9 +438,11 @@ export default async function MyPage({ searchParams }: TabProps) {
     <section className="mx-auto max-w-7xl">
       <ProfileInfo initialNickname={initialNickname} isOwner />
 
-      <section className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+      <section className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-4">
         <SummaryCard label="내 플리" value={createdCount.toLocaleString()} hint="직접 만든 플레이리스트 + 앨범리스트" />
         <SummaryCard label="받은 좋아요" value={totalReceivedLikes.toLocaleString()} hint="내 플리에 받은 전체 좋아요" />
+        <SummaryCard label="전체 조회수" value={totalViewCount.toLocaleString()} hint="내 플리 전체 조회수" />
+        <SummaryCard label="조회수 대비 좋아요 비율" value={formatPercent(viewLikedRatio)} hint="조회수 대비 좋아요 비율" />
         <SummaryCard label="공개 비율" value={formatPercent(publicRatio)} hint={`${publicCount.toLocaleString()} / ${createdCount.toLocaleString()}`} />
       </section>
 
