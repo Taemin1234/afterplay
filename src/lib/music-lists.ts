@@ -346,6 +346,7 @@ export type PlaylistDetail = {
   title: string;
   story: string;
   visibility: 'PUBLIC' | 'PRIVATE';
+  viewCount: number;
   author: {
     id: string;
     nickname: string | null;
@@ -385,6 +386,7 @@ export type AlbumListDetail = {
   title: string;
   story: string;
   visibility: 'PUBLIC' | 'PRIVATE';
+  viewCount: number;
   author: {
     id: string;
     nickname: string | null;
@@ -434,6 +436,7 @@ export async function fetchPlaylistDetail(id: string, viewerUserId?: string): Pr
       title: true,
       story: true,
       visibility: true,
+      viewCount: true,
       authorId: true,
       createdAt: true,
       updatedAt: true,
@@ -509,6 +512,7 @@ export async function fetchPlaylistDetail(id: string, viewerUserId?: string): Pr
     title: playlist.title,
     story: playlist.story,
     visibility: playlist.visibility,
+    viewCount: playlist.viewCount,
     author: {
       id: author?.id ?? playlist.authorId,
       nickname: author?.nickname ?? null,
@@ -559,6 +563,7 @@ export async function fetchAlbumListDetail(id: string, viewerUserId?: string): P
       title: true,
       story: true,
       visibility: true,
+      viewCount: true,
       authorId: true,
       createdAt: true,
       updatedAt: true,
@@ -647,6 +652,7 @@ export async function fetchAlbumListDetail(id: string, viewerUserId?: string): P
     title: albumList.title,
     story: albumList.story,
     visibility: albumList.visibility,
+    viewCount: albumList.viewCount,
     author: {
       id: author?.id ?? albumList.authorId,
       nickname: author?.nickname ?? null,
@@ -679,4 +685,149 @@ export async function fetchAlbumListDetail(id: string, viewerUserId?: string): P
       albumImageUrl: entry.album.coverImage,
     })),
   };
+}
+
+////////////////////////////////////////
+// 조회수 카운터
+// 본인 조회수는 카운트하지 않음
+// 24시간에 1번 적용
+// 비로그인 유저면 deviceId로 조회수 카운트
+type RegisterListViewOptions = {
+  kind: 'playlist' | 'albumlist';
+  id: string;
+  authorId: string;
+  viewerUserId?: string;
+  deviceId?: string;
+};
+
+// 조회수 쿨다운(24시간)
+const VIEW_COUNT_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+
+export async function registerListView({
+  kind,
+  id,
+  authorId,
+  viewerUserId,
+  deviceId,
+}: RegisterListViewOptions): Promise<void> {
+  // 카운트 안하는 상황
+  // 본인 조회수는 카운트 안함
+  if (viewerUserId && viewerUserId === authorId) return;
+  // 로그인을 하지 않았고 deviceId도 없으면 카운트 안함
+  if (!viewerUserId && !deviceId) return;
+
+  // 현재 시간에서 24시간 전
+  // 저장된 최근 조회 시간보다 threshold가 최신이면 조회수 증가
+  const threshold = new Date(Date.now() - VIEW_COUNT_COOLDOWN_MS);
+
+  // 플레이리스트 경우
+  if (kind === 'playlist') {
+    // 로그인 유저인 경우
+    if (viewerUserId) {
+      await prisma.$transaction(async (tx) => {
+        // 해당 유저가 이미 조회를 한 적이 있는지 확인
+        const existing = await tx.playlistViewEvent.findUnique({
+          where: { playlistId_userId: { playlistId: id, userId: viewerUserId } },
+          select: { lastCountedAt: true },
+        });
+
+        // 조회를 한 적이 없으면 조회수 증가
+        if (!existing) {
+          await tx.playlistViewEvent.create({
+            data: { playlistId: id, userId: viewerUserId, lastCountedAt: new Date() },
+          });
+          await tx.playlist.update({ where: { id }, data: { viewCount: { increment: 1 } } });
+          return;
+        }
+
+        // 조회를 한 적이 있고 최근 조회 시간이 threshold 이전이면 조회수 증가
+        if (existing.lastCountedAt <= threshold) {
+          await tx.playlistViewEvent.update({
+            where: { playlistId_userId: { playlistId: id, userId: viewerUserId } },
+            data: { lastCountedAt: new Date() },
+          });
+          await tx.playlist.update({ where: { id }, data: { viewCount: { increment: 1 } } });
+        }
+      });
+      return;
+    }
+
+    if (!deviceId) return;
+
+    await prisma.$transaction(async (tx) => {
+      const existing = await tx.playlistViewEvent.findUnique({
+        where: { playlistId_deviceId: { playlistId: id, deviceId } },
+        select: { lastCountedAt: true },
+      });
+
+      if (!existing) {
+        await tx.playlistViewEvent.create({
+          data: { playlistId: id, deviceId, lastCountedAt: new Date() },
+        });
+        await tx.playlist.update({ where: { id }, data: { viewCount: { increment: 1 } } });
+        return;
+      }
+
+      if (existing.lastCountedAt <= threshold) {
+        await tx.playlistViewEvent.update({
+          where: { playlistId_deviceId: { playlistId: id, deviceId } },
+          data: { lastCountedAt: new Date() },
+        });
+        await tx.playlist.update({ where: { id }, data: { viewCount: { increment: 1 } } });
+      }
+    });
+    return;
+  }
+
+  // 앨범리스트 경우
+  if (viewerUserId) {
+    await prisma.$transaction(async (tx) => {
+      const existing = await tx.albumListViewEvent.findUnique({
+        where: { albumListId_userId: { albumListId: id, userId: viewerUserId } },
+        select: { lastCountedAt: true },
+      });
+
+      if (!existing) {
+        await tx.albumListViewEvent.create({
+          data: { albumListId: id, userId: viewerUserId, lastCountedAt: new Date() },
+        });
+        await tx.albumList.update({ where: { id }, data: { viewCount: { increment: 1 } } });
+        return;
+      }
+
+      if (existing.lastCountedAt <= threshold) {
+        await tx.albumListViewEvent.update({
+          where: { albumListId_userId: { albumListId: id, userId: viewerUserId } },
+          data: { lastCountedAt: new Date() },
+        });
+        await tx.albumList.update({ where: { id }, data: { viewCount: { increment: 1 } } });
+      }
+    });
+    return;
+  }
+
+  if (!deviceId) return;
+
+  await prisma.$transaction(async (tx) => {
+    const existing = await tx.albumListViewEvent.findUnique({
+      where: { albumListId_deviceId: { albumListId: id, deviceId } },
+      select: { lastCountedAt: true },
+    });
+
+    if (!existing) {
+      await tx.albumListViewEvent.create({
+        data: { albumListId: id, deviceId, lastCountedAt: new Date() },
+      });
+      await tx.albumList.update({ where: { id }, data: { viewCount: { increment: 1 } } });
+      return;
+    }
+
+    if (existing.lastCountedAt <= threshold) {
+      await tx.albumListViewEvent.update({
+        where: { albumListId_deviceId: { albumListId: id, deviceId } },
+        data: { lastCountedAt: new Date() },
+      });
+      await tx.albumList.update({ where: { id }, data: { viewCount: { increment: 1 } } });
+    }
+  });
 }
