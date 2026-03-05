@@ -13,6 +13,7 @@ type TypeSelectorProps<T extends string> = {
   onChange: (value: T) => void;
   ariaLabel?: string;
   className?: string;
+  variant?: "solid" | "subtle";
 };
 
 export default function TypeSelector<T extends string>({
@@ -20,12 +21,30 @@ export default function TypeSelector<T extends string>({
   value,
   options,
   onChange,
-  ariaLabel = "타입 선택",
+  ariaLabel = "옵션 선택",
   className = "",
+  variant = "solid",
 }: TypeSelectorProps<T>) {
+  const containerClassName =
+    variant === "subtle"
+      ? "inline-flex w-fit items-center gap-1 rounded-lg border border-gray-800 bg-black/20 p-1"
+      : "flex w-fit gap-4 rounded-lg border border-gray-800 p-1";
+
+  const getOptionClassName = (active: boolean) => {
+    if (variant === "subtle") {
+      return `flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+        active ? "bg-neon-green/20 text-neon-green" : "text-gray-300 hover:bg-white/5"
+      }`;
+    }
+
+    return `flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all ${
+      active ? "bg-[#39FF14] text-black" : "text-gray-500 hover:text-white"
+    }`;
+  };
+
   return (
     <div
-      className={`flex w-fit gap-4 rounded-lg border border-gray-800 p-1 ${className}`.trim()}
+      className={`${containerClassName} ${className}`.trim()}
       role="radiogroup"
       aria-label={ariaLabel}
     >
@@ -39,12 +58,7 @@ export default function TypeSelector<T extends string>({
             checked={value === option.value}
             onChange={() => onChange(option.value)}
           />
-          <span
-            className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all ${value === option.value
-                ? "bg-[#39FF14] text-black"
-                : "text-gray-500 hover:text-white"
-              }`}
-          >
+          <span className={getOptionClassName(value === option.value)}>
             {option.icon}
             {option.label}
           </span>

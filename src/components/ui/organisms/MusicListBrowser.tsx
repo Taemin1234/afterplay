@@ -1,6 +1,6 @@
-'use client';
+﻿'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Disc, Headphones, Music } from 'lucide-react';
 import TypeSelector from '@/components/ui/molecules/TypeSelector';
 import MusicListGrid from '@/components/ui/organisms/MusicListGrid';
@@ -14,11 +14,18 @@ type MusicListBrowserProps = {
   visibility?: VisibilityScope;
 };
 
+type SortOption = 'latest' | 'likes';
+
 const typeOptions = [
-  { value: 'all', label: 'All', icon: <Headphones size={16} /> },
-  { value: 'playlist', label: 'Playlist', icon: <Music size={16} /> },
-  { value: 'albumlist', label: 'Album List', icon: <Disc size={16} /> },
+  { value: 'all', label: '전체', icon: <Headphones size={16} /> },
+  { value: 'playlist', label: '플레이리스트', icon: <Music size={16} /> },
+  { value: 'albumlist', label: '앨범리스트', icon: <Disc size={16} /> },
 ] as const;
+
+const sortOptions: Array<{ value: SortOption; label: string }> = [
+  { value: 'latest', label: '최신순' },
+  { value: 'likes', label: '좋아요순' },
+];
 
 export default function MusicListBrowser({
   userId,
@@ -28,6 +35,7 @@ export default function MusicListBrowser({
   visibility = 'public',
 }: MusicListBrowserProps) {
   const [type, setType] = useState<ListType>(initialType);
+  const [sort, setSort] = useState<SortOption>('latest');
   const [items, setItems] = useState<MusicListItem[]>(initialItems ?? []);
   const [isLoading, setIsLoading] = useState(false);
   const hydratedRef = useRef(false);
@@ -37,6 +45,16 @@ export default function MusicListBrowser({
     (nextType: ListType) => `${userId ?? 'home'}:${visibility}:${limit}:${nextType}`,
     [userId, visibility, limit]
   );
+
+  const sortedItems = useMemo(() => {
+    return [...items].sort((a, b) => {
+      if (sort === 'likes' && b.likesCount !== a.likesCount) {
+        return b.likesCount - a.likesCount;
+      }
+
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  }, [items, sort]);
 
   useEffect(() => {
     if (!initialItems || initialItems.length === 0) return;
@@ -97,16 +115,26 @@ export default function MusicListBrowser({
 
   return (
     <section className="space-y-4">
-      <TypeSelector
-        name={userId ? 'user-list-type' : 'home-list-type'}
-        ariaLabel="List type"
-        value={type}
-        options={typeOptions}
-        onChange={setType}
-      />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <TypeSelector
+          name={userId ? 'user-list-type' : 'home-list-type'}
+          ariaLabel="List type"
+          value={type}
+          options={typeOptions}
+          onChange={setType}
+        />
+        <TypeSelector
+          name={userId ? 'user-list-sort' : 'home-list-sort'}
+          ariaLabel="List sort"
+          value={sort}
+          options={sortOptions}
+          onChange={setSort}
+          variant="subtle"
+        />
+      </div>
       {isLoading ? <p className="text-sm text-gray-400">Loading...</p> : null}
-      {!isLoading && items.length === 0 ? <p className="px-4 py-12 text-sm text-gray-400">리스트가 없습니다</p> : null}
-      {items.length > 0 ? <MusicListGrid items={items} /> : null}
+      {!isLoading && sortedItems.length === 0 ? <p className="px-4 py-12 text-sm text-gray-400">리스트가 없습니다</p> : null}
+      {sortedItems.length > 0 ? <MusicListGrid items={sortedItems} /> : null}
     </section>
   );
 }

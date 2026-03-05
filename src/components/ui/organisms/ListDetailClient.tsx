@@ -239,7 +239,7 @@ export default function ListDetailClient({
           <div className="flex items-center justify-between">
             <div className="flex flex-wrap items-center gap-4 text-xs text-gray-400">
               <span>작성일 {formatDate(item.createdAt)}</span>
-              <span>조회수 {item.viewCount.toLocaleString()}</span>
+              {/* <span>조회수 {item.viewCount.toLocaleString()}</span> */}
               {authorHref ? (
                 <Link href={authorHref} className="inline-flex items-center gap-1 underline">
                   <User size={14} />
