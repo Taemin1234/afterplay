@@ -6,6 +6,8 @@ type MusicListGridProps = {
 };
 
 export default function MusicListGrid({ items }: MusicListGridProps) {
+  if (items.length === 0) return null;
+
   return (
     <ul className="grid grid-cols-1 gap-6 p-4 md:grid-cols-2 lg:grid-cols-4">
       {items.map((item) => (

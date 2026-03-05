@@ -1,9 +1,11 @@
 ﻿'use client';
 
+import { Suspense } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Disc, Headphones, Music } from 'lucide-react';
 import TypeSelector from '@/components/ui/molecules/TypeSelector';
 import MusicListGrid from '@/components/ui/organisms/MusicListGrid';
+import MusicListGridSkeleton from "@/components/layout/MusicListGridSkeleton";
 import type { ListType, MusicListItem, MusicListResponse, VisibilityScope } from '@/types';
 
 type MusicListBrowserProps = {
@@ -40,6 +42,7 @@ export default function MusicListBrowser({
   const [isLoading, setIsLoading] = useState(false);
   const hydratedRef = useRef(false);
   const cacheRef = useRef<Map<string, MusicListItem[]>>(new Map());
+  const skeletonCount = Math.min(limit, 8)
 
   const makeCacheKey = useCallback(
     (nextType: ListType) => `${userId ?? 'home'}:${visibility}:${limit}:${nextType}`,
@@ -132,9 +135,10 @@ export default function MusicListBrowser({
           variant="subtle"
         />
       </div>
-      {isLoading ? <p className="text-sm text-gray-400">Loading...</p> : null}
       {!isLoading && sortedItems.length === 0 ? <p className="px-4 py-12 text-sm text-gray-400">리스트가 없습니다</p> : null}
-      {sortedItems.length > 0 ? <MusicListGrid items={sortedItems} /> : null}
+      <Suspense fallback={<MusicListGridSkeleton count={skeletonCount}/>}>
+        {isLoading ? <MusicListGridSkeleton count={skeletonCount}/> : <MusicListGrid items={sortedItems} /> }
+      </Suspense>
     </section>
   );
 }
