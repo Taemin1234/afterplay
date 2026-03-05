@@ -5,7 +5,9 @@ import MusicListBrowser from '@/components/ui/organisms/MusicListBrowser';
 import MusicListGrid from '@/components/ui/organisms/MusicListGrid';
 import prisma from '@/lib/prisma';
 import { createSupabaseServerClient } from '@/utils/supabase/server';
+import { Heart, ListMusic, Eye, LockOpen, ThumbsUp } from 'lucide-react';
 import type { MusicListItem } from '@/types';
+import type { ReactNode } from "react";
 
 interface TabProps {
   searchParams: Promise<{ tab?: string }>;
@@ -434,16 +436,22 @@ export default async function MyPage({ searchParams }: TabProps) {
   const likedTabHref = '/mypage?tab=liked';
   const bookmarkedTabHref = '/mypage?tab=bookmarked';
 
+  const summaryContent = [
+    {label: '내 플리', hint: '직접 만든 플레이리스트 + 앨범리스트' , value : createdCount.toLocaleString(), icon : <ListMusic size={16}/>},
+    {label: '받은 좋아요', hint: '내 플리에 받은 전체 좋아요' , value : totalReceivedLikes.toLocaleString(), icon : <Heart size={16}/>},
+    {label: '전체 조회수', hint: '내 플리 전체 조회수' , value : totalViewCount.toLocaleString(), icon : <Eye size={16}/>},
+    {label: '조회수 대비 좋아요 비율', hint: '조회수 대비 좋아요 비율' , value : formatPercent(viewLikedRatio), icon : <ThumbsUp size={16}/>},
+    {label: '공개 비율', hint: `${publicCount.toLocaleString()} / ${createdCount.toLocaleString()}` , value : formatPercent(publicRatio), icon : <LockOpen size={16}/>},
+  ]
+
   return (
     <section className="mx-auto max-w-7xl">
       <ProfileInfo initialNickname={initialNickname} isOwner />
 
       <section className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-4">
-        <SummaryCard label="내 플리" value={createdCount.toLocaleString()} hint="직접 만든 플레이리스트 + 앨범리스트" />
-        <SummaryCard label="받은 좋아요" value={totalReceivedLikes.toLocaleString()} hint="내 플리에 받은 전체 좋아요" />
-        <SummaryCard label="전체 조회수" value={totalViewCount.toLocaleString()} hint="내 플리 전체 조회수" />
-        <SummaryCard label="조회수 대비 좋아요 비율" value={formatPercent(viewLikedRatio)} hint="조회수 대비 좋아요 비율" />
-        <SummaryCard label="공개 비율" value={formatPercent(publicRatio)} hint={`${publicCount.toLocaleString()} / ${createdCount.toLocaleString()}`} />
+        {summaryContent.map((cont) => (
+          <SummaryCard key={cont.label} label={cont.label} value={cont.value} hint={cont.hint} icon={cont.icon} />
+        ))}
       </section>
 
       <section className="mt-10">
@@ -534,27 +542,17 @@ export default async function MyPage({ searchParams }: TabProps) {
   );
 }
 
-function SummaryCard({ label, value, hint }: { label: string; value: string; hint: string }) {
+function SummaryCard({ label, value, hint, icon }: { label: string; value: string; hint: string; icon:ReactNode; }) {
   return (
     <article className="rounded-xl border border-slate-800 bg-slate-900/40 p-5">
-      <p className="text-sm text-gray-400">{label}</p>
+      <p className="flex items-center gap-1 text-sm text-gray-400">{icon}{label}</p>
       <p className="mt-2 text-2xl font-bold text-white">{value}</p>
       <p className="mt-2 text-xs text-gray-500">{hint}</p>
     </article>
   );
 }
 
-function EmptyState({
-  title,
-  description,
-  ctaHref,
-  ctaLabel,
-}: {
-  title: string;
-  description: string;
-  ctaHref: string;
-  ctaLabel: string;
-}) {
+function EmptyState({title, description, ctaHref, ctaLabel,}: { title: string; description: string; ctaHref: string; ctaLabel: string;}) {
   return (
     <div className="rounded-xl border border-dashed border-slate-700 bg-slate-900/30 px-6 py-14 text-center">
       <h3 className="text-lg font-semibold text-white">{title}</h3>
