@@ -3,7 +3,7 @@ import { useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bookmark, Heart, MessageCircle, Pencil, Share2, Trash2, User } from 'lucide-react';
+import { Bookmark, Heart, MessageCircle, Pencil, Share2, Trash2, User, LockKeyhole } from 'lucide-react';
 import Tag from '@/components/ui/atoms/tag';
 import Button from '@/components/ui/atoms/Button';
 import type { AlbumListDetail, PlaylistDetail } from '@/lib/music-lists';
@@ -197,7 +197,10 @@ export default function ListDetailClient({
         <header className="space-y-3 border-b border-slate-800/70 pb-4">
           <div>
             <div className="flex items-start justify-between gap-4">
-              <h1 className="text-2xl font-bold text-white md:text-3xl flex-1">{item.title}</h1>
+            {item.visibility === 'PRIVATE' ? <div className='mt-1'><LockKeyhole size={28}/></div> : null}
+              <h1 className="text-2xl font-bold text-white md:text-3xl flex-1">
+                {item.title}
+              </h1>
 
               {isOwner && (
                 <div className="flex items-center gap-2">
@@ -237,7 +240,7 @@ export default function ListDetailClient({
           </div>
 
           <div className="flex items-center justify-between">
-            <div className="flex flex-wrap items-center gap-4 text-xs text-gray-400">
+            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
               <span>작성일 {formatDate(item.createdAt)}</span>
               {/* <span>조회수 {item.viewCount.toLocaleString()}</span> */}
               {authorHref ? (

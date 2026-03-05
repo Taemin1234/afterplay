@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import Tag from "@/components/ui/atoms/tag";
-import { PlayCircle, MessageCircle, Heart } from 'lucide-react';
+import { PlayCircle, MessageCircle, Heart, LockKeyhole } from 'lucide-react';
 import type { MusicListItem } from "@/types";
 
 interface ListItemProps {
@@ -35,9 +35,16 @@ export default function ListItem({ item }: ListItemProps) {
             <Tag variant="subtle">
               {item.kind === 'PLAYLIST' ? 'PLAYLIST' : 'ALBUMLIST'}
             </Tag>
-            <span className="text-sm text-gray-400">
-              By {item.authorNickname}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-400">
+                By {item.authorNickname}
+              </span>
+              {item.visibility === 'PRIVATE' ? 
+                <div className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-slate-600/60 bg-slate-700/70 text-white">
+                  <LockKeyhole size={11} className="text-slate-300/80" />
+                </div>
+              : null}
+            </div>
           </div>
 
           <div className="relative mb-4 flex h-48 items-center justify-center">
