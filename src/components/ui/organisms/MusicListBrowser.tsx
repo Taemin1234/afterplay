@@ -39,7 +39,7 @@ export default function MusicListBrowser({
   const [type, setType] = useState<ListType>(initialType);
   const [sort, setSort] = useState<SortOption>('latest');
   const [items, setItems] = useState<MusicListItem[]>(initialItems ?? []);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(initialItems === undefined);
   const hydratedRef = useRef(false);
   const cacheRef = useRef<Map<string, MusicListItem[]>>(new Map());
   const skeletonCount = Math.min(limit, 8)
