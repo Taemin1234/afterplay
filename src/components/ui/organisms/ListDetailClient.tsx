@@ -304,7 +304,6 @@ export default function ListDetailClient({
         apiSegment={apiSegment}
         itemId={item.id}
         isLoggedIn={isLoggedIn}
-        isOwner={isOwner}
         viewerUserId={viewerUserId}
         loginHref={loginHref}
         initialComments={item.comments}

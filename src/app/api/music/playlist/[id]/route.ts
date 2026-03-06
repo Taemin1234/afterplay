@@ -8,6 +8,11 @@ import {
   upsertTags,
   validateAndNormalizeListPayload,
 } from '@/lib/music-list-api';
+import {
+  type MusicDetailActionPayload,
+  handleCommentActions,
+  toggleBookmarkByRawSql,
+} from '@/lib/music-detail-route-helpers';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -17,53 +22,6 @@ type RouteContext = {
     id: string;
   }>;
 };
-
-type PlaylistActionPayload = {
-  action?: 'toggle-like' | 'toggle-bookmark' | 'comment' | 'edit-comment' | 'delete-comment';
-  commentId?: string;
-  content?: string;
-};
-
-async function togglePlaylistBookmark(userId: string, playlistId: string) {
-  const existingRows = await prisma.$queryRawUnsafe<Array<{ exists: boolean }>>(
-    'SELECT EXISTS(SELECT 1 FROM "PlaylistBookmark" WHERE "userId" = $1 AND "playlistId" = $2) AS "exists"',
-    userId,
-    playlistId
-  );
-
-  const exists = existingRows[0]?.exists ?? false;
-
-  if (exists) {
-    await prisma.$executeRawUnsafe(
-      'DELETE FROM "PlaylistBookmark" WHERE "userId" = $1 AND "playlistId" = $2',
-      userId,
-      playlistId
-    );
-  } else {
-    await prisma.$executeRawUnsafe(
-      'INSERT INTO "PlaylistBookmark" ("userId", "playlistId") VALUES ($1, $2)',
-      userId,
-      playlistId
-    );
-  }
-
-  const [countRows, mineRows] = await Promise.all([
-    prisma.$queryRawUnsafe<Array<{ count: bigint }>>(
-      'SELECT COUNT(*)::bigint AS "count" FROM "PlaylistBookmark" WHERE "playlistId" = $1',
-      playlistId
-    ),
-    prisma.$queryRawUnsafe<Array<{ count: bigint }>>(
-      'SELECT COUNT(*)::bigint AS "count" FROM "PlaylistBookmark" WHERE "playlistId" = $1 AND "userId" = $2',
-      playlistId,
-      userId
-    ),
-  ]);
-
-  return {
-    bookmarksCount: Number(countRows[0]?.count ?? 0),
-    viewerHasBookmarked: Number(mineRows[0]?.count ?? 0) > 0,
-  };
-}
 
 export async function GET(_request: Request, context: RouteContext) {
   try {
@@ -105,7 +63,7 @@ export async function POST(request: Request, context: RouteContext) {
       return NextResponse.json({ error: 'Playlist not found' }, { status: 404 });
     }
 
-    const body = (await request.json()) as PlaylistActionPayload;
+    const body = (await request.json()) as MusicDetailActionPayload;
 
     if (body.action === 'toggle-like') {
       const key = { userId_playlistId: { userId: user.id, playlistId: id } };
@@ -131,7 +89,12 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     if (body.action === 'toggle-bookmark') {
-      const { bookmarksCount, viewerHasBookmarked } = await togglePlaylistBookmark(user.id, id);
+      const { bookmarksCount, viewerHasBookmarked } = await toggleBookmarkByRawSql({
+        userId: user.id,
+        tableName: 'PlaylistBookmark',
+        foreignKeyColumn: 'playlistId',
+        foreignKeyValue: id,
+      });
 
       return NextResponse.json({
         ok: true,
@@ -141,155 +104,74 @@ export async function POST(request: Request, context: RouteContext) {
       });
     }
 
-    if (body.action === 'comment') {
-      const content = body.content?.trim();
-      if (!content) {
-        return NextResponse.json({ error: 'Comment content is required' }, { status: 400 });
-      }
-      if (content.length > 500) {
-        return NextResponse.json({ error: 'Comment must be 500 characters or less' }, { status: 400 });
-      }
-
-      const comment = await prisma.playlistComment.create({
-        data: {
-          content,
-          userId: user.id,
-          playlistId: id,
-        },
-        select: {
-          id: true,
-          content: true,
-          createdAt: true,
-          user: {
-            select: {
-              id: true,
-              nickname: true,
-              avatarUrl: true,
+    const commentActionResponse = await handleCommentActions({
+      action: body.action,
+      body,
+      actor: {
+        id: user.id,
+        role: user.role,
+      },
+      createComment: async (content) =>
+        prisma.playlistComment.create({
+          data: {
+            content,
+            userId: user.id,
+            playlistId: id,
+          },
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            user: {
+              select: {
+                id: true,
+                nickname: true,
+                avatarUrl: true,
+              },
             },
           },
-        },
-      });
-
-      const commentsCount = await prisma.playlistComment.count({
-        where: {
-          playlistId: id,
-          deletedAt: null,
-        },
-      });
-
-      return NextResponse.json({
-        ok: true,
-        action: 'comment',
-        commentsCount,
-        comment: {
-          id: comment.id,
-          content: comment.content,
-          createdAt: comment.createdAt.toISOString(),
-          user: comment.user,
-        },
-      });
-    }
-
-    if (body.action === 'edit-comment') {
-      const commentId = body.commentId?.trim();
-      const content = body.content?.trim();
-      if (!commentId) {
-        return NextResponse.json({ error: 'commentId is required' }, { status: 400 });
-      }
-      if (!content) {
-        return NextResponse.json({ error: 'Comment content is required' }, { status: 400 });
-      }
-      if (content.length > 500) {
-        return NextResponse.json({ error: 'Comment must be 500 characters or less' }, { status: 400 });
-      }
-
-      const target = await prisma.playlistComment.findFirst({
-        where: {
-          id: commentId,
-          playlistId: id,
-          deletedAt: null,
-        },
-        select: { id: true, userId: true },
-      });
-
-      if (!target) {
-        return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
-      }
-      if (target.userId !== user.id) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      }
-
-      const comment = await prisma.playlistComment.update({
-        where: { id: commentId },
-        data: { content },
-        select: {
-          id: true,
-          content: true,
-          createdAt: true,
-          user: {
-            select: {
-              id: true,
-              nickname: true,
-              avatarUrl: true,
+        }),
+      findCommentTarget: async (commentId) =>
+        prisma.playlistComment.findFirst({
+          where: {
+            id: commentId,
+            playlistId: id,
+            deletedAt: null,
+          },
+          select: { id: true, userId: true },
+        }),
+      updateComment: async (commentId, content) =>
+        prisma.playlistComment.update({
+          where: { id: commentId },
+          data: { content },
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            user: {
+              select: {
+                id: true,
+                nickname: true,
+                avatarUrl: true,
+              },
             },
           },
-        },
-      });
-
-      return NextResponse.json({
-        ok: true,
-        action: 'edit-comment',
-        comment: {
-          id: comment.id,
-          content: comment.content,
-          createdAt: comment.createdAt.toISOString(),
-          user: comment.user,
-        },
-      });
-    }
-
-    if (body.action === 'delete-comment') {
-      const commentId = body.commentId?.trim();
-      if (!commentId) {
-        return NextResponse.json({ error: 'commentId is required' }, { status: 400 });
-      }
-
-      const target = await prisma.playlistComment.findFirst({
-        where: {
-          id: commentId,
-          playlistId: id,
-          deletedAt: null,
-        },
-        select: { id: true, userId: true },
-      });
-
-      if (!target) {
-        return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
-      }
-
-      const canDelete = target.userId === user.id || user.role === 'ADMIN';
-
-      if (!canDelete) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      }
-
-      await prisma.playlistComment.delete({
-        where: { id: commentId },
-      });
-
-      const commentsCount = await prisma.playlistComment.count({
-        where: {
-          playlistId: id,
-          deletedAt: null,
-        },
-      });
-
-      return NextResponse.json({
-        ok: true,
-        action: 'delete-comment',
-        commentId,
-        commentsCount,
-      });
+        }),
+      deleteComment: async (commentId) => {
+        await prisma.playlistComment.delete({
+          where: { id: commentId },
+        });
+      },
+      countComments: async () =>
+        prisma.playlistComment.count({
+          where: {
+            playlistId: id,
+            deletedAt: null,
+          },
+        }),
+    });
+    if (commentActionResponse) {
+      return commentActionResponse;
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });

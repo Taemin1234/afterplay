@@ -19,7 +19,6 @@ interface CommentSectionProps {
   apiSegment: 'playlist' | 'albumlist';
   itemId: string;
   isLoggedIn: boolean;
-  isOwner: boolean;
   viewerUserId?: string | null;
   loginHref: string;
   initialComments: ListComment[];
@@ -40,7 +39,6 @@ export default function CommentSection({
   apiSegment,
   itemId,
   isLoggedIn,
-  isOwner,
   viewerUserId = null,
   loginHref,
   initialComments,
