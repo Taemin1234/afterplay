@@ -19,7 +19,8 @@ type RouteContext = {
 };
 
 type PlaylistActionPayload = {
-  action?: 'toggle-like' | 'toggle-bookmark' | 'comment';
+  action?: 'toggle-like' | 'toggle-bookmark' | 'comment' | 'edit-comment' | 'delete-comment';
+  commentId?: string;
   content?: string;
 };
 
@@ -186,6 +187,108 @@ export async function POST(request: Request, context: RouteContext) {
           createdAt: comment.createdAt.toISOString(),
           user: comment.user,
         },
+      });
+    }
+
+    if (body.action === 'edit-comment') {
+      const commentId = body.commentId?.trim();
+      const content = body.content?.trim();
+      if (!commentId) {
+        return NextResponse.json({ error: 'commentId is required' }, { status: 400 });
+      }
+      if (!content) {
+        return NextResponse.json({ error: 'Comment content is required' }, { status: 400 });
+      }
+      if (content.length > 500) {
+        return NextResponse.json({ error: 'Comment must be 500 characters or less' }, { status: 400 });
+      }
+
+      const target = await prisma.playlistComment.findFirst({
+        where: {
+          id: commentId,
+          playlistId: id,
+          deletedAt: null,
+        },
+        select: { id: true, userId: true },
+      });
+
+      if (!target) {
+        return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
+      }
+      if (target.userId !== user.id) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+
+      const comment = await prisma.playlistComment.update({
+        where: { id: commentId },
+        data: { content },
+        select: {
+          id: true,
+          content: true,
+          createdAt: true,
+          user: {
+            select: {
+              id: true,
+              nickname: true,
+              avatarUrl: true,
+            },
+          },
+        },
+      });
+
+      return NextResponse.json({
+        ok: true,
+        action: 'edit-comment',
+        comment: {
+          id: comment.id,
+          content: comment.content,
+          createdAt: comment.createdAt.toISOString(),
+          user: comment.user,
+        },
+      });
+    }
+
+    if (body.action === 'delete-comment') {
+      const commentId = body.commentId?.trim();
+      if (!commentId) {
+        return NextResponse.json({ error: 'commentId is required' }, { status: 400 });
+      }
+
+      const target = await prisma.playlistComment.findFirst({
+        where: {
+          id: commentId,
+          playlistId: id,
+          deletedAt: null,
+        },
+        select: { id: true, userId: true },
+      });
+
+      if (!target) {
+        return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
+      }
+
+      const canDelete = target.userId === user.id || user.role === 'ADMIN';
+
+      if (!canDelete) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+
+      await prisma.playlistComment.delete({
+        where: { id: commentId },
+      });
+
+      const commentsCount = await prisma.playlistComment.count({
+        where: {
+          playlistId: id,
+          deletedAt: null,
+        },
+      });
+
+      return NextResponse.json({
+        ok: true,
+        action: 'delete-comment',
+        commentId,
+        commentsCount,
       });
     }
 

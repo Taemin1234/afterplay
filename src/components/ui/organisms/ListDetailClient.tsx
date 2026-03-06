@@ -6,15 +6,16 @@ import { useRouter } from 'next/navigation';
 import { Bookmark, Heart, MessageCircle, Pencil, Share2, Trash2, User, LockKeyhole } from 'lucide-react';
 import Tag from '@/components/ui/atoms/tag';
 import Button from '@/components/ui/atoms/Button';
+import CommentSection from '@/components/ui/molecules/CommentSection';
 import type { AlbumListDetail, PlaylistDetail } from '@/lib/music-lists';
 
 type DetailItem = PlaylistDetail | AlbumListDetail;
-type CommentItem = DetailItem['comments'][number];
 
 interface ListDetailClientProps {
   item: DetailItem;
   isLoggedIn: boolean;
   isOwner: boolean;
+  viewerUserId?: string | null;
   isModalContext?: boolean;
 }
 
@@ -30,6 +31,7 @@ export default function ListDetailClient({
   item,
   isLoggedIn,
   isOwner,
+  viewerUserId = null,
   isModalContext = false,
 }: ListDetailClientProps) {
   const router = useRouter();
@@ -42,9 +44,6 @@ export default function ListDetailClient({
   const [commentsCount, setCommentsCount] = useState(item.commentsCount);
   const [viewerHasLiked, setViewerHasLiked] = useState(item.viewerHasLiked);
   const [viewerHasBookmarked, setViewerHasBookmarked] = useState(item.viewerHasBookmarked);
-  const [comments, setComments] = useState<CommentItem[]>(item.comments);
-  const [commentInput, setCommentInput] = useState('');
-  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
   const [isBookmarking, setIsBookmarking] = useState(false);
@@ -104,34 +103,6 @@ export default function ListDetailClient({
       alert('북마크 처리 중 오류가 발생했습니다.');
     } finally {
       setIsBookmarking(false);
-    }
-  };
-
-  const handleSubmitComment = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!requireLogin() || isSubmittingComment) return;
-
-    const content = commentInput.trim();
-    if (!content) return;
-
-    setIsSubmittingComment(true);
-    try {
-      const res = await fetch(`/api/music/${apiSegment}/${item.id}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'comment', content }),
-      });
-
-      if (!res.ok) throw new Error('failed');
-      const data = await res.json();
-      setCommentInput('');
-      setCommentsCount(data.commentsCount);
-      setComments((prev) => [data.comment, ...prev]);
-    } catch (error) {
-      console.error(error);
-      alert('댓글 등록 중 오류가 발생했습니다.');
-    } finally {
-      setIsSubmittingComment(false);
     }
   };
 
@@ -329,52 +300,18 @@ export default function ListDetailClient({
         </ol>
       </article>
 
-      <section ref={targetRef} className="rounded-2xl border border-slate-800/70 bg-[#0b1020] p-6">
-        <h2 className="text-lg font-semibold text-white">댓글</h2>
-
-        {!isLoggedIn && (
-          <p className="mt-2 text-sm text-gray-400">
-            댓글 작성은 로그인이 필요합니다.{' '}
-            <Link href={loginHref} className="text-neon-green">
-              로그인하기
-            </Link>
-          </p>
-        )}
-
-        <form onSubmit={handleSubmitComment} className="mt-4 space-y-2">
-          <textarea
-            value={commentInput}
-            onChange={(e) => setCommentInput(e.target.value)}
-            placeholder={isLoggedIn ? '댓글을 입력해주세요.' : '로그인 후 댓글을 작성할 수 있습니다.'}
-            disabled={!isLoggedIn || isSubmittingComment}
-            maxLength={500}
-            className="h-24 w-full resize-none rounded-md border border-slate-700 bg-[#070b16] px-3 py-2 text-sm text-white outline-none focus:border-neon-green disabled:cursor-not-allowed disabled:opacity-60"
-          />
-          <div className="flex justify-end">
-            <Button
-              type="submit"
-              size="sm"
-              disabled={!isLoggedIn || isSubmittingComment || !commentInput.trim()}
-              className="font-semibold"
-            >
-              댓글 등록
-            </Button>
-          </div>
-        </form>
-
-        <ul className="mt-5 space-y-3">
-          {comments.map((comment) => (
-            <li key={comment.id} className="rounded-lg border border-slate-800/80 bg-black/20 p-3">
-              <div className="flex items-center justify-between text-xs text-gray-400">
-                <span>{comment.user.nickname ?? '익명'}</span>
-                <span>{formatDate(comment.createdAt)}</span>
-              </div>
-              <p className="mt-2 whitespace-pre-wrap text-sm text-gray-100">{comment.content}</p>
-            </li>
-          ))}
-          {comments.length === 0 && <li className="text-center text-sm text-gray-500">아직 댓글이 없습니다.</li>}
-        </ul>
-      </section>
+      <CommentSection
+        apiSegment={apiSegment}
+        itemId={item.id}
+        isLoggedIn={isLoggedIn}
+        isOwner={isOwner}
+        viewerUserId={viewerUserId}
+        loginHref={loginHref}
+        initialComments={item.comments}
+        requireLogin={requireLogin}
+        targetRef={targetRef}
+        onCommentsCountChange={setCommentsCount}
+      />
     </section>
   );
 }

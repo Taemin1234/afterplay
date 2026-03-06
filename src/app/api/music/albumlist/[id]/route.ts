@@ -19,7 +19,8 @@ type RouteContext = {
 };
 
 type AlbumListActionPayload = {
-  action?: 'toggle-like' | 'toggle-bookmark' | 'comment';
+  action?: 'toggle-like' | 'toggle-bookmark' | 'comment' | 'edit-comment' | 'delete-comment';
+  commentId?: string;
   content?: string;
 };
 
@@ -140,6 +141,8 @@ export async function POST(request: Request, context: RouteContext) {
       });
     }
 
+    // 댓글 동작
+    /////////////////////////////////
     if (body.action === 'comment') {
       const content = body.content?.trim();
       if (!content) {
@@ -186,6 +189,117 @@ export async function POST(request: Request, context: RouteContext) {
           createdAt: comment.createdAt.toISOString(),
           user: comment.user,
         },
+      });
+    }
+
+    // 댓글 수정
+    if (body.action === 'edit-comment') {
+      const commentId = body.commentId?.trim(); // 댓글 ID
+      const content = body.content?.trim(); // 댓글 내용
+
+      // 잘못된 요청은 DB조회 전 차단
+      if (!commentId) {
+        return NextResponse.json({ error: '사용자가 없습니다.' }, { status: 400 });
+      } // id가 없을때
+      if (!content) {
+        return NextResponse.json({ error: '내용이 없습니다.' }, { status: 400 });
+      } // 내용이 없을때
+      if (content.length > 500) {
+        return NextResponse.json({ error: '댓글은 500자 이하로 제한됩니다.' }, { status: 400 });
+      } // 댓글 길이가 500자 넘을 때
+
+      // 수정 대상 댓글 조회
+      const target = await prisma.albumListComment.findFirst({
+        where: {
+          id: commentId, // id와 commentId가 같고
+          albumListId: id, // 현재 albumList에 속한 댓글
+          deletedAt: null, // 삭제되지 않은 댓글
+        },
+        select: { id: true, userId: true }, // id와 userId 가져오기
+      });
+
+      // 댓글이 없을 때
+      if (!target) {
+        return NextResponse.json({ error: '댓글을 찾을 수 없습니다.' }, { status: 404 });
+      }
+      // 댓글 작성자 본인만 수정
+      if (target.userId !== user.id) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+
+      // 댓글 업데이트
+      const comment = await prisma.albumListComment.update({
+        where: { id: commentId }, // 해당 댓글
+        data: { content }, // 내용 변경
+        select: {
+          id: true,
+          content: true,
+          createdAt: true,
+          user: {
+            select: {
+              id: true,
+              nickname: true,
+              avatarUrl: true,
+            },
+          },
+        },
+      });
+
+      // 수정 성공 응답
+      return NextResponse.json({
+        ok: true,
+        action: 'edit-comment',
+        comment: {
+          id: comment.id,
+          content: comment.content,
+          createdAt: comment.createdAt.toISOString(),
+          user: comment.user,
+        },
+      });
+    }
+
+    // 댓글 삭제
+    if (body.action === 'delete-comment') {
+      const commentId = body.commentId?.trim();
+      if (!commentId) {
+        return NextResponse.json({ error: 'commentId is required' }, { status: 400 });
+      }
+
+      const target = await prisma.albumListComment.findFirst({
+        where: {
+          id: commentId,
+          albumListId: id,
+          deletedAt: null,
+        },
+        select: { id: true, userId: true },
+      });
+
+      if (!target) {
+        return NextResponse.json({ error: '댓글을 찾을 수 없습니다.' }, { status: 404 });
+      }
+
+      const canDelete = target.userId === user.id || user.role === 'ADMIN';
+
+      if (!canDelete) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+
+      await prisma.albumListComment.delete({
+        where: { id: commentId },
+      });
+
+      const commentsCount = await prisma.albumListComment.count({
+        where: {
+          albumListId: id,
+          deletedAt: null,
+        },
+      });
+
+      return NextResponse.json({
+        ok: true,
+        action: 'delete-comment',
+        commentId,
+        commentsCount,
       });
     }
 

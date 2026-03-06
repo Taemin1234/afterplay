@@ -75,6 +75,7 @@ export default async function MusicListDetailPage({
       item={item}
       isLoggedIn={isLoggedIn}
       isOwner={isOwner}
+      viewerUserId={user?.id ?? null}
       isModalContext={isModalContext}
     />
   );
