@@ -8,6 +8,7 @@ export type ListComment = {
   id: string;
   content: string;
   createdAt: string;
+  updatedAt: string;
   user: {
     id: string;
     nickname: string | null;
@@ -33,6 +34,10 @@ function formatDate(value: string) {
     month: 'short',
     day: 'numeric',
   });
+}
+
+function isEditedComment(comment: ListComment) {
+  return new Date(comment.updatedAt).getTime() > new Date(comment.createdAt).getTime();
 }
 
 export default function CommentSection({
@@ -99,22 +104,19 @@ export default function CommentSection({
     setEditingCommentInput('');
   };
 
-  // 댓글 수정
   const handleUpdateComment = async (commentId: string) => {
-    // 로그인 여부 및 중복작업방지
     if (!requireLogin() || pendingCommentActionId) return;
 
     const content = editingCommentInput.trim();
     if (!content) return;
 
-    // 댓글 상태 설정
     setPendingCommentActionId(commentId);
     try {
       const res = await fetch(`/api/music/${apiSegment}/${itemId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'edit-comment', // 백엔드로 보내는 작업값
+          action: 'edit-comment',
           commentId,
           content,
         }),
@@ -123,13 +125,13 @@ export default function CommentSection({
       if (!res.ok) throw new Error('failed');
       const data = await res.json();
 
-      // 수정된 댓글을 상태값에 반영
       setComments((prev) =>
         prev.map((comment) =>
           comment.id === commentId
             ? {
                 ...comment,
                 content: data.comment.content,
+                updatedAt: data.comment.updatedAt,
               }
             : comment
         )
@@ -143,7 +145,6 @@ export default function CommentSection({
     }
   };
 
-  // 댓글 삭제
   const handleDeleteComment = async (commentId: string) => {
     if (!requireLogin() || pendingCommentActionId) return;
 
@@ -155,7 +156,6 @@ export default function CommentSection({
       const res = await fetch(`/api/music/${apiSegment}/${itemId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // 백엔드로 데이터 전송
         body: JSON.stringify({
           action: 'delete-comment',
           commentId,
@@ -165,7 +165,6 @@ export default function CommentSection({
       if (!res.ok) throw new Error('failed');
       const data = await res.json();
 
-      // 댓글 개수 업데이트
       onCommentsCountChange(data.commentsCount);
       setComments((prev) => prev.filter((comment) => comment.id !== commentId));
       if (editingCommentId === commentId) {
@@ -218,7 +217,14 @@ export default function CommentSection({
           <li key={comment.id} className="rounded-lg border border-slate-800/80 bg-black/20 p-3">
             <div className="flex items-center justify-between text-xs text-gray-400">
               <span>{comment.user.nickname ?? '익명'}</span>
-              <span>{formatDate(comment.createdAt)}</span>
+              <span className="inline-flex items-center gap-2">
+                {formatDate(comment.createdAt)}
+                {isEditedComment(comment) && (
+                  <span className="rounded bg-slate-700/70 px-1.5 py-0.5 text-[10px] text-gray-200">
+                    수정됨
+                  </span>
+                )}
+              </span>
             </div>
             {editingCommentId === comment.id ? (
               <div className="mt-2 space-y-2">
@@ -252,7 +258,7 @@ export default function CommentSection({
             ) : (
               <>
                 <p className="mt-2 whitespace-pre-wrap text-sm text-gray-100">{comment.content}</p>
-                {(comment.user.id === viewerUserId) && (
+                {comment.user.id === viewerUserId && (
                   <div className="mt-3 flex items-center justify-end gap-2">
                     <Button
                       variant="outline"
@@ -263,7 +269,7 @@ export default function CommentSection({
                     >
                       수정
                     </Button>
-                      <Button
+                    <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleDeleteComment(comment.id)}

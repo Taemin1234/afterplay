@@ -24,6 +24,7 @@ type CommentWithAuthor = {
   id: string;
   content: string;
   createdAt: Date;
+  updatedAt: Date;
   user: {
     id: string;
     nickname: string | null;
@@ -54,6 +55,7 @@ function toCommentResponse(comment: CommentWithAuthor) {
     id: comment.id,
     content: comment.content,
     createdAt: comment.createdAt.toISOString(),
+    updatedAt: comment.updatedAt.toISOString(),
     user: comment.user,
   };
 }

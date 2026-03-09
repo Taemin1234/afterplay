@@ -365,6 +365,7 @@ export type PlaylistDetail = {
     id: string;
     content: string;
     createdAt: string;
+    updatedAt: string;
     user: {
       id: string;
       nickname: string | null;
@@ -405,6 +406,7 @@ export type AlbumListDetail = {
     id: string;
     content: string;
     createdAt: string;
+    updatedAt: string;
     user: {
       id: string;
       nickname: string | null;
@@ -459,6 +461,7 @@ export async function fetchPlaylistDetail(id: string, viewerUserId?: string): Pr
           id: true,
           content: true,
           createdAt: true,
+          updatedAt: true,
           user: {
             select: {
               id: true,
@@ -531,6 +534,7 @@ export async function fetchPlaylistDetail(id: string, viewerUserId?: string): Pr
       id: comment.id,
       content: comment.content,
       createdAt: comment.createdAt.toISOString(),
+      updatedAt: comment.updatedAt.toISOString(),
       user: {
         id: comment.user.id,
         nickname: comment.user.nickname,
@@ -586,6 +590,7 @@ export async function fetchAlbumListDetail(id: string, viewerUserId?: string): P
           id: true,
           content: true,
           createdAt: true,
+          updatedAt: true,
           user: {
             select: {
               id: true,
@@ -671,6 +676,7 @@ export async function fetchAlbumListDetail(id: string, viewerUserId?: string): P
       id: comment.id,
       content: comment.content,
       createdAt: comment.createdAt.toISOString(),
+      updatedAt: comment.updatedAt.toISOString(),
       user: {
         id: comment.user.id,
         nickname: comment.user.nickname,

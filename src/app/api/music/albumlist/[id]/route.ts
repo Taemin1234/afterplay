@@ -122,6 +122,7 @@ export async function POST(request: Request, context: RouteContext) {
             id: true,
             content: true,
             createdAt: true,
+            updatedAt: true,
             user: {
               select: {
                 id: true,
@@ -148,6 +149,7 @@ export async function POST(request: Request, context: RouteContext) {
             id: true,
             content: true,
             createdAt: true,
+            updatedAt: true,
             user: {
               select: {
                 id: true,
