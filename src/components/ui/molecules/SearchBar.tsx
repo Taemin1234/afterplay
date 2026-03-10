@@ -57,7 +57,7 @@ export default function SearchBar({
     return (
         <div onClick={isModalMode ? onClick : undefined} className={className}>
             <Input variant='none' placeholder={placeholder} value={value} onChange={isModalMode ? () => {} : onChange!} readOnly={isModalMode} onKeyDown={onKeyDown} autoFocus={autoFocus}/>
-            <IconButton icon={<Search className='h-5 w-5' />} onClick={onClick}/>
+            <IconButton icon={<Search size={20} />} onClick={onClick}/>
         </div>
     )
 }

@@ -9,7 +9,7 @@ export default function MainLayout({
   return (
     <>
       <Header />
-      <main className='container mx-auto px-2 py-4 lg:px-4 lg:py-8'>
+      <main className='container mx-auto px-5 py-4 lg:py-8'>
         {children}
         {modal}
       </main>

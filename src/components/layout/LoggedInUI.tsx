@@ -26,7 +26,7 @@ export default function LoggedInUI({nickname} : {nickname? : string | null}) {
                 <p>{nickname ?? '익명'}</p>
                 <IconButton variant='bg' as='span' icon={<User className="w-4 h-4" />}/>
             </Link>
-            <IconButton icon={<LogOut className="w-5 h-5" />} onClick={handleSignOut}/>
+            <IconButton icon={<LogOut size={20} />} onClick={handleSignOut}/>
         </>
     )
 }
