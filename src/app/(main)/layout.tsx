@@ -1,15 +1,34 @@
-import Header from '@/components/layout/Header'
+import Header from '@/components/layout/Header';
+import MobileBottomNav from '@/components/layout/MobileBottomNav';
+import prisma from '@/lib/prisma';
+import { createSupabaseServerClient } from '@/utils/supabase/server';
 
-export default function MainLayout({
-  children, modal,
+export default async function MainLayout({
+  children,
+  modal,
 }: {
   children: React.ReactNode;
-  modal : React.ReactNode;
+  modal: React.ReactNode;
 }) {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const dbUser = user
+    ? await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { nickname: true },
+      })
+    : null;
+
+  const nickname = dbUser?.nickname ?? null;
+
   return (
     <>
-      <Header />
-      <main className='container mx-auto px-5 py-4 lg:py-8'>
+      <Header user={user} nickname={nickname} />
+      <MobileBottomNav user={user} nickname={nickname} />
+      <main className='container mx-auto px-5 py-4 pb-24 md:pb-4 lg:py-8'>
         {children}
         {modal}
       </main>

@@ -1,49 +1,38 @@
+import type { User } from '@supabase/supabase-js';
 import { Disc3 } from 'lucide-react';
 import Link from 'next/link';
 
 import SearchBar from '@/components/ui/molecules/SearchBar';
+
 import LoggedInUI from './LoggedInUI';
 import LoggedOutUI from './LoggedOutUI';
-// 로그인 정보 가져오기
-import { createSupabaseServerClient } from '@/utils/supabase/server';
-import prisma from '@/lib/prisma';
 
-export default async function Header () {
-    const supabase = await createSupabaseServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
+type HeaderProps = {
+  user: User | null;
+  nickname: string | null;
+};
 
-    const dbUser = user
-      ? await prisma.user.findUnique({
-          where: { id: user.id },
-          select: { nickname: true },
-        })
-      : null;
-    const nickname = dbUser?.nickname ?? null;
-
-    return (
-        <header className="sticky top-0 z-50 w-full border-b border-[#39ff14]/20 bg-[#0a0f1c]/80 backdrop-blur-md">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href={"/"} className="flex items-center gap-2 group">
-            <div className="p-2 rounded-full bg-[#39ff14]/10 group-hover:bg-[#39ff14]/20 transition-colors">
-              <Disc3 className="w-6 h-6 text-[#39ff14]" />
-            </div>
-            <span className="text-xl font-bold tracking-tighter text-white font-mono">
-              After<span className="text-[#39ff14]">Play</span>
-            </span>
-          </Link>
-  
-          <div className="flex-1 max-w-md mx-8 hidden md:block">
-            <SearchBar/>
+export default function Header({ user, nickname }: HeaderProps) {
+  return (
+    <header className='w-full border-b border-[#39ff14]/20 bg-[#0a0f1c]/80 backdrop-blur-md md:sticky md:top-0 md:z-50 md:block'>
+      <div className='container mx-auto flex h-16 items-center justify-between px-4'>
+        <Link href='/' className='group flex items-center gap-2'>
+          <div className='rounded-full bg-[#39ff14]/10 p-2 transition-colors group-hover:bg-[#39ff14]/20'>
+            <Disc3 className='h-6 w-6 text-[#39ff14]' />
           </div>
-          
-          <div className="flex items-center gap-4">
-            {user ? (
-              <LoggedInUI nickname={nickname}/>
-            ) : (
-              <LoggedOutUI />
-            )}
-          </div>
+          <span className='font-mono text-xl font-bold tracking-tighter text-white'>
+            After<span className='text-[#39ff14]'>Play</span>
+          </span>
+        </Link>
+
+        <div className='mx-8 hidden max-w-md flex-1 md:block'>
+          <SearchBar />
         </div>
-      </header>
-    )
+
+        <div className='hidden items-center gap-4 md:flex'>
+          {user ? <LoggedInUI nickname={nickname} /> : <LoggedOutUI />}
+        </div>
+      </div>
+    </header>
+  );
 }
