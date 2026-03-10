@@ -1,6 +1,7 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
+import { useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import type { User } from '@supabase/supabase-js';
 import { Disc3 } from 'lucide-react';
 import Link from 'next/link';
@@ -16,9 +17,23 @@ type HeaderProps = {
 };
 
 export default function Header({ user, nickname }: HeaderProps) {
+  const router = useRouter();
   const pathname = usePathname();
+  const [query, setQuery] = useState('');
 
   const isSearchPage = pathname.startsWith('/search');
+
+  const handleSearch = () => {
+    const trimmed = query.trim();
+    if (trimmed.length < 2) return;
+    router.push(`/search?q=${encodeURIComponent(trimmed)}&tab=content`);
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    handleSearch();
+  };
 
   return (
     <header className={isSearchPage ? 'hidden md:block' : 'block'}>
@@ -34,7 +49,13 @@ export default function Header({ user, nickname }: HeaderProps) {
           </Link>
 
           <div className='mx-8 hidden max-w-md flex-1 md:block'>
-            <SearchBar />
+            <SearchBar
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onClick={handleSearch}
+              onKeyDown={handleSearchKeyDown}
+              placeholder='게시글, 태그, 사용자 검색'
+            />
           </div>
 
           <div className='hidden items-center gap-4 md:flex'>
