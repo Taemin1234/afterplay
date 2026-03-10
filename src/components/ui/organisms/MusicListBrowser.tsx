@@ -118,49 +118,50 @@ export default function MusicListBrowser({
 
   return (
     <>
-    <section className="space-y-4 pb-24 sm:space-y-5 sm:pb-0">
-      <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="hidden w-full pb-1 md:block">
-          <TypeSelector
-            name={userId ? 'user-list-type' : 'home-list-type'}
-            ariaLabel="List type"
+      {/* <div className="sticky top-0 left-0 right-0 -mx-5 z-40 bg-[#0a0f1c]  md:hidden">
+        <TypeSelector
+            name={userId ? 'user-list-type-mobile' : 'home-list-type-mobile'}
+            ariaLabel="List type mobile"
             value={type}
             options={typeOptions}
             onChange={setType}
-            className="min-w-max"
+            className="w-full text-2xl"
           />
+      </div> */}
+      <section className="relative space-y-4 pb-24 sm:space-y-5 sm:pb-0">
+        <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="w-full pb-1">
+            <TypeSelector
+              name={userId ? 'user-list-type' : 'home-list-type'}
+              ariaLabel="List type"
+              value={type}
+              options={typeOptions}
+              onChange={setType}
+              className="w-full md:min-w-max"
+            />
+          </div>
+          {/* 최신순, 좋아요 순 정렬 */}
+          <div className="pb-1">
+            <TypeSelector
+              name={userId ? 'user-list-sort' : 'home-list-sort'}
+              ariaLabel="List sort"
+              value={sort}
+              options={sortOptions}
+              onChange={setSort}
+              variant="subtle"
+              className="min-w-max sm:ml-auto"
+            />
+          </div>
         </div>
-        <div className="pb-1">
-          <TypeSelector
-            name={userId ? 'user-list-sort' : 'home-list-sort'}
-            ariaLabel="List sort"
-            value={sort}
-            options={sortOptions}
-            onChange={setSort}
-            variant="subtle"
-            className="min-w-max sm:ml-auto"
-          />
-        </div>
-      </div>
-      {!isLoading && sortedItems.length === 0 ? (
-        <p className="rounded-xl border border-slate-800/70 bg-black/20 px-4 py-12 text-center text-sm text-gray-400 sm:text-base">
-          리스트가 없습니다
-        </p>
-      ) : null}
-      <Suspense fallback={<MusicListGridSkeleton count={skeletonCount}/>}>
-        {isLoading ? <MusicListGridSkeleton count={skeletonCount}/> : <MusicListGrid items={sortedItems} /> }
-      </Suspense>
-    </section>
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-800/80 bg-[#050816]/90 backdrop-blur md:hidden">
-      <TypeSelector
-          name={userId ? 'user-list-type-mobile' : 'home-list-type-mobile'}
-          ariaLabel="List type mobile"
-          value={type}
-          options={typeOptions}
-          onChange={setType}
-          variant="mobile"
-        />
-    </div>
+        {!isLoading && sortedItems.length === 0 ? (
+          <p className="rounded-xl border border-slate-800/70 bg-black/20 px-4 py-12 text-center text-sm text-gray-400 sm:text-base">
+            리스트가 없습니다
+          </p>
+        ) : null}
+        <Suspense fallback={<MusicListGridSkeleton count={skeletonCount}/>}>
+          {isLoading ? <MusicListGridSkeleton count={skeletonCount}/> : <MusicListGrid items={sortedItems} /> }
+        </Suspense>
+      </section>
     </>
   );
 }
