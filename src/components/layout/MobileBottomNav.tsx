@@ -43,7 +43,10 @@ export default function MobileBottomNav({ user, nickname }: MobileBottomNavProps
   ];
 
   return (
-    <nav className='fixed bottom-0 left-0 right-0 z-50 border-t border-[#39ff14]/20 bg-[#0a0f1c]/95 backdrop-blur-md md:hidden'>
+    <nav
+      className='fixed bottom-0 left-0 right-0 z-50 border-t border-[#39ff14]/20 bg-[#0a0f1c]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden'
+      style={{ WebkitTransform: 'translateZ(0)' }}
+    >
       <div className='mx-auto grid h-16 max-w-lg grid-cols-3'>
         {navItems.map((item) => {
           const Icon = item.icon;

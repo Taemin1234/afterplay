@@ -27,11 +27,11 @@ export default async function MainLayout({
   return (
     <>
       <Header user={user} nickname={nickname} />
-      <MobileBottomNav user={user} nickname={nickname} />
-      <main className='container mx-auto px-5 py-4 pb-24 md:pb-4 lg:py-8'>
+      <main className='container mx-auto px-5 py-4 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-4 lg:py-8'>
         {children}
         {modal}
       </main>
+      <MobileBottomNav user={user} nickname={nickname} />
       {/* <Footer /> */}
     </>
   );
