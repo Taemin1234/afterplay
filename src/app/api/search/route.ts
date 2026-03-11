@@ -121,6 +121,31 @@ const baseSelect = {
   tags: { select: { tag: { select: { name: true } } } },
 } as const;
 
+// 공백제거(중간 공백을 하나의 공백으로 통일)
+function normalizeTerm(value: string): string {
+  return value.trim().replace(/\s+/g, ' ');
+}
+
+// 소문자로 통일
+function compactTerm(value: string): string {
+  return normalizeTerm(value).replace(/\s+/g, '').toLowerCase();
+}
+
+// 공백 제거 버전과 원문 둘다 set으로 저장
+function pushTerms(set: Set<string>, ...values: Array<string | null | undefined>) {
+  // 받은 values를 순회하며 정규화한 문자열과 공백을 제거한 compact를 set에 추가
+  for (const value of values) {
+    if (!value) continue;
+    const normalized = normalizeTerm(value);
+    if (normalized.length === 0) continue;
+    set.add(normalized);
+    const compact = normalized.replace(/\s+/g, '');
+    if (compact.length > 0) {
+      set.add(compact);
+    }
+  }
+}
+
 export async function GET(request: Request) {
   // URL 쿼리 읽기
   const { searchParams } = new URL(request.url);
@@ -136,6 +161,50 @@ export async function GET(request: Request) {
       users: [] as SearchUserItem[],
     });
   }
+
+  // alias 테이블 조회
+  const aliasRows = await prisma.musicSearchAlias.findMany({
+    select: {
+      type: true,
+      canonical: true,
+      alias: true,
+    },
+    take: 1000,
+  });
+
+  // 원본과 별칭에서 일치하는 검색어 가져오기
+  const compactQuery = compactTerm(query);
+  const matchedAliasRows = aliasRows.filter((row) => {
+    const canonicalCompact = compactTerm(row.canonical);
+    const aliasCompact = compactTerm(row.alias);
+    return canonicalCompact.includes(compactQuery) || aliasCompact.includes(compactQuery);
+  });
+
+  // track, album 검색어 따로 저장
+  const trackTerms = new Set<string>([normalizeTerm(query)]);
+  const albumTerms = new Set<string>([normalizeTerm(query)]);
+
+  for (const row of matchedAliasRows) {
+    // 아티스트 별칭은 트랙/앨범 검색에 공통으로 확장
+    if (row.type === 'TRACK_ARTIST' || row.type === 'ALBUM_ARTIST') {
+      pushTerms(trackTerms, row.canonical, row.alias);
+      pushTerms(albumTerms, row.canonical, row.alias);
+      continue;
+    }
+
+    if (row.type === 'TRACK_TITLE') {
+      pushTerms(trackTerms, row.canonical, row.alias);
+      continue;
+    }
+
+    if (row.type === 'ALBUM_TITLE') {
+      pushTerms(albumTerms, row.canonical, row.alias);
+    }
+  }
+
+  // 검색어 개수 제한
+  const trackSearchTerms = [...trackTerms].slice(0, 20);
+  const albumSearchTerms = [...albumTerms].slice(0, 20);
 
   // 검색 동시 실행
   // 플레이리스트, 앨범리스트 제목/내용
@@ -229,8 +298,8 @@ export async function GET(request: Request) {
             some: {
               track: {
                 OR: [
-                  { title: { contains: query, mode: 'insensitive' } },
-                  { artist: { contains: query, mode: 'insensitive' } },
+                  ...trackSearchTerms.map((term) => ({ title: { contains: term, mode: 'insensitive' as const } })),
+                  ...trackSearchTerms.map((term) => ({ artist: { contains: term, mode: 'insensitive' as const } })),
                 ],
               },
             },
@@ -255,8 +324,8 @@ export async function GET(request: Request) {
             some: {
               album: {
                 OR: [
-                  { title: { contains: query, mode: 'insensitive' } },
-                  { artist: { contains: query, mode: 'insensitive' } },
+                  ...albumSearchTerms.map((term) => ({ title: { contains: term, mode: 'insensitive' as const } })),
+                  ...albumSearchTerms.map((term) => ({ artist: { contains: term, mode: 'insensitive' as const } })),
                 ],
               },
             },

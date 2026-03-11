@@ -22,6 +22,13 @@ enum Role {
   ADMIN
 }
 
+enum MusicAliasType {
+  TRACK_ARTIST
+  TRACK_TITLE
+  ALBUM_ARTIST
+  ALBUM_TITLE
+}
+
 // --------------------------------------------------------
 // User (Supabase Auth user.id = UUID)
 // --------------------------------------------------------
@@ -434,4 +441,17 @@ model ListFeed {
   @@unique([userId, kind, refId])
   @@index([userId, createdAt(sort: Desc), id(sort: Desc)])
   @@index([kind, refId])
+}
+
+model MusicSearchAlias {
+  id        Int            @id @default(autoincrement())
+  type      MusicAliasType
+  canonical String
+  alias     String
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@unique([type, canonical, alias])
+  @@index([alias])
+  @@index([canonical])
 }
