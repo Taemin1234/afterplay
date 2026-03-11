@@ -1,7 +1,6 @@
 ﻿'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -9,7 +8,7 @@ import SearchBar from '@/components/ui/molecules/SearchBar';
 import TypeSelector from '@/components/ui/molecules/TypeSelector';
 import type { MusicListItem } from '@/types';
 
-type SearchTab = 'content' | 'tag' | 'user';
+type SearchTab = 'content' | 'tag' | 'music' | 'user';
 
 // 유저검색 타입
 type SearchUserItem = {
@@ -23,18 +22,20 @@ type SearchUserItem = {
 type SearchResponse = {
   content: MusicListItem[];
   tag: MusicListItem[];
+  music: MusicListItem[];
   users: SearchUserItem[];
 };
 
 const tabOptions = [
   { value: 'content', label: '게시글 내용' },
   { value: 'tag', label: '태그' },
+  { value: 'music', label: '노래/앨범/가수' },
   { value: 'user', label: '사용자' },
 ] as const;
 
 // 타입 가드
 function isSearchTab(value: string | null): value is SearchTab {
-  return value === 'content' || value === 'tag' || value === 'user';
+  return value === 'content' || value === 'tag' || value === 'music' || value === 'user';
 }
 
 // 게시글 결과 표시 컴포넌트
@@ -94,22 +95,9 @@ function SearchUserList({ items }: { items: SearchUserItem[] }) {
               href={href}
               className='flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 p-3 transition-colors hover:border-[#39ff14]/40'
             >
-              {/* {user.avatarUrl ? (
-                <Image
-                  src={user.avatarUrl}
-                  alt={user.nickname}
-                  width={40}
-                  height={40}
-                  className='h-10 w-10 rounded-full object-cover'
-                />
-              ) : (
-                <div className='flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-sm text-white'>
-                  {user.nickname.slice(0, 1).toUpperCase()}
-                </div>
-              )} */}
-                <div className='flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-sm text-white'>
-                  {user.nickname.slice(0, 1).toUpperCase()}
-                </div>
+              <div className='flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-sm text-white'>
+                {user.nickname.slice(0, 1).toUpperCase()}
+              </div>
               <div>
                 <p className='text-sm font-medium text-white'>{user.nickname}</p>
                 <p className='text-xs text-slate-400'>프로필 보기</p>
@@ -133,7 +121,7 @@ export default function SearchPageClient() {
 
   const [query, setQuery] = useState(initialQuery);
   const [tab, setTab] = useState<SearchTab>(initialTab);
-  const [results, setResults] = useState<SearchResponse>({ content: [], tag: [], users: [] });
+  const [results, setResults] = useState<SearchResponse>({ content: [], tag: [], music: [], users: [] });
   const [isLoading, setIsLoading] = useState(false);
 
   // 쿼리값 변경 시 재설정
@@ -149,7 +137,7 @@ export default function SearchPageClient() {
 
     // 두글자이상만 요청
     if (normalized.length < 2) {
-      setResults({ content: [], tag: [], users: [] });
+      setResults({ content: [], tag: [], music: [], users: [] });
       setIsLoading(false);
       return;
     }
@@ -163,7 +151,7 @@ export default function SearchPageClient() {
         const data: SearchResponse = await response.json();
         setResults(data);
       } catch {
-        setResults({ content: [], tag: [], users: [] });
+        setResults({ content: [], tag: [], music: [], users: [] });
       } finally {
         setIsLoading(false);
       }
@@ -202,6 +190,7 @@ export default function SearchPageClient() {
   const currentCount = useMemo(() => {
     if (tab === 'content') return results.content.length;
     if (tab === 'tag') return results.tag.length;
+    if (tab === 'music') return results.music.length;
     return results.users.length;
   }, [results, tab]);
 
@@ -236,6 +225,7 @@ export default function SearchPageClient() {
 
       {tab === 'content' && <SearchPostList items={results.content} />}
       {tab === 'tag' && <SearchPostList items={results.tag} />}
+      {tab === 'music' && <SearchPostList items={results.music} />}
       {tab === 'user' && <SearchUserList items={results.users} />}
     </section>
   );

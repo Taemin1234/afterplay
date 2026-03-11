@@ -99,6 +99,28 @@ function sortByCreatedAtDesc(items: MusicListItem[]): MusicListItem[] {
   return [...items].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
+function dedupeListItems(items: MusicListItem[]): MusicListItem[] {
+  const map = new Map<string, MusicListItem>();
+
+  for (const item of items) {
+    map.set(`${item.kind}:${item.id}`, item);
+  }
+
+  return [...map.values()];
+}
+
+const baseSelect = {
+  id: true,
+  title: true,
+  story: true,
+  visibility: true,
+  authorId: true,
+  author: { select: { nickname: true } },
+  createdAt: true,
+  _count: { select: { likes: true, comments: true } },
+  tags: { select: { tag: { select: { name: true } } } },
+} as const;
+
 export async function GET(request: Request) {
   // URL 쿼리 읽기
   const { searchParams } = new URL(request.url);
@@ -110,6 +132,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       content: [] as MusicListItem[],
       tag: [] as MusicListItem[],
+      music: [] as MusicListItem[],
       users: [] as SearchUserItem[],
     });
   }
@@ -117,139 +140,157 @@ export async function GET(request: Request) {
   // 검색 동시 실행
   // 플레이리스트, 앨범리스트 제목/내용
   // 플레이리스트, 앨범리스트 태그
+  // 저장된 노래와 앨범
   // 사용자 닉네임
-  const [contentPlaylists, contentAlbumLists, tagPlaylists, tagAlbumLists, users] = await Promise.all([
-    // 플레이리스트 중
-    // 삭제되지 않았고 공개글이고 제목이나 내용에 검색어가 포함
-    prisma.playlist.findMany({
-      where: {
-        deletedAt: null,
-        visibility: 'PUBLIC',
-        OR: [{ title: { contains: query, mode: 'insensitive' } }, { story: { contains: query, mode: 'insensitive' } }], // insensitive 대소문자 구분 없음
-      },
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-      // 검색결과 중 필요한 부분만 가져오기
-      select: {
-        id: true,
-        title: true,
-        story: true,
-        visibility: true,
-        authorId: true,
-        author: { select: { nickname: true } },
-        createdAt: true,
-        _count: { select: { likes: true, comments: true } },
-        tags: { select: { tag: { select: { name: true } } } },
-        tracks: {
-          orderBy: { order: 'asc' },
-          take: 3,
-          select: { track: { select: { albumCover: true } } },
+  const [contentPlaylists, contentAlbumLists, tagPlaylists, tagAlbumLists, musicPlaylists, musicAlbumLists, users] =
+    await Promise.all([
+      prisma.playlist.findMany({
+        where: {
+          deletedAt: null,
+          visibility: 'PUBLIC',
+          OR: [{ title: { contains: query, mode: 'insensitive' } }, { story: { contains: query, mode: 'insensitive' } }], // insensitive 대소문자 구분 없음
         },
-      },
-    }),
-    prisma.albumList.findMany({
-      where: {
-        deletedAt: null,
-        visibility: 'PUBLIC',
-        OR: [{ title: { contains: query, mode: 'insensitive' } }, { story: { contains: query, mode: 'insensitive' } }],
-      },
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-      select: {
-        id: true,
-        title: true,
-        story: true,
-        visibility: true,
-        authorId: true,
-        author: { select: { nickname: true } },
-        createdAt: true,
-        _count: { select: { likes: true, comments: true } },
-        tags: { select: { tag: { select: { name: true } } } },
-        albums: {
-          orderBy: { order: 'asc' },
-          take: 3,
-          select: { album: { select: { coverImage: true } } },
-        },
-      },
-    }),
-    // 플레이리스트 태그 기준
-    prisma.playlist.findMany({
-      where: {
-        deletedAt: null,
-        visibility: 'PUBLIC',
-        tags: {
-          some: {
-            tag: { name: { contains: query, mode: 'insensitive' } },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        // 검색결과 중 필요한 부분만 가져오기
+        select: {
+          ...baseSelect,
+          tracks: {
+            orderBy: { order: 'asc' },
+            take: 3,
+            select: { track: { select: { albumCover: true } } },
           },
         },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-      select: {
-        id: true,
-        title: true,
-        story: true,
-        visibility: true,
-        authorId: true,
-        author: { select: { nickname: true } },
-        createdAt: true,
-        _count: { select: { likes: true, comments: true } },
-        tags: { select: { tag: { select: { name: true } } } },
-        tracks: {
-          orderBy: { order: 'asc' },
-          take: 3,
-          select: { track: { select: { albumCover: true } } },
+      }),
+      prisma.albumList.findMany({
+        where: {
+          deletedAt: null,
+          visibility: 'PUBLIC',
+          OR: [{ title: { contains: query, mode: 'insensitive' } }, { story: { contains: query, mode: 'insensitive' } }],
         },
-      },
-    }),
-    prisma.albumList.findMany({
-      where: {
-        deletedAt: null,
-        visibility: 'PUBLIC',
-        tags: {
-          some: {
-            tag: { name: { contains: query, mode: 'insensitive' } },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        select: {
+          ...baseSelect,
+          albums: {
+            orderBy: { order: 'asc' },
+            take: 3,
+            select: { album: { select: { coverImage: true } } },
           },
         },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-      select: {
-        id: true,
-        title: true,
-        story: true,
-        visibility: true,
-        authorId: true,
-        author: { select: { nickname: true } },
-        createdAt: true,
-        _count: { select: { likes: true, comments: true } },
-        tags: { select: { tag: { select: { name: true } } } },
-        albums: {
-          orderBy: { order: 'asc' },
-          take: 3,
-          select: { album: { select: { coverImage: true } } },
+      }),
+      prisma.playlist.findMany({
+        where: {
+          deletedAt: null,
+          visibility: 'PUBLIC',
+          tags: {
+            some: {
+              tag: { name: { contains: query, mode: 'insensitive' } },
+            },
+          },
         },
-      },
-    }),
-    // 유저
-    prisma.user.findMany({
-      where: {
-        deletedAt: null,
-        nickname: {
-          contains: query,
-          mode: 'insensitive',
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        select: {
+          ...baseSelect,
+          tracks: {
+            orderBy: { order: 'asc' },
+            take: 3,
+            select: { track: { select: { albumCover: true } } },
+          },
         },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-      select: {
-        id: true,
-        nickname: true,
-        nicknameSlug: true,
-        avatarUrl: true,
-      },
-    }),
-  ]);
+      }),
+      prisma.albumList.findMany({
+        where: {
+          deletedAt: null,
+          visibility: 'PUBLIC',
+          tags: {
+            some: {
+              tag: { name: { contains: query, mode: 'insensitive' } },
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        select: {
+          ...baseSelect,
+          albums: {
+            orderBy: { order: 'asc' },
+            take: 3,
+            select: { album: { select: { coverImage: true } } },
+          },
+        },
+      }),
+      prisma.playlist.findMany({
+        where: {
+          deletedAt: null,
+          visibility: 'PUBLIC',
+          tracks: {
+            some: {
+              track: {
+                OR: [
+                  { title: { contains: query, mode: 'insensitive' } },
+                  { artist: { contains: query, mode: 'insensitive' } },
+                ],
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        select: {
+          ...baseSelect,
+          tracks: {
+            orderBy: { order: 'asc' },
+            take: 3,
+            select: { track: { select: { albumCover: true } } },
+          },
+        },
+      }),
+      prisma.albumList.findMany({
+        where: {
+          deletedAt: null,
+          visibility: 'PUBLIC',
+          albums: {
+            some: {
+              album: {
+                OR: [
+                  { title: { contains: query, mode: 'insensitive' } },
+                  { artist: { contains: query, mode: 'insensitive' } },
+                ],
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        select: {
+          ...baseSelect,
+          albums: {
+            orderBy: { order: 'asc' },
+            take: 3,
+            select: { album: { select: { coverImage: true } } },
+          },
+        },
+      }),
+      prisma.user.findMany({
+        where: {
+          deletedAt: null,
+          nickname: {
+            contains: query,
+            mode: 'insensitive',
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        select: {
+          id: true,
+          nickname: true,
+          nicknameSlug: true,
+          avatarUrl: true,
+        },
+      }),
+    ]);
 
   // 결과 합치기
   const contentItems = sortByCreatedAtDesc([
@@ -257,7 +298,14 @@ export async function GET(request: Request) {
     ...contentAlbumLists.map(mapAlbumListToItem),
   ]).slice(0, limit);
 
-  const tagItems = sortByCreatedAtDesc([...tagPlaylists.map(mapPlaylistToItem), ...tagAlbumLists.map(mapAlbumListToItem)]).slice(0, limit);
+  const tagItems = sortByCreatedAtDesc([...tagPlaylists.map(mapPlaylistToItem), ...tagAlbumLists.map(mapAlbumListToItem)]).slice(
+    0,
+    limit
+  );
+
+  const musicItems = sortByCreatedAtDesc(
+    dedupeListItems([...musicPlaylists.map(mapPlaylistToItem), ...musicAlbumLists.map(mapAlbumListToItem)])
+  ).slice(0, limit);
 
   // 유저 결과 가공
   const userItems: SearchUserItem[] = users
@@ -273,6 +321,7 @@ export async function GET(request: Request) {
   return NextResponse.json({
     content: contentItems,
     tag: tagItems,
+    music: musicItems,
     users: userItems,
   });
 }
