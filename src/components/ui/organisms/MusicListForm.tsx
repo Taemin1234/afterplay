@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Disc, LockKeyhole, LockKeyholeOpen, Music, Trash2 } from 'lucide-react';
+import { Disc, LockKeyhole, LockKeyholeOpen, Music, Trash2, X } from 'lucide-react';
 import Image from 'next/image';
 import Button from '@/components/ui/atoms/Button';
 import IconButton from '@/components/ui/atoms/IconButton';
@@ -66,6 +66,7 @@ export default function MusicListForm({
   const [searchResults, setSearchResults] = useState<MusicListFormItem[]>([]);
   const [selectedMusic, setSelectedMusic] = useState<MusicListFormItem[]>(initialValues?.musicItems ?? []);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [tagInput, setTagInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -177,6 +178,15 @@ export default function MusicListForm({
   };
 
   useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 767px)');
+    const updateViewport = () => setIsMobileViewport(mediaQuery.matches);
+    updateViewport();
+
+    mediaQuery.addEventListener('change', updateViewport);
+    return () => mediaQuery.removeEventListener('change', updateViewport);
+  }, []);
+
+  useEffect(() => {
     const timer = setTimeout(async () => {
       if (searchQuery.trim().length < 2) {
         setSearchResults([]);
@@ -201,7 +211,7 @@ export default function MusicListForm({
 
   return (
     <div className="flex items-center justify-center">
-      <motion.div className="relative w-full rounded-2xl border border-gray-800 bg-[#121212] p-8">
+      <motion.div className="relative w-full rounded-2xl border border-gray-800 bg-[#121212] py-5 px-3 md:p-8">
         <h2 className="mb-6 font-sans text-2xl font-bold text-neon-green">{pageTitle}</h2>
 
         <div className="flex flex-col items-end justify-between sm:flex-row sm:items-center">
@@ -347,19 +357,46 @@ export default function MusicListForm({
         </form>
       </motion.div>
 
-      {isModalOpen && (
-        <ModalWrap onClose={handleToggleModal} showCloseButton panelClassName="h-full">
-          <SearchMusic
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            searchType={searchType}
-            searchResults={searchResults}
-            setSearchResults={setSearchResults}
-            onClose={handleToggleModal}
-            onSelect={handleSelectMusic}
-          />
-        </ModalWrap>
-      )}
+      {isModalOpen &&
+        (isMobileViewport ? (
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-[#070b16] px-4 py-4 sm:px-6 sm:py-6">
+            <div className="mx-auto w-full max-w-2xl">
+              <div className="mb-3 flex justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  rounded="full"
+                  icon={<X size={16} />}
+                  onClick={handleToggleModal}
+                  className="border-white/15 text-gray-200 hover:bg-white/10"
+                >
+                  닫기
+                </Button>
+              </div>
+              <SearchMusic
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                searchType={searchType}
+                searchResults={searchResults}
+                setSearchResults={setSearchResults}
+                onClose={handleToggleModal}
+                onSelect={handleSelectMusic}
+              />
+            </div>
+          </div>
+        ) : (
+          <ModalWrap onClose={handleToggleModal} showCloseButton panelClassName="h-full">
+            <SearchMusic
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              searchType={searchType}
+              searchResults={searchResults}
+              setSearchResults={setSearchResults}
+              onClose={handleToggleModal}
+              onSelect={handleSelectMusic}
+            />
+          </ModalWrap>
+        ))}
     </div>
   );
 }
