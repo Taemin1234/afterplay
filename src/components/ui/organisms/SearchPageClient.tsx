@@ -213,6 +213,7 @@ export default function SearchPageClient() {
           onChange={handleTabChange}
           ariaLabel='검색 결과 탭'
           variant='subtle'
+          size='sm'
           className='w-full'
         />
       </div>

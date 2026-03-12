@@ -149,6 +149,7 @@ export default function MusicListBrowser({
               options={sortOptions}
               onChange={setSort}
               variant="subtle"
+              size="sm"
               className="min-w-max sm:ml-auto"
             />
           </div>

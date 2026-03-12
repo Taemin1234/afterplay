@@ -14,6 +14,7 @@ type TypeSelectorProps<T extends string> = {
   ariaLabel?: string;
   className?: string;
   variant?: "solid" | "subtle";
+  size?: "sm" | "md";
 };
 
 export default function TypeSelector<T extends string>({
@@ -24,21 +25,38 @@ export default function TypeSelector<T extends string>({
   ariaLabel = "옵션 선택",
   className = "",
   variant = "solid",
+  size = "md",
 }: TypeSelectorProps<T>) {
-  const containerClassName =
-    variant === "subtle"
+  const containerClassName = (() => {
+    if (variant === "subtle") {
+      return size === "sm"
         ? "inline-flex max-w-full items-center gap-1 rounded-lg border border-gray-800 bg-black/20 p-1"
-        : "inline-flex max-w-full items-center gap-1 rounded-lg border border-gray-800 p-1 sm:gap-2 md:max-w-fit";
+        : "inline-flex max-w-full items-center gap-1 rounded-lg border border-gray-800 bg-black/20 p-1 sm:gap-1.5";
+    }
+
+    return size === "sm"
+      ? "inline-flex max-w-full items-center gap-1 rounded-lg border border-gray-800 p-1 md:max-w-fit"
+      : "inline-flex max-w-full items-center gap-1 rounded-lg border border-gray-800 p-1 sm:gap-2 md:max-w-fit";
+  })();
 
   const getOptionClassName = (active: boolean) => {
-
     if (variant === "subtle") {
-      return `inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors sm:gap-2 sm:px-3 ${
+      const subtleSizeClass =
+        size === "sm"
+          ? "gap-1 px-2 py-1 text-xs sm:gap-1.5 sm:px-2.5"
+          : "gap-1.5 px-2.5 py-1.5 text-xs sm:gap-2 sm:px-3 sm:text-sm";
+
+      return `inline-flex items-center whitespace-nowrap rounded-md font-medium transition-colors ${subtleSizeClass} ${
         active ? "bg-neon-green/20 text-neon-green" : "text-gray-300 hover:bg-white/5"
       }`;
     }
 
-    return `w-full inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-all sm:gap-2 sm:px-4 sm:py-2 ${
+    const solidSizeClass =
+      size === "sm"
+        ? "gap-1 px-2 py-1.5 text-xs sm:gap-1.5 sm:px-3"
+        : "gap-1.5 px-3 py-1.5 text-xs sm:gap-2 sm:px-4 sm:py-2 sm:text-sm";
+
+    return `w-full inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium transition-all ${solidSizeClass} ${
       active ? "bg-[#39FF14] text-black" : "text-gray-500 hover:text-white"
     }`;
   };
@@ -52,7 +70,7 @@ export default function TypeSelector<T extends string>({
       {options.map((option) => (
         <label
           key={option.value}
-          className='flex-1 cursor-pointer md:flex-none'
+          className="flex-1 cursor-pointer md:flex-none"
         >
           <input
             type="radio"
