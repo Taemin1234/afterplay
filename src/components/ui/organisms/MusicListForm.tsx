@@ -204,21 +204,20 @@ export default function MusicListForm({
       <motion.div className="relative w-full rounded-2xl border border-gray-800 bg-[#121212] p-8">
         <h2 className="mb-6 font-sans text-2xl font-bold text-neon-green">{pageTitle}</h2>
 
-        <div className="flex items-center justify-between">
-          <div className={lockType ? 'pointer-events-none opacity-70' : ''}>
+        <div className="flex flex-col items-end justify-between sm:flex-row sm:items-center">
+          <div className={`w-full ${lockType ? 'pointer-events-none opacity-70' : ''}`}>
             <TypeSelector
               name="searchType"
               ariaLabel="리스트 유형 선택"
               value={searchType}
               options={typeOptions}
               onChange={handleTypeChange}
+              className='w-full sm:max-w-fit'
             />
           </div>
 
-          <div className="mb-6 flex items-center justify-between gap-1.5 px-1">
-            <div className="flex flex-col">
-              <span className="text-sm font-medium text-white">비밀글</span>
-            </div>
+          <div className="flex mt-2 items-center justify-between gap-1.5 px-1 sm:mt-0">
+            <p className="shrink-0 text-sm font-medium text-white">비밀글</p>
 
             <label className="relative inline-flex cursor-pointer items-center">
               <input

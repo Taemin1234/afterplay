@@ -98,22 +98,23 @@ export default async function MyPage({ searchParams }: TabProps) {
   ]
 
   return (
-    <section className="mx-auto max-w-7xl">
+    <section className="mx-auto w-full max-w-7xl">
       <ProfileInfo initialNickname={initialNickname} isOwner />
 
-      <section className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-4">
+      <section className="mt-6 grid grid-cols-1 gap-3 sm:mt-8 sm:grid-cols-2 sm:gap-4 xl:grid-cols-5">
         {summaryContent.map((cont) => (
           <SummaryCard key={cont.label} label={cont.label} value={cont.value} hint={cont.hint} icon={cont.icon} />
         ))}
       </section>
 
-      <section className="mt-10">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-2">
-          <nav className="flex items-center gap-6">
+      <section className="mt-8 sm:mt-10">
+        <div className="mb-5 border-b border-slate-800 pb-3 sm:mb-6 sm:pb-2">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            <nav className="-mx-1 flex items-center gap-4 overflow-x-auto px-1 pb-1 sm:mx-0 sm:gap-6 sm:overflow-visible sm:px-0 sm:pb-0">
             <Link
               href={createdTabHref}
               scroll={false}
-              className={`pb-2 text-base transition-colors ${
+              className={`shrink-0 whitespace-nowrap pb-2 text-sm transition-colors sm:text-base ${
                 activeTab === 'created'
                   ? 'border-b-2 border-neon-green font-semibold text-neon-green'
                   : 'text-gray-400 hover:text-gray-200'
@@ -124,7 +125,7 @@ export default async function MyPage({ searchParams }: TabProps) {
             <Link
               href={likedTabHref}
               scroll={false}
-              className={`pb-2 text-base transition-colors ${
+              className={`shrink-0 whitespace-nowrap pb-2 text-sm transition-colors sm:text-base ${
                 activeTab === 'liked'
                   ? 'border-b-2 border-neon-green font-semibold text-neon-green'
                   : 'text-gray-400 hover:text-gray-200'
@@ -135,7 +136,7 @@ export default async function MyPage({ searchParams }: TabProps) {
             <Link
               href={bookmarkedTabHref}
               scroll={false}
-              className={`pb-2 text-base transition-colors ${
+              className={`shrink-0 whitespace-nowrap pb-2 text-sm transition-colors sm:text-base ${
                 activeTab === 'bookmarked'
                   ? 'border-b-2 border-neon-green font-semibold text-neon-green'
                   : 'text-gray-400 hover:text-gray-200'
@@ -143,13 +144,14 @@ export default async function MyPage({ searchParams }: TabProps) {
             >
               북마크한 플리
             </Link>
-          </nav>
-          <Link
-            href="/createList"
-            className="inline-flex items-center rounded-md bg-neon-green px-3 py-2 text-sm font-semibold text-black transition-opacity hover:opacity-90"
-          >
-            새 플리 만들기
-          </Link>
+            </nav>
+            <Link
+              href="/createList"
+              className="hidden text-center rounded-md bg-neon-green px-3 py-2 text-sm font-semibold text-black transition-opacity hover:opacity-90 sm:w-auto sm:inline-block"
+            >
+              새 플리 만들기
+            </Link>
+          </div>
         </div>
 
         {activeTab === 'created' ? (
@@ -563,9 +565,9 @@ async function fetchBookmarkedItems(userId: string): Promise<MusicListItem[]> {
 
 function SummaryCard({ label, value, hint, icon }: { label: string; value: string; hint: string; icon:ReactNode; }) {
   return (
-    <article className="rounded-xl border border-slate-800 bg-slate-900/40 p-5">
-      <p className="flex items-center gap-1 text-sm text-gray-400">{icon}{label}</p>
-      <p className="mt-2 text-2xl font-bold text-white">{value}</p>
+    <article className="rounded-xl border border-slate-800 bg-slate-900/40 p-4 sm:p-5">
+      <p className="flex items-center gap-1 text-xs text-gray-400 sm:text-sm">{icon}{label}</p>
+      <p className="mt-2 text-xl font-bold text-white sm:text-2xl">{value}</p>
       <p className="mt-2 text-xs text-gray-500">{hint}</p>
     </article>
   );
@@ -573,12 +575,12 @@ function SummaryCard({ label, value, hint, icon }: { label: string; value: strin
 
 function EmptyState({title, description, ctaHref, ctaLabel,}: { title: string; description: string; ctaHref: string; ctaLabel: string;}) {
   return (
-    <div className="rounded-xl border border-dashed border-slate-700 bg-slate-900/30 px-6 py-14 text-center">
-      <h3 className="text-lg font-semibold text-white">{title}</h3>
+    <div className="rounded-xl border border-dashed border-slate-700 bg-slate-900/30 px-4 py-10 text-center sm:px-6 sm:py-14">
+      <h3 className="text-base font-semibold text-white sm:text-lg">{title}</h3>
       <p className="mt-2 text-sm text-gray-400">{description}</p>
       <Link
         href={ctaHref}
-        className="mt-5 inline-flex items-center rounded-md border border-neon-green/60 px-4 py-2 text-sm font-medium text-neon-green transition-colors hover:bg-neon-green/10"
+        className="mt-5 inline-flex w-full items-center justify-center rounded-md border border-neon-green/60 px-4 py-2 text-sm font-medium text-neon-green transition-colors hover:bg-neon-green/10 sm:w-auto"
       >
         {ctaLabel}
       </Link>

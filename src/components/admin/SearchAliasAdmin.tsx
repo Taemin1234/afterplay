@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import { useEffect, useState } from 'react';
+import Button from '../ui/atoms/Button';
 
 type MusicAliasType = 'TRACK_ARTIST' | 'TRACK_TITLE' | 'ALBUM_ARTIST' | 'ALBUM_TITLE';
 
@@ -175,13 +176,9 @@ export default function SearchAliasAdmin() {
           className='rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white'
         />
 
-        <button
-          type='submit'
-          disabled={isSaving}
-          className='rounded-md border border-[#39ff14]/40 bg-[#39ff14]/10 px-3 py-2 text-sm text-[#39ff14] disabled:opacity-50'
-        >
+        <Button type='submit' variant='outline' size='sm' disabled={isSaving} className='bg-[#39ff14]/10 justify-center  disabled:opacity-50'>
           {isSaving ? '저장 중...' : '별칭 추가'}
-        </button>
+        </Button>
       </form>
 
       {error ? <p className='text-sm text-red-300'>{error}</p> : null}

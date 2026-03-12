@@ -51,11 +51,11 @@ export async function POST(request: Request) {
     }
 
     if (canonical.length < 1 || alias.length < 1) {
-      return NextResponse.json({ error: 'canonical/alias is required' }, { status: 400 });
+      return NextResponse.json({ error: '항목을 채워주세요' }, { status: 400 });
     }
 
     if (canonical.toLowerCase() === alias.toLowerCase()) {
-      return NextResponse.json({ error: 'canonical and alias must be different' }, { status: 400 });
+      return NextResponse.json({ error: '원본과 별칭은 달라야합니다.' }, { status: 400 });
     }
 
     const created = await prisma.musicSearchAlias.create({

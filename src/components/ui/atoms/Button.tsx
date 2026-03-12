@@ -32,9 +32,9 @@ export default function Button({
   };
 
   const sizeStyles = {
-    sm: 'px-2 py-1 text-sm',
-    md: 'px-4 py-2 text-base',
-    lg: 'px-6 py-3 text-lg',
+    sm: 'px-2.5 py-1.5 text-xs sm:text-sm',
+    md: 'px-3 py-2 text-sm sm:px-4 sm:text-base',
+    lg: 'px-4 py-2.5 text-base sm:px-6 sm:py-3 sm:text-lg',
   };
 
   const roundedStyles = {
@@ -43,7 +43,7 @@ export default function Button({
     full: 'rounded-full',
   };
 
-  const classNames = `inline-flex items-center gap-2 transition-colors ${variantStyles[variant]} ${sizeStyles[size]} ${roundedStyles[rounded]} ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${className}`.trim();
+  const classNames = `inline-flex items-center justify-center gap-2 whitespace-nowrap transition-colors ${variantStyles[variant]} ${sizeStyles[size]} ${roundedStyles[rounded]} ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${className}`.trim();
 
   if (as === 'span') {
     return (

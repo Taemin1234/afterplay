@@ -163,24 +163,30 @@ export default function ListDetailClient({
       : null;
 
   return (
-    <section className="mx-auto w-full max-w-5xl space-y-6">
-      <article className="overflow-hidden rounded-2xl border border-slate-800/70 bg-gradient-to-b from-[#131c31] to-[#070c18] px-6 py-8 shadow-[0_24px_60px_rgba(0,0,0,0.45)]">
-        <header className="space-y-3 border-b border-slate-800/70 pb-4">
+    <section className="mx-auto w-full max-w-5xl space-y-4 sm:space-y-6">
+      <article className="overflow-hidden rounded-2xl border border-slate-800/70 bg-gradient-to-b from-[#131c31] to-[#070c18] px-4 py-6 shadow-[0_24px_60px_rgba(0,0,0,0.45)] sm:px-6 sm:py-8">
+        <header className="space-y-4 border-b border-slate-800/70 pb-4 sm:space-y-5">
           <div>
-            <div className="flex items-start justify-between gap-4">
-            {item.visibility === 'PRIVATE' ? <div className='mt-1'><LockKeyhole size={28}/></div> : null}
-              <h1 className="text-2xl font-bold text-white md:text-3xl flex-1">
-                {item.title}
-              </h1>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+              <div className="flex min-w-0 flex-1 items-start gap-2.5 sm:gap-3">
+                {item.visibility === 'PRIVATE' ? (
+                  <div className="mt-0.5 shrink-0">
+                    <LockKeyhole size={22} className="sm:h-7 sm:w-7" />
+                  </div>
+                ) : null}
+                <h1 className="min-w-0 flex-1 text-xl font-bold text-white sm:text-2xl md:text-3xl">
+                  {item.title}
+                </h1>
+              </div>
 
               {isOwner && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center justify-end gap-2 sm:w-auto sm:shrink-0">
                   <Button
                     variant="outline"
                     size="sm"
                     icon={<Pencil size={14} />}
                     onClick={handleGoEdit}
-                    className="border-white/15 text-gray-200 hover:bg-white/10"
+                    className="justify-center border-white/15 text-gray-200 hover:bg-white/10 sm:w-auto"
                   >
                     수정
                   </Button>
@@ -192,6 +198,7 @@ export default function ListDetailClient({
                     onClick={handleDelete}
                     disabled={isDeleting}
                     title="삭제 버튼"
+                    className="justify-center sm:w-auto"
                   >
                     삭제
                   </Button>
@@ -199,10 +206,10 @@ export default function ListDetailClient({
               )}
             </div>
 
-            <p className="mt-8 text-base whitespace-pre-line text-gray-300">{item.story}</p>
+            <p className="mt-5 whitespace-pre-line text-sm text-gray-300 sm:mt-6 sm:text-base">{item.story}</p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 mt-8">
+          <div className="mt-6 flex flex-wrap items-center gap-2 sm:mt-8">
             {item.tags.map((tag) => (
               <Tag key={tag} variant="neon">
                 #{tag}
@@ -210,8 +217,8 @@ export default function ListDetailClient({
             ))}
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-gray-400 sm:text-sm">
               <span>작성일 {formatDate(item.createdAt)}</span>
               {/* <span>조회수 {item.viewCount.toLocaleString()}</span> */}
               {authorHref ? (
@@ -227,7 +234,7 @@ export default function ListDetailClient({
               )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex gap-2 sm:w-auto sm:flex-wrap sm:items-center">
               <Button
                 variant="outline"
                 size="sm"
@@ -235,9 +242,9 @@ export default function ListDetailClient({
                 onClick={handleToggleLike}
                 disabled={!isLoggedIn || isLiking}
                 icon={viewerHasLiked ? <Heart size={16} fill="red" strokeWidth={0} /> : <Heart size={16} />}
-                className={`border-0 bg-white/5 hover:bg-white/10 ${viewerHasLiked ? 'text-red-300' : 'text-gray-300'}`}
+                className={`justify-center border-0 bg-white/5 text-xs hover:bg-white/10 sm:w-auto sm:text-sm ${viewerHasLiked ? 'text-red-300' : 'text-gray-300'}`}
               >
-                좋아요 {likesCount}
+                <span className='hidden sm:inline-block'>좋아요</span> {likesCount}
               </Button>
 
               <Button
@@ -247,9 +254,9 @@ export default function ListDetailClient({
                 onClick={handleToggleBookmark}
                 disabled={!isLoggedIn || isBookmarking}
                 icon={viewerHasBookmarked ? <Bookmark size={16} fill="#39ff14" strokeWidth={0} /> : <Bookmark size={16} />}
-                className={`border-0 bg-white/5 hover:bg-white/10 ${viewerHasBookmarked ? 'text-neon-green' : 'text-gray-300'}`}
+                className={`justify-center border-0 bg-white/5 text-xs hover:bg-white/10 sm:w-auto sm:text-sm ${viewerHasBookmarked ? 'text-neon-green' : 'text-gray-300'}`}
               >
-                북마크 {bookmarksCount}
+                <span className='hidden sm:inline-block'>북마크</span> {bookmarksCount}
               </Button>
 
               <Button
@@ -258,9 +265,9 @@ export default function ListDetailClient({
                 rounded="full"
                 onClick={goToTarget}
                 icon={<MessageCircle size={16} />}
-                className="border-0 bg-white/5 text-gray-300 hover:bg-white/10"
+                className="justify-center border-0 bg-white/5 text-xs text-gray-300 hover:bg-white/10 sm:w-auto sm:text-sm"
               >
-                댓글 {commentsCount}
+                <span className='hidden sm:inline-block'>댓글</span> {commentsCount}
               </Button>
 
               <Button
@@ -269,31 +276,31 @@ export default function ListDetailClient({
                 rounded="full"
                 onClick={handleShare}
                 icon={<Share2 size={16} />}
-                className="border-0 bg-white/5 text-gray-300 hover:bg-white/10"
+                className="justify-center border-0 bg-white/5 text-xs text-gray-300 hover:bg-white/10 sm:w-auto sm:text-sm"
               >
-                공유하기
+                <span className='hidden sm:inline-block'>공유하기</span>
               </Button>
             </div>
           </div>
         </header>
 
-        <ol className="mt-4 space-y-2">
+        <ol className="mt-4 space-y-2 sm:mt-5">
           {item.musicItems.map((music) => (
             <li
               key={`${music.id}-${music.order}`}
-              className="flex items-center gap-3 rounded-lg border border-slate-800/70 bg-black/15 p-2"
+              className="flex items-center gap-2 rounded-lg border border-slate-800/70 bg-black/15 p-2 sm:gap-3 sm:p-2.5"
             >
-              <span className="w-6 text-center text-xs text-gray-400">{music.order + 1}</span>
+              <span className="w-5 shrink-0 text-center text-xs text-gray-400 sm:w-6">{music.order + 1}</span>
               <Image
                 src={music.albumImageUrl}
-                width={56}
-                height={56}
+                width={48}
+                height={48}
                 alt={music.title}
-                className="rounded-md object-cover"
+                className="h-12 w-12 shrink-0 rounded-md object-cover sm:h-14 sm:w-14"
               />
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-white">{music.title}</p>
-                <p className="truncate text-xs text-gray-400">{music.artist}</p>
+                <p className="text-sm font-medium text-white">{music.title}</p>
+                <p className="text-xs text-gray-400">{music.artist}</p>
               </div>
             </li>
           ))}

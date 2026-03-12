@@ -10,11 +10,11 @@ interface IconButtonProps {
 export default function IconButton({ variant = 'primary', icon, disabled = false, onClick, as = 'button', className = ""}: IconButtonProps) {
 
     const variantStyles = {
-        primary: 'text-slate-400 hover:text-white',
-        bg: 'w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-white border border-slate-600',
+        primary: 'inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-400 hover:text-white sm:h-10 sm:w-10',
+        bg: 'inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-600 bg-slate-700 text-white sm:h-10 sm:w-10',
     };
 
-    const classNames = `cursor-pointer transition-colors ${variantStyles[variant]} ${className}`.trim();
+    const classNames = `transition-colors ${variantStyles[variant]} ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${className}`.trim();
 
     if (as === 'span') {
         return (

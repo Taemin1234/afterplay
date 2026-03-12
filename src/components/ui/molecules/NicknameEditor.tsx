@@ -69,14 +69,15 @@ export default function NicknameEditor({ initialNickname, isOwner = false }: Nic
   };
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex min-w-0 items-center gap-2 sm:gap-3">
       {isEditing ? (
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
           <Input
             variant="form"
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
             placeholder="닉네임을 입력해주세요."
+            className="w-36 sm:w-44"
           />
           <IconButton
             icon={<Check className="text-neon-green" size={20} />}
@@ -93,8 +94,8 @@ export default function NicknameEditor({ initialNickname, isOwner = false }: Nic
         </div>
       ) : (
         <>
-          <p className="text-2xl font-bold text-white">{nickname}</p>
-          {isOwner && <IconButton icon={<Pencil size={18} />} onClick={() => setIsEditing(true)} />}
+          <p className="truncate text-base font-bold text-white sm:text-lg md:text-2xl">{nickname}</p>
+          {isOwner && <IconButton icon={<Pencil className='h-3.5 w-3.5 sm:h-4 sm:w-4' />} onClick={() => setIsEditing(true)} />}
         </>
       )}
     </div>

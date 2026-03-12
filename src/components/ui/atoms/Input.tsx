@@ -2,19 +2,19 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
     variant?: 'form' | 'none';
 }
 
-export default function Input({variant='form', ...props } : InputProps) {
+export default function Input({ variant = 'form', className = '', type = 'text', ...props }: InputProps) {
 
     const variantStyles = {
-        form: 'bg-black border border-gray-800 p-3 rounded-md outline-none focus:border-neon-green',
-        none : 'focus:outline-none transition h-full flex-1 bg-transparent outline-none placeholder:text-slate-500'
+        form: 'rounded-md border border-gray-800 bg-black px-3 py-2.5 text-sm outline-none focus:border-neon-green sm:text-base',
+        none: 'h-full flex-1 bg-transparent text-sm outline-none transition placeholder:text-slate-500 focus:outline-none sm:text-base'
     };
 
-    const className = `w-full text-white p-0.5 ${variantStyles[variant]}`;
+    const composedClassName = `w-full text-white transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${variantStyles[variant]} ${className}`.trim();
 
     return (
         <input 
-            type="text"
-            className={className}
+            type={type}
+            className={composedClassName}
             autoFocus={false}
             {...props}
         />
