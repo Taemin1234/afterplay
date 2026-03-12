@@ -6,18 +6,12 @@ import MusicListBrowser from '@/components/ui/organisms/MusicListBrowser';
 import MusicListGrid from '@/components/ui/organisms/MusicListGrid';
 import MusicListGridSkeleton from '@/components/layout/MusicListGridSkeleton';
 import prisma from '@/lib/prisma';
+import { getUserSummaryStats } from '@/lib/dashboard-stats';
 import { createSupabaseServerClient } from '@/utils/supabase/server';
-import { Heart, ListMusic, Eye, LockOpen, ThumbsUp } from 'lucide-react';
 import type { MusicListItem } from '@/types';
-import type { ReactNode } from "react";
 
 interface TabProps {
   searchParams: Promise<{ tab?: string }>;
-}
-
-function formatPercent(value: number): string {
-  if (Number.isNaN(value) || !Number.isFinite(value)) return '0%';
-  return `${Math.round(value)}%`;
 }
 
 export default async function MyPage({ searchParams }: TabProps) {
@@ -40,73 +34,36 @@ export default async function MyPage({ searchParams }: TabProps) {
 
   const googleName = user.user_metadata?.full_name || user.user_metadata?.name;
   const initialNickname = me?.nickname || googleName || '익명';
-
-  const [
-    playlistTotalCount,
-    albumListTotalCount,
-    publicPlaylistCount,
-    publicAlbumListCount,
-    receivedPlaylistLikeCount,
-    receivedAlbumListLikeCount,
-    PlaylistViewCount,
-    AlbumListViewCount,
-  ] = await Promise.all([
-    prisma.playlist.count({
-      where: { authorId: user.id, deletedAt: null },
-    }),
-    prisma.albumList.count({
-      where: { authorId: user.id, deletedAt: null },
-    }),
-    prisma.playlist.count({
-      where: { authorId: user.id, deletedAt: null, visibility: 'PUBLIC' },
-    }),
-    prisma.albumList.count({
-      where: { authorId: user.id, deletedAt: null, visibility: 'PUBLIC' },
-    }),
-    prisma.playlistLike.count({
-      where: { playlist: { authorId: user.id, deletedAt: null } },
-    }),
-    prisma.albumListLike.count({
-      where: { albumList: { authorId: user.id, deletedAt: null } },
-    }),
-    prisma.playlistViewEvent.count({
-        where: { playlist: { authorId: user.id, deletedAt: null } },
-      }),
-    prisma.albumListViewEvent.count({
-    where: { albumList: { authorId: user.id, deletedAt: null } },
-    }),
-  ]);
-
-  const createdCount = playlistTotalCount + albumListTotalCount;
-  const publicCount = publicPlaylistCount + publicAlbumListCount;
-  const totalReceivedLikes = receivedPlaylistLikeCount + receivedAlbumListLikeCount;
-  const totalViewCount = PlaylistViewCount + AlbumListViewCount;
-
-  const publicRatio = createdCount > 0 ? (publicCount / createdCount) * 100 : 0;
-  const viewLikedRatio = totalReceivedLikes || totalViewCount > 0 ? (totalReceivedLikes / totalViewCount) * 100 : 0;
+  const summaryStats = await getUserSummaryStats(user.id);
+  const createdCount = summaryStats.createdCount;
 
   const createdTabHref = '/mypage?tab=created';
   const likedTabHref = '/mypage?tab=liked';
   const bookmarkedTabHref = '/mypage?tab=bookmarked';
 
-  const summaryContent = [
-    {label: '내 플리', hint: '직접 만든 플레이리스트 + 앨범리스트' , value : createdCount.toLocaleString(), icon : <ListMusic size={16}/>},
-    {label: '받은 좋아요', hint: '내 플리에 받은 전체 좋아요' , value : totalReceivedLikes.toLocaleString(), icon : <Heart size={16}/>},
-    {label: '전체 조회수', hint: '내 플리 전체 조회수' , value : totalViewCount.toLocaleString(), icon : <Eye size={16}/>},
-    {label: '조회수 대비 좋아요 비율', hint: '조회수 대비 좋아요 비율' , value : formatPercent(viewLikedRatio), icon : <ThumbsUp size={16}/>},
-    {label: '공개 비율', hint: `${publicCount.toLocaleString()} / ${createdCount.toLocaleString()}` , value : formatPercent(publicRatio), icon : <LockOpen size={16}/>},
-  ]
-
   return (
     <section className="mx-auto w-full max-w-7xl">
       <ProfileInfo initialNickname={initialNickname} isOwner />
-
-      <section className="mt-6 grid grid-cols-1 gap-3 sm:mt-8 sm:grid-cols-2 sm:gap-4 xl:grid-cols-5">
-        {summaryContent.map((cont) => (
-          <SummaryCard key={cont.label} label={cont.label} value={cont.value} hint={cont.hint} icon={cont.icon} />
-        ))}
-      </section>
-
+      <Link
+        href="/mypage/dashboard"
+        className="group mt-4 inline-flex justify-center w-full items-center gap-2 rounded-lg border border-neon-green/35 bg-[#0b1020] px-3.5 py-2.5 text-sm font-semibold text-neon-green shadow-[0_10px_24px_rgba(0,0,0,0.35)] transition-all duration-300 hover:-translate-y-0.5 hover:border-neon-green/60 hover:bg-[#11192e] md:w-fit"
+      >
+        <span>대시보드</span>
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-0.5"
+        >
+          <path
+            d="M7 17L17 7M17 7H9M17 7V15"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </Link>
       <section className="mt-8 sm:mt-10">
         <div className="mb-5 border-b border-slate-800 pb-3 sm:mb-6 sm:pb-2">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
@@ -561,16 +518,6 @@ async function fetchBookmarkedItems(userId: string): Promise<MusicListItem[]> {
       tags: item.tags,
       previewImages: item.previewImages,
     }));
-}
-
-function SummaryCard({ label, value, hint, icon }: { label: string; value: string; hint: string; icon:ReactNode; }) {
-  return (
-    <article className="rounded-xl border border-slate-800 bg-slate-900/40 p-4 sm:p-5">
-      <p className="flex items-center gap-1 text-xs text-gray-400 sm:text-sm">{icon}{label}</p>
-      <p className="mt-2 text-xl font-bold text-white sm:text-2xl">{value}</p>
-      <p className="mt-2 text-xs text-gray-500">{hint}</p>
-    </article>
-  );
 }
 
 function EmptyState({title, description, ctaHref, ctaLabel,}: { title: string; description: string; ctaHref: string; ctaLabel: string;}) {
