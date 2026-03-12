@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Disc, LockKeyhole, LockKeyholeOpen, Music, Trash2, X } from 'lucide-react';
+import { AnimatePresence, motion, Reorder } from 'framer-motion';
+import { Disc, GripVertical, LockKeyhole, LockKeyholeOpen, Music, Trash2, X } from 'lucide-react';
 import Image from 'next/image';
 import Button from '@/components/ui/atoms/Button';
 import IconButton from '@/components/ui/atoms/IconButton';
@@ -315,33 +315,42 @@ export default function MusicListForm({
               <SearchBar rounded="md" variant="form" mode="ui" onClick={handleToggleModal} />
 
               {selectedMusic.length > 0 && (
-                <motion.ul
+                <motion.div
                   initial={{ scale: 0.95, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  className="mt-2 flex flex-col gap-2"
+                  className="mt-2"
                 >
-                  {selectedMusic.map((musicItem) => (
-                    <li
-                      key={musicItem.id}
-                      className="flex items-center justify-between rounded-md border border-[#1DB954]/30 bg-[#1DB954]/10 p-3"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Image
-                          src={musicItem.albumImageUrl}
-                          width={48}
-                          height={48}
-                          className="rounded shadow-lg"
-                          alt={musicItem.name}
-                        />
-                        <div>
-                          <div className="text-sm font-bold text-white">{musicItem.name}</div>
-                          <div className="text-xs text-gray-400">{musicItem.artist}</div>
+                  <Reorder.Group
+                    axis="y"
+                    values={selectedMusic}
+                    onReorder={setSelectedMusic}
+                    className="flex flex-col gap-2"
+                  >
+                    {selectedMusic.map((musicItem) => (
+                      <Reorder.Item
+                        key={musicItem.id}
+                        value={musicItem}
+                        className="flex cursor-grab items-center justify-between rounded-md border border-[#1DB954]/30 bg-[#1DB954]/10 p-3 active:cursor-grabbing"
+                      >
+                        <div className="flex min-w-0 items-center gap-3">
+                          <GripVertical size={16} className="shrink-0 text-gray-400" />
+                          <Image
+                            src={musicItem.albumImageUrl}
+                            width={48}
+                            height={48}
+                            className="rounded shadow-lg"
+                            alt={musicItem.name}
+                          />
+                          <div className="min-w-0">
+                            <div className="truncate text-sm font-bold text-white">{musicItem.name}</div>
+                            <div className="truncate text-xs text-gray-400">{musicItem.artist}</div>
+                          </div>
                         </div>
-                      </div>
-                      <IconButton icon={<Trash2 size={18} />} onClick={() => handleDeleteMusic(musicItem.id)} />
-                    </li>
-                  ))}
-                </motion.ul>
+                        <IconButton icon={<Trash2 size={18} />} onClick={() => handleDeleteMusic(musicItem.id)} />
+                      </Reorder.Item>
+                    ))}
+                  </Reorder.Group>
+                </motion.div>
               )}
             </div>
 
