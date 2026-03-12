@@ -1,5 +1,6 @@
 import Header from '@/components/layout/Header';
 import MobileBottomNav from '@/components/layout/MobileBottomNav';
+import ScrollToTopButton from '@/components/layout/ScrollToTopButton';
 import prisma from '@/lib/prisma';
 import { createSupabaseServerClient } from '@/utils/supabase/server';
 
@@ -31,6 +32,7 @@ export default async function MainLayout({
         {children}
         {modal}
       </main>
+      <ScrollToTopButton />
       <MobileBottomNav user={user} nickname={nickname} />
       {/* <Footer /> */}
     </>
