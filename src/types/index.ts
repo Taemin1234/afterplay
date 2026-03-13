@@ -1,5 +1,6 @@
 export type FeedKind = "PLAYLIST" | "ALBUM_LIST";
 export type ListType = 'all' | 'playlist' | 'albumlist';
+export type ListSortOption = 'latest' | 'likes';
 export type VisibilityScope = 'all' | 'public' | 'private';
 
 export type MusicListItem = {

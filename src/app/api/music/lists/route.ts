@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fetchListItems, parseCursor, parseLimit, parseListType } from '@/lib/music-lists';
+import { fetchListItems, parseCursor, parseLimit, parseLikesCursor, parseListSort, parseListType } from '@/lib/music-lists';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -9,13 +9,18 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
 
     const type = parseListType(searchParams.get('type'));
+    const sort = parseListSort(searchParams.get('sort'));
     const limit = parseLimit(searchParams.get('limit'));
-    const cursor = parseCursor(searchParams.get('cursor'));
+    const rawCursor = searchParams.get('cursor');
+    const cursor = sort === 'latest' ? parseCursor(rawCursor) : null;
+    const likesOffset = sort === 'likes' ? parseLikesCursor(rawCursor) : 0;
 
     const result = await fetchListItems({
       type,
+      sort,
       limit,
       cursor,
+      likesOffset,
       visibility: 'public',
     });
 

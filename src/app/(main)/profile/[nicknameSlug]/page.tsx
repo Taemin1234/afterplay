@@ -37,7 +37,7 @@ export default async function UserProfile({ params }: { params: Promise<{ nickna
   const isOwner = Boolean(user?.id && user.id === profileUser.id);
 
   // 유저의 모든 플리 가져오기
-  const { items } = await fetchListItems({
+  const { items, nextCursor } = await fetchListItems({
     type: 'all',
     limit: 16,
     cursor: null,
@@ -53,6 +53,7 @@ export default async function UserProfile({ params }: { params: Promise<{ nickna
         <MusicListBrowser
           userId={profileUser.id}
           initialItems={items}
+          initialNextCursor={nextCursor}
           initialType="all"
           limit={16}
           visibility={isOwner ? 'all' : 'public'}

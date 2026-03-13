@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma';
-import type { FeedKind, ListType, VisibilityScope } from "@/types";
+import type { FeedKind, ListSortOption, ListType, VisibilityScope } from "@/types";
 
 type FeedCursor = {
   createdAt: string;
@@ -8,8 +8,10 @@ type FeedCursor = {
 
 type QueryOptions = {
   type: ListType;
+  sort?: ListSortOption;
   limit: number;
   cursor: FeedCursor | null;
+  likesOffset?: number;
   feedUserId?: string;
   authorId?: string;
   visibility: VisibilityScope;
@@ -104,13 +106,256 @@ export function parseCursor(raw: string | null): FeedCursor | null {
   return decodeCursor(raw);
 }
 
+export function parseListSort(raw: string | null): ListSortOption {
+  if (!raw) return 'latest';
+  if (raw === 'latest' || raw === 'likes') return raw;
+  throw new Error('sort must be one of latest, likes');
+}
+
+export function parseLikesCursor(raw: string | null): number {
+  if (!raw) return 0;
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n < 0) {
+    throw new Error('likes cursor must be a non-negative integer');
+  }
+  return n;
+}
+
+function encodeLikesCursor(offset: number): string {
+  return String(offset);
+}
+
 export function parseVisibilityScope(raw: string | null): VisibilityScope {
   if (!raw) return 'all';
   if (raw === 'all' || raw === 'public' || raw === 'private') return raw;
   throw new Error('visibility must be one of all, public, private');
 }
 
+function compareByLikesThenRecent(a: ResponseItem, b: ResponseItem): number {
+  if (b.likesCount !== a.likesCount) return b.likesCount - a.likesCount;
+
+  const timeDiff = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  if (timeDiff !== 0) return timeDiff;
+
+  return b.id.localeCompare(a.id);
+}
+
+async function fetchListItemsByLikes(options: QueryOptions): Promise<ResponsePayload> {
+  const playlistWhere: Record<string, unknown> = { deletedAt: null };
+  const albumListWhere: Record<string, unknown> = { deletedAt: null };
+  const offset = options.likesOffset ?? 0;
+  const scopedAuthorId = options.authorId ?? options.feedUserId;
+
+  if (scopedAuthorId) {
+    playlistWhere.authorId = scopedAuthorId;
+    albumListWhere.authorId = scopedAuthorId;
+  }
+  if (options.visibility === 'public') {
+    playlistWhere.visibility = 'PUBLIC';
+    albumListWhere.visibility = 'PUBLIC';
+  }
+  if (options.visibility === 'private') {
+    playlistWhere.visibility = 'PRIVATE';
+    albumListWhere.visibility = 'PRIVATE';
+  }
+
+  const orderBy = [
+    { likes: { _count: 'desc' as const } },
+    { createdAt: 'desc' as const },
+    { id: 'desc' as const },
+  ];
+
+  if (options.type === 'playlist') {
+    const rows = await prisma.playlist.findMany({
+      where: playlistWhere,
+      orderBy,
+      skip: offset,
+      take: options.limit + 1,
+      select: {
+        id: true,
+        title: true,
+        story: true,
+        visibility: true,
+        authorId: true,
+        createdAt: true,
+        author: { select: { nickname: true } },
+        _count: { select: { likes: true, comments: true } },
+        tags: { select: { tag: { select: { name: true } } } },
+        tracks: {
+          orderBy: { order: 'asc' },
+          take: 3,
+          select: { track: { select: { albumCover: true } } },
+        },
+      },
+    });
+
+    const hasNext = rows.length > options.limit;
+    const page = hasNext ? rows.slice(0, options.limit) : rows;
+    return {
+      items: page.map((row) => ({
+        kind: 'PLAYLIST',
+        id: row.id,
+        title: row.title,
+        story: row.story,
+        visibility: row.visibility,
+        authorId: row.authorId,
+        authorNickname: row.author.nickname,
+        createdAt: row.createdAt.toISOString(),
+        likesCount: row._count.likes,
+        commentsCount: row._count.comments,
+        tags: row.tags.map((tagRow) => tagRow.tag.name),
+        previewImages: row.tracks
+          .map((entry) => entry.track.albumCover)
+          .filter((image): image is string => Boolean(image)),
+      })),
+      nextCursor: hasNext ? encodeLikesCursor(offset + options.limit) : null,
+    };
+  }
+
+  if (options.type === 'albumlist') {
+    const rows = await prisma.albumList.findMany({
+      where: albumListWhere,
+      orderBy,
+      skip: offset,
+      take: options.limit + 1,
+      select: {
+        id: true,
+        title: true,
+        story: true,
+        visibility: true,
+        authorId: true,
+        createdAt: true,
+        author: { select: { nickname: true } },
+        _count: { select: { likes: true, comments: true } },
+        tags: { select: { tag: { select: { name: true } } } },
+        albums: {
+          orderBy: { order: 'asc' },
+          take: 3,
+          select: { album: { select: { coverImage: true } } },
+        },
+      },
+    });
+
+    const hasNext = rows.length > options.limit;
+    const page = hasNext ? rows.slice(0, options.limit) : rows;
+    return {
+      items: page.map((row) => ({
+        kind: 'ALBUM_LIST',
+        id: row.id,
+        title: row.title,
+        story: row.story,
+        visibility: row.visibility,
+        authorId: row.authorId,
+        authorNickname: row.author.nickname,
+        createdAt: row.createdAt.toISOString(),
+        likesCount: row._count.likes,
+        commentsCount: row._count.comments,
+        tags: row.tags.map((tagRow) => tagRow.tag.name),
+        previewImages: row.albums
+          .map((entry) => entry.album.coverImage)
+          .filter((image): image is string => Boolean(image)),
+      })),
+      nextCursor: hasNext ? encodeLikesCursor(offset + options.limit) : null,
+    };
+  }
+
+  const mergedTake = offset + options.limit + 1;
+  const [playlistRows, albumListRows] = await Promise.all([
+    prisma.playlist.findMany({
+      where: playlistWhere,
+      orderBy,
+      take: mergedTake,
+      select: {
+        id: true,
+        title: true,
+        story: true,
+        visibility: true,
+        authorId: true,
+        createdAt: true,
+        author: { select: { nickname: true } },
+        _count: { select: { likes: true, comments: true } },
+        tags: { select: { tag: { select: { name: true } } } },
+        tracks: {
+          orderBy: { order: 'asc' },
+          take: 3,
+          select: { track: { select: { albumCover: true } } },
+        },
+      },
+    }),
+    prisma.albumList.findMany({
+      where: albumListWhere,
+      orderBy,
+      take: mergedTake,
+      select: {
+        id: true,
+        title: true,
+        story: true,
+        visibility: true,
+        authorId: true,
+        createdAt: true,
+        author: { select: { nickname: true } },
+        _count: { select: { likes: true, comments: true } },
+        tags: { select: { tag: { select: { name: true } } } },
+        albums: {
+          orderBy: { order: 'asc' },
+          take: 3,
+          select: { album: { select: { coverImage: true } } },
+        },
+      },
+    }),
+  ]);
+
+  const merged: ResponseItem[] = [
+    ...playlistRows.map((row) => ({
+      kind: 'PLAYLIST' as const,
+      id: row.id,
+      title: row.title,
+      story: row.story,
+      visibility: row.visibility,
+      authorId: row.authorId,
+      authorNickname: row.author.nickname,
+      createdAt: row.createdAt.toISOString(),
+      likesCount: row._count.likes,
+      commentsCount: row._count.comments,
+      tags: row.tags.map((tagRow) => tagRow.tag.name),
+      previewImages: row.tracks
+        .map((entry) => entry.track.albumCover)
+        .filter((image): image is string => Boolean(image)),
+    })),
+    ...albumListRows.map((row) => ({
+      kind: 'ALBUM_LIST' as const,
+      id: row.id,
+      title: row.title,
+      story: row.story,
+      visibility: row.visibility,
+      authorId: row.authorId,
+      authorNickname: row.author.nickname,
+      createdAt: row.createdAt.toISOString(),
+      likesCount: row._count.likes,
+      commentsCount: row._count.comments,
+      tags: row.tags.map((tagRow) => tagRow.tag.name),
+      previewImages: row.albums
+        .map((entry) => entry.album.coverImage)
+        .filter((image): image is string => Boolean(image)),
+    })),
+  ].sort(compareByLikesThenRecent);
+
+  const pageWithExtra = merged.slice(offset, offset + options.limit + 1);
+  const hasNext = pageWithExtra.length > options.limit;
+  const page = hasNext ? pageWithExtra.slice(0, options.limit) : pageWithExtra;
+
+  return {
+    items: page,
+    nextCursor: hasNext ? encodeLikesCursor(offset + options.limit) : null,
+  };
+}
+
 export async function fetchListItems(options: QueryOptions): Promise<ResponsePayload> {
+  const sort = options.sort ?? 'latest';
+  if (sort === 'likes') {
+    return fetchListItemsByLikes(options);
+  }
+
   const kind = toItemKind(options.type);
   const baseFeedWhere: Record<string, unknown> = {};
 

@@ -4,6 +4,8 @@ import {
   fetchListItems,
   parseCursor,
   parseLimit,
+  parseLikesCursor,
+  parseListSort,
   parseListType,
   parseVisibilityScope,
 } from '@/lib/music-lists';
@@ -26,16 +28,21 @@ export async function GET(request: Request, context: RouteContext) {
 
     const { searchParams } = new URL(request.url);
     const type = parseListType(searchParams.get('type'));
+    const sort = parseListSort(searchParams.get('sort'));
     const limit = parseLimit(searchParams.get('limit'));
-    const cursor = parseCursor(searchParams.get('cursor'));
+    const rawCursor = searchParams.get('cursor');
+    const cursor = sort === 'latest' ? parseCursor(rawCursor) : null;
+    const likesOffset = sort === 'likes' ? parseLikesCursor(rawCursor) : 0;
     const requestedVisibility = parseVisibilityScope(searchParams.get('visibility'));
 
     // Public-only requests can skip auth checks.
     if (requestedVisibility === 'public') {
       const result = await fetchListItems({
         type,
+        sort,
         limit,
         cursor,
+        likesOffset,
         feedUserId: userId,
         authorId: userId,
         visibility: 'public',
@@ -59,8 +66,10 @@ export async function GET(request: Request, context: RouteContext) {
 
     const result = await fetchListItems({
       type,
+      sort,
       limit,
       cursor,
+      likesOffset,
       feedUserId: userId,
       authorId: userId,
       visibility,
