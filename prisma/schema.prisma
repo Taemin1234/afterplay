@@ -39,6 +39,7 @@ model User {
   nickname  String?  @unique
   nicknameSlug String? @unique
   avatarUrl String?
+  isDeletedPlaceholder Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

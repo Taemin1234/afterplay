@@ -1,0 +1,2 @@
+ALTER TABLE "User"
+ADD COLUMN "isDeletedPlaceholder" BOOLEAN NOT NULL DEFAULT false;

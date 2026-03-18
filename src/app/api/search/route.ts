@@ -345,6 +345,7 @@ export async function GET(request: Request) {
       prisma.user.findMany({
         where: {
           deletedAt: null,
+          isDeletedPlaceholder: false,
           nickname: {
             contains: query,
             mode: 'insensitive',
@@ -394,3 +395,4 @@ export async function GET(request: Request) {
     users: userItems,
   });
 }
+

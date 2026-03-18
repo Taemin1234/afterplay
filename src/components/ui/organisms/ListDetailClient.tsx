@@ -224,12 +224,12 @@ export default function ListDetailClient({
               {authorHref ? (
                 <Link href={authorHref} className="inline-flex items-center gap-1 underline">
                   <User size={14} />
-                  {item.author.nickname ?? '익명'}
+                  {item.author.nickname ?? '탈퇴한 사용자'}
                 </Link>
               ) : (
                 <span className="inline-flex items-center gap-1">
                   <User size={14} />
-                  {item.author.nickname ?? '익명'}
+                  {item.author.nickname ?? '탈퇴한 사용자'}
                 </span>
               )}
             </div>

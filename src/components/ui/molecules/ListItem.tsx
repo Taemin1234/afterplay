@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -35,7 +35,7 @@ export default function ListItem({ item }: ListItemProps) {
             <Tag variant="subtle">{item.kind === "PLAYLIST" ? "PLAYLIST" : "ALBUMLIST"}</Tag>
             <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
               <span className="max-w-[8rem] truncate text-xs text-gray-400 sm:max-w-[10rem] sm:text-sm">
-                By {item.authorNickname ?? "익명"}
+                By {item.authorNickname ?? '탈퇴한 사용자'}
               </span>
               {item.visibility === "PRIVATE" ? (
                 <div className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-slate-600/60 bg-slate-700/70 text-white">
@@ -132,3 +132,4 @@ export default function ListItem({ item }: ListItemProps) {
     </li>
   );
 }
+

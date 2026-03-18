@@ -5,6 +5,7 @@ import ProfileInfo from '@/components/ui/organisms/ProfileInfo';
 import MusicListBrowser from '@/components/ui/organisms/MusicListBrowser';
 import MusicListGrid from '@/components/ui/organisms/MusicListGrid';
 import MusicListGridSkeleton from '@/components/layout/MusicListGridSkeleton';
+import AccountDeletionButton from '@/components/ui/organisms/AccountDeletionButton';
 import prisma from '@/lib/prisma';
 import { getUserSummaryStats } from '@/lib/dashboard-stats';
 import { createSupabaseServerClient } from '@/utils/supabase/server';
@@ -64,6 +65,7 @@ export default async function MyPage({ searchParams }: TabProps) {
           />
         </svg>
       </Link>
+      <AccountDeletionButton />
       <section className="mt-8 sm:mt-10">
         <div className="mb-5 border-b border-slate-800 pb-3 sm:mb-6 sm:pb-2">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">

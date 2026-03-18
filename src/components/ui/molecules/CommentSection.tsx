@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -216,7 +216,7 @@ export default function CommentSection({
         {comments.map((comment) => (
           <li key={comment.id} className="rounded-lg border border-slate-800/80 bg-black/20 p-3">
             <div className="flex items-center justify-between text-xs text-gray-400">
-              <span>{comment.user.nickname ?? '익명'}</span>
+              <span>{comment.user.nickname ?? '탈퇴한 사용자'}</span>
               <span className="inline-flex items-center gap-2">
                 {formatDate(comment.createdAt)}
                 {isEditedComment(comment) && (

@@ -69,7 +69,7 @@ function SearchPostList({ items }: { items: MusicListItem[] }) {
                   </span>
                 ))}
               </div>
-              <p className='mt-3 text-xs text-slate-400'>작성자: {item.authorNickname ?? '익명'}</p>
+              <p className='mt-3 text-xs text-slate-400'>작성자: {item.authorNickname ?? '탈퇴한 사용자'}</p>
             </Link>
           </li>
         );
