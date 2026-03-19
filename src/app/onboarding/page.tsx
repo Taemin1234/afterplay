@@ -1,7 +1,7 @@
-﻿'use client';
+'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Disc3, Sparkles } from 'lucide-react';
 
 const NICKNAME_MAX_UNITS = 16;
@@ -28,10 +28,19 @@ function clampNicknameByUnits(value: string, maxUnits: number) {
   return result;
 }
 
+function toSafeNext(nextParam: string | null): string {
+  if (!nextParam) return '/';
+  if (!nextParam.startsWith('/')) return '/';
+  if (nextParam.startsWith('//')) return '/';
+  return nextParam;
+}
+
 export default function OnboardingPage() {
   const [nickname, setNickname] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const safeNext = useMemo(() => toSafeNext(searchParams.get('next')), [searchParams]);
   const nicknameUnits = getNicknameUnits(nickname);
 
   const getNicknameErrorMessage = (error?: string) => {
@@ -53,7 +62,7 @@ export default function OnboardingPage() {
 
       if (res.ok) {
         alert('가입을 축하합니다!');
-        router.push('/');
+        router.push(safeNext);
       } else {
         const data = await res.json();
         alert(getNicknameErrorMessage(data?.error));
@@ -118,3 +127,4 @@ export default function OnboardingPage() {
     </main>
   );
 }
+

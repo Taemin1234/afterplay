@@ -1,21 +1,50 @@
 'use client';
 
 import Image from 'next/image';
+import { useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 
+function toSafeNext(nextParam: string | null): string {
+  if (!nextParam) return '/';
+  if (!nextParam.startsWith('/')) return '/';
+  if (nextParam.startsWith('//')) return '/';
+  return nextParam;
+}
+
+function getLoginErrorMessage(code: string | null): string | null {
+  if (code === 'oauth_provider_error') return '소셜 로그인 제공자에서 인증을 완료하지 못했습니다.';
+  if (code === 'oauth_code_missing') return '인증 코드가 전달되지 않았습니다. 다시 로그인해주세요.';
+  if (code === 'oauth_callback_failed') return '로그인 세션 생성에 실패했습니다. 다시 시도해주세요.';
+  if (code === 'email_not_available') return '이 소셜 계정에서 이메일을 확인할 수 없습니다. 다른 계정으로 시도해주세요.';
+  if (code === 'email_already_registered') return '이미 다른 로그인 방식으로 가입된 이메일입니다. 기존 방식으로 로그인해주세요.';
+  return null;
+}
+
 export default function LoginPage() {
+  const searchParams = useSearchParams();
+  const safeNext = useMemo(() => toSafeNext(searchParams.get('next')), [searchParams]);
+  const errorCode = searchParams.get('error');
+  const errorDetail = searchParams.get('detail');
+  const loginError = useMemo(() => getLoginErrorMessage(errorCode), [errorCode]);
+
   const handleOAuthLogin = async (provider: 'google' | 'spotify') => {
     const supabase = createClient();
+    const callbackUrl = new URL('/auth/callback', window.location.origin);
+
+    if (safeNext !== '/') {
+      callbackUrl.searchParams.set('next', safeNext);
+    }
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        // 로그인 성공 후 돌아올 주소 (환경변수로 관리)
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: callbackUrl.toString(),
       },
     });
 
     if (error) {
-      console.error(`${provider} 로그인 에러:`, error.message);
+      console.error(`${provider} login error:`, error.message);
       alert('로그인 중 오류가 발생했습니다.');
     }
   };
@@ -27,8 +56,15 @@ export default function LoginPage() {
           <h1 className="text-3xl font-bold tracking-tight text-white mb-2">
             After<span className="text-[#39ff14]">Play</span>
           </h1>
-          <p className="text-sm text-gray-400">당신만의 플레이리스트를 만들고 공유해 보세요.</p>
+          <p className="text-sm text-gray-400">나만의 플레이리스트를 만들고 공유해보세요.</p>
         </div>
+
+        {loginError ? (
+          <div className="mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+            <p>{loginError}</p>
+            {errorDetail ? <p className="mt-1 break-words text-xs text-red-200/90">원인: {errorDetail}</p> : null}
+          </div>
+        ) : null}
 
         <button
           onClick={() => handleOAuthLogin('google')}
@@ -56,9 +92,7 @@ export default function LoginPage() {
           Spotify 계정으로 계속하기
         </button>
 
-        <p className="mt-4 text-[14px] text-gray-500 text-center">
-          Google 또는 Spotify 인증으로 안전하게 로그인할 수 있어요.
-        </p>
+        <p className="mt-4 text-[14px] text-gray-500 text-center">Google 또는 Spotify 인증으로 안전하게 로그인할 수 있어요.</p>
       </div>
     </main>
   );
