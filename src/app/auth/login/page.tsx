@@ -28,6 +28,13 @@ export default function LoginPage() {
   const errorDetail = searchParams.get('detail');
   const loginError = useMemo(() => getLoginErrorMessage(errorCode), [errorCode]);
 
+  function getOAuthQueryParams(provider: 'google' | 'spotify'): Record<string, string> {
+    if (provider === 'google') {
+      return { prompt: 'select_account' };
+    }
+    return { show_dialog: 'true' };
+  }
+
   const handleOAuthLogin = async (provider: 'google' | 'spotify') => {
     const supabase = createClient();
     const callbackUrl = new URL('/auth/callback', window.location.origin);
@@ -40,6 +47,7 @@ export default function LoginPage() {
       provider,
       options: {
         redirectTo: callbackUrl.toString(),
+        queryParams: getOAuthQueryParams(provider),
       },
     });
 
