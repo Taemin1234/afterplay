@@ -23,7 +23,14 @@ export default async function MainLayout({
       })
     : null;
 
-  const nickname = dbUser?.nickname ?? null;
+  const metadataName =
+    user?.user_metadata?.full_name ??
+    user?.user_metadata?.name ??
+    user?.user_metadata?.preferred_username ??
+    null;
+  const emailName = user?.email?.split('@')[0] ?? null;
+  const fallbackNickname = metadataName || emailName;
+  const nickname = dbUser?.nickname ?? fallbackNickname ?? null;
 
   return (
     <>

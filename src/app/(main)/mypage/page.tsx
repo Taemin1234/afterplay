@@ -33,8 +33,8 @@ export default async function MyPage({ searchParams }: TabProps) {
     select: { id: true, nickname: true },
   });
 
-  const googleName = user.user_metadata?.full_name || user.user_metadata?.name;
-  const initialNickname = me?.nickname || googleName || '익명';
+  const metadataName = user.user_metadata?.full_name || user.user_metadata?.name;
+  const initialNickname = me?.nickname || metadataName || '익명';
   const summaryStats = await getUserSummaryStats(user.id);
   const createdCount = summaryStats.createdCount;
 
