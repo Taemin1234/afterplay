@@ -58,7 +58,7 @@ export default function Header({ user, nickname }: HeaderProps) {
             />
           </div>
 
-          <div className='hidden items-center gap-4 md:flex'>
+          <div className='items-center gap-4 md:flex'>
             {user ? <LoggedInUI nickname={nickname} /> : <LoggedOutUI />}
           </div>
         </div>

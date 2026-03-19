@@ -22,7 +22,7 @@ export default function LoggedInUI({nickname} : {nickname? : string | null}) {
 
     return (
         <>
-            <Link href='/mypage' className='flex items-center justify-center gap-3'>
+            <Link href='/mypage' className='hidden items-center justify-center gap-3 md:flex'>
                 <p>{nickname ?? '익명'}</p>
                 <IconButton variant='bg' as='span' icon={<User className="w-4 h-4" />}/>
             </Link>
