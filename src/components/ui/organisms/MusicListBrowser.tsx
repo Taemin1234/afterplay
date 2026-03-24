@@ -227,7 +227,7 @@ export default function MusicListBrowser({
             className="w-full text-2xl"
           />
       </div> */}
-      <section className="relative space-y-4 pb-24 sm:space-y-5 sm:pb-0">
+      <section className="relative space-y-4 sm:space-y-5 sm:pb-0">
         <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between">
           <div className="w-full pb-1">
             <TypeSelector

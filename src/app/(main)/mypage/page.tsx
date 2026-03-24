@@ -10,6 +10,7 @@ import prisma from '@/lib/prisma';
 import { getUserSummaryStats } from '@/lib/dashboard-stats';
 import { createSupabaseServerClient } from '@/utils/supabase/server';
 import type { MusicListItem } from '@/types';
+import { ArrowUpRight } from 'lucide-react'
 
 interface TabProps {
   searchParams: Promise<{ tab?: string }>;
@@ -45,27 +46,16 @@ export default async function MyPage({ searchParams }: TabProps) {
   return (
     <section className="mx-auto w-full max-w-7xl">
       <ProfileInfo initialNickname={initialNickname} isOwner />
-      <Link
-        href="/mypage/dashboard"
-        className="group mt-4 inline-flex justify-center w-full items-center gap-2 rounded-lg border border-neon-green/35 bg-[#0b1020] px-3.5 py-2.5 text-sm font-semibold text-neon-green shadow-[0_10px_24px_rgba(0,0,0,0.35)] transition-all duration-300 hover:-translate-y-0.5 hover:border-neon-green/60 hover:bg-[#11192e] md:w-fit"
-      >
-        <span>대시보드</span>
-        <svg
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-          className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-0.5"
+      <div className='flex flex-col gap-4 mt-4 sm:flex-row md:justify-between'>
+        <Link
+          href="/mypage/dashboard"
+          className="group inline-flex justify-center w-full items-center gap-1 rounded-lg border border-neon-green/35 bg-[#0b1020] px-3.5 py-2.5 text-sm font-semibold text-neon-green shadow-[0_10px_24px_rgba(0,0,0,0.35)] transition-all duration-300 hover:-translate-y-0.5 hover:border-neon-green/60 hover:bg-[#11192e] md:w-fit"
         >
-          <path
-            d="M7 17L17 7M17 7H9M17 7V15"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </Link>
-      <AccountDeletionButton />
+          <span>대시보드</span>
+          <ArrowUpRight className='h-4 w-4' />
+        </Link>
+        <AccountDeletionButton />
+      </div>
       <section className="mt-8 sm:mt-10">
         <div className="mb-5 border-b border-slate-800 pb-3 sm:mb-6 sm:pb-2">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">

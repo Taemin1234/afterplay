@@ -68,7 +68,7 @@ export default function AccountDeletionButton() {
       size="sm"
       onClick={handleDeleteAccount}
       disabled={isDeleting}
-      className="mt-4 w-full justify-center sm:mt-0 sm:w-auto"
+      className="w-full justify-center sm:w-auto sm:mt-0"
     >
       {isDeleting ? '처리 중...' : '회원탈퇴'}
     </Button>
