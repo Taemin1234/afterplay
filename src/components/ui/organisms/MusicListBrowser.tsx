@@ -240,7 +240,7 @@ export default function MusicListBrowser({
             />
           </div>
           {/* 최신순, 좋아요 순 정렬 */}
-          <div className="pb-1">
+          <div className="pb-1 flex justify-end">
             <TypeSelector
               name={userId ? 'user-list-sort' : 'home-list-sort'}
               ariaLabel="List sort"
