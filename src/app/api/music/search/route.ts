@@ -12,7 +12,8 @@ type SpotifySearchItem = {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get('q')?.trim() ?? '';
-  const type = (searchParams.get('type') as 'track' | 'album') || 'track';
+  const rawType = searchParams.get('type');
+  const type: 'track' | 'album' = rawType === 'album' ? 'album' : 'track';
 
   if (query.length < 2) {
     return NextResponse.json([]);
@@ -31,7 +32,8 @@ export async function GET(request: Request) {
     }));
 
     return NextResponse.json(results);
-  } catch {
+  } catch (error) {
+    console.error('[api/music/search] Spotify fetch failed', { query, type, error });
     return NextResponse.json({ error: 'Spotify fetch error' }, { status: 500 });
   }
 }
