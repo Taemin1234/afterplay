@@ -31,7 +31,17 @@ export default async function MyPage({ searchParams }: TabProps) {
 
   const me = await prisma.user.findUnique({
     where: { id: user.id },
-    select: { id: true, nickname: true },
+    select: {
+      id: true,
+      nickname: true,
+      avatarUrl: true,
+      _count: {
+        select: {
+          followers: true,
+          following: true,
+        },
+      },
+    },
   });
 
   const metadataName = user.user_metadata?.full_name || user.user_metadata?.name;
@@ -45,7 +55,15 @@ export default async function MyPage({ searchParams }: TabProps) {
 
   return (
     <section className="mx-auto w-full max-w-7xl">
-      <ProfileInfo initialNickname={initialNickname} isOwner />
+      <ProfileInfo
+        profileUserId={user.id}
+        initialNickname={initialNickname}
+        isOwner
+        viewerUserId={user.id}
+        initialFollowerCount={me?._count.followers ?? 0}
+        initialFollowingCount={me?._count.following ?? 0}
+        initialIsFollowing={false}
+      />
       <div className='flex flex-col gap-4 mt-4 sm:flex-row md:justify-between'>
         <Link
           href="/mypage/dashboard"

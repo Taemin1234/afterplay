@@ -8,7 +8,7 @@ import { notFound } from 'next/navigation';
 export default async function UserProfile({ params }: { params: Promise<{ nicknameSlug: string }> }) {
   const { nicknameSlug: rawNicknameSlug } = await params;
 
-  // 퍼센트 인코딩을 한글로 디코딩
+  // Decode once so both raw and decoded slug can match.
   let decodedNicknameSlug = rawNicknameSlug;
   try {
     decodedNicknameSlug = decodeURIComponent(rawNicknameSlug);
@@ -16,27 +16,50 @@ export default async function UserProfile({ params }: { params: Promise<{ nickna
     decodedNicknameSlug = rawNicknameSlug;
   }
 
-  // DB에서 유저 찾기(rawNicknameSlug 또는 decodedNicknameSlug 중 하나라도 일치하는 유저를 찾음)
   const profileUser = await prisma.user.findFirst({
     where: {
       OR: [{ nicknameSlug: rawNicknameSlug }, { nicknameSlug: decodedNicknameSlug }],
     },
-    select: { id: true, nickname: true },
+    select: {
+      id: true,
+      nickname: true,
+      avatarUrl: true,
+      _count: {
+        select: {
+          followers: true,
+          following: true,
+        },
+      },
+    },
   });
 
   if (!profileUser) {
     notFound();
   }
 
-  // Supabase에서 현재 로그인된 유저 가져오기
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isOwner = Boolean(user?.id && user.id === profileUser.id);
+  const viewerUserId = user?.id ?? null;
+  const isOwner = Boolean(viewerUserId && viewerUserId === profileUser.id);
 
-  // 유저의 모든 플리 가져오기
+  const initialIsFollowing =
+    !isOwner && viewerUserId
+      ? Boolean(
+          await prisma.follow.findUnique({
+            where: {
+              followerId_followingId: {
+                followerId: viewerUserId,
+                followingId: profileUser.id,
+              },
+            },
+            select: { followerId: true },
+          })
+        )
+      : false;
+
   const { items, nextCursor } = await fetchListItems({
     type: 'all',
     limit: 16,
@@ -48,7 +71,15 @@ export default async function UserProfile({ params }: { params: Promise<{ nickna
 
   return (
     <div>
-      <ProfileInfo initialNickname={profileUser.nickname ?? '익명'} isOwner={isOwner} />
+      <ProfileInfo
+        profileUserId={profileUser.id}
+        initialNickname={profileUser.nickname ?? '\uC775\uBA85'}
+        isOwner={isOwner}
+        viewerUserId={viewerUserId}
+        initialFollowerCount={profileUser._count.followers}
+        initialFollowingCount={profileUser._count.following}
+        initialIsFollowing={initialIsFollowing}
+      />
       <section className="mt-8">
         <MusicListBrowser
           userId={profileUser.id}

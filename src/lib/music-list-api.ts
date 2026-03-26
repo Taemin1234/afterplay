@@ -42,7 +42,6 @@ export async function getAuthenticatedUser() {
 export async function upsertDbUser(user: {
   id: string;
   email?: string | null;
-  user_metadata?: { avatar_url?: string | null } | null;
 }) {
   const email = user.email?.trim();
   if (!email) return;
@@ -51,12 +50,11 @@ export async function upsertDbUser(user: {
     where: { id: user.id },
     update: {
       email,
-      avatarUrl: user.user_metadata?.avatar_url ?? null,
     },
     create: {
       id: user.id,
       email,
-      avatarUrl: user.user_metadata?.avatar_url ?? null,
+      avatarUrl: null,
       nickname: null,
     },
   });

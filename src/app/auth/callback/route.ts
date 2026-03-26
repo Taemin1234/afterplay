@@ -54,7 +54,7 @@ export async function GET(request: Request) {
   }
 
   // Supabase Auth user에서 필요한 값 추출
-  const { id, email, user_metadata } = data.user;
+  const { id, email } = data.user;
   const normalizedEmail = email?.trim();
 
   // DB에 user가 있는지 확인
@@ -90,7 +90,7 @@ export async function GET(request: Request) {
       data: {
         id,
         email: normalizedEmail,
-        avatarUrl: user_metadata.avatar_url ?? null,
+        avatarUrl: null,
         nickname: null,
       },
     });
