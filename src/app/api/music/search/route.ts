@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { searchSpotify } from '@/lib/spotify';
+import { searchSpotify, type SpotifySearchType } from '@/lib/spotify';
 
 type SpotifySearchItem = {
   id: string;
@@ -13,7 +13,8 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get('q')?.trim() ?? '';
   const rawType = searchParams.get('type');
-  const type: 'track' | 'album' = rawType === 'album' ? 'album' : 'track';
+  const type: SpotifySearchType =
+    rawType === 'album' || rawType === 'artist' ? rawType : 'track';
 
   if (query.length < 2) {
     return NextResponse.json([]);
@@ -22,13 +23,19 @@ export async function GET(request: Request) {
   try {
     const data = await searchSpotify(query, type);
     // 우리 UI 규격으로 변환
-    const items = type === 'track' ? data?.tracks?.items ?? [] : data?.albums?.items ?? [];
+    const items =
+      type === 'track'
+        ? data?.tracks?.items ?? []
+        : type === 'album'
+          ? data?.albums?.items ?? []
+          : data?.artists?.items ?? [];
 
     const results = (items as SpotifySearchItem[]).map((item) => ({
       id: item.id,
       name: item.name,
       artist: item.artists?.[0]?.name ?? '',
-      albumImageUrl: type === 'track' ? item.album?.images?.[0]?.url : item.images?.[0]?.url,
+      albumImageUrl:
+        type === 'track' ? item.album?.images?.[0]?.url : item.images?.[0]?.url,
     }));
 
     return NextResponse.json(results);

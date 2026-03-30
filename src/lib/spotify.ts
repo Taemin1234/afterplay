@@ -4,6 +4,7 @@ const clientId = process.env.SPOTIFY_CLIENT_ID;
 const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 const TOKEN_ENDPOINT = 'https://accounts.spotify.com/api/token';
 const SEARCH_ENDPOINT = 'https://api.spotify.com/v1/search';
+export type SpotifySearchType = 'track' | 'album' | 'artist';
 
 // Spotify 토큰 응답의 형태
 type SpotifyTokenResponse = {
@@ -71,7 +72,7 @@ export const getAccessToken = async () => {
 };
 
 // 2. 검색 함수 (곡 또는 앨범)
-const requestSpotifySearch = async (accessToken: string, query: string, type: 'track' | 'album') => {
+const requestSpotifySearch = async (accessToken: string, query: string, type: SpotifySearchType) => {
   const response = await fetch(
     `${SEARCH_ENDPOINT}?q=${encodeURIComponent(query)}&type=${type}&limit=10&market=KR`,
     {
@@ -88,7 +89,7 @@ const requestSpotifySearch = async (accessToken: string, query: string, type: 't
   return response.json();
 };
 
-export const searchSpotify = async (query: string, type: 'track' | 'album') => {
+export const searchSpotify = async (query: string, type: SpotifySearchType) => {
   const firstToken = await getAccessToken();
 
   try {

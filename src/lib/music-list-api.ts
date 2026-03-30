@@ -2,7 +2,7 @@ import prisma from '@/lib/prisma';
 import { createSupabaseServerClient } from '@/utils/supabase/server';
 
 export type VisibilityValue = 'PUBLIC' | 'PRIVATE';
-export type ListEntityType = 'track' | 'album';
+export type ListEntityType = 'track' | 'album' | 'artist';
 
 export interface MusicItemPayload {
   id: string;
