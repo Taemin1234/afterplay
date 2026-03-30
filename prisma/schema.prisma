@@ -111,7 +111,7 @@ model Playlist {
   comments  PlaylistComment[]
   views     PlaylistViewEvent[]
 
-  featuredSetting FeaturedPlaylist?
+  featuredSettings FeaturedPlaylist[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -175,7 +175,7 @@ model AlbumList {
   comments  AlbumListComment[]
   views     AlbumListViewEvent[]
 
-  featuredSetting FeaturedAlbumList?
+  featuredSettings FeaturedAlbumList[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -350,9 +350,25 @@ model AlbumListViewEvent {
 // --------------------------------------------------------
 // 관리자 추천 게시물
 // --------------------------------------------------------
+model FeaturedPlaylistSection {
+  id          String   @id @default(uuid()) @db.Uuid
+  key         String   @unique
+  name        String
+  description String?  @db.Text
+  isActive    Boolean  @default(true)
+  priority    Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  playlists FeaturedPlaylist[]
+
+  @@index([isActive, priority, createdAt(sort: Desc)])
+}
+
 model FeaturedPlaylist {
   id          String   @id @default(uuid()) @db.Uuid
-  playlistId  String   @unique @db.Uuid
+  playlistId  String   @db.Uuid
+  sectionId   String   @db.Uuid
   setByUserId String?  @db.Uuid
   note        String?  @db.Text
   priority    Int      @default(0)
@@ -362,17 +378,35 @@ model FeaturedPlaylist {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  playlist  Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
-  setByUser User?    @relation("FeaturedPlaylistSetBy", fields: [setByUserId], references: [id], onDelete: SetNull)
+  playlist  Playlist               @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  section   FeaturedPlaylistSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  setByUser User?                  @relation("FeaturedPlaylistSetBy", fields: [setByUserId], references: [id], onDelete: SetNull)
 
-  @@index([isActive, priority, createdAt(sort: Desc)])
+  @@unique([playlistId, sectionId])
+  @@index([sectionId, isActive, priority, createdAt(sort: Desc)])
   @@index([startsAt, endsAt])
   @@index([setByUserId])
 }
 
+model FeaturedAlbumListSection {
+  id          String   @id @default(uuid()) @db.Uuid
+  key         String   @unique
+  name        String
+  description String?  @db.Text
+  isActive    Boolean  @default(true)
+  priority    Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  albumLists FeaturedAlbumList[]
+
+  @@index([isActive, priority, createdAt(sort: Desc)])
+}
+
 model FeaturedAlbumList {
   id          String   @id @default(uuid()) @db.Uuid
-  albumListId String   @unique @db.Uuid
+  albumListId String   @db.Uuid
+  sectionId   String   @db.Uuid
   setByUserId String?  @db.Uuid
   note        String?  @db.Text
   priority    Int      @default(0)
@@ -382,10 +416,12 @@ model FeaturedAlbumList {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  albumList AlbumList @relation(fields: [albumListId], references: [id], onDelete: Cascade)
-  setByUser User?     @relation("FeaturedAlbumListSetBy", fields: [setByUserId], references: [id], onDelete: SetNull)
+  albumList AlbumList               @relation(fields: [albumListId], references: [id], onDelete: Cascade)
+  section   FeaturedAlbumListSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  setByUser User?                   @relation("FeaturedAlbumListSetBy", fields: [setByUserId], references: [id], onDelete: SetNull)
 
-  @@index([isActive, priority, createdAt(sort: Desc)])
+  @@unique([albumListId, sectionId])
+  @@index([sectionId, isActive, priority, createdAt(sort: Desc)])
   @@index([startsAt, endsAt])
   @@index([setByUserId])
 }
