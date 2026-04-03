@@ -44,7 +44,7 @@ export default function Header({ user, nickname }: HeaderProps) {
               <Disc3 className='h-6 w-6 text-[#39ff14]' />
             </div>
             <span className='font-mono text-xl font-bold tracking-tighter text-white'>
-              After<span className='text-[#39ff14]'>Play</span>
+              <span className='text-[#39ff14]'>Dustpeak</span>Club
             </span>
           </Link>
 
