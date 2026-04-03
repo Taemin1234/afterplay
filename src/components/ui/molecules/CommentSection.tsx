@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Button from '@/components/ui/atoms/Button';
 
+const COMMENT_MAX_LENGTH = 500;
+
 export type ListComment = {
   id: string;
   content: string;
@@ -197,10 +199,13 @@ export default function CommentSection({
           onChange={(e) => setCommentInput(e.target.value)}
           placeholder={isLoggedIn ? '댓글을 입력해주세요.' : '로그인 후 댓글을 작성할 수 있습니다.'}
           disabled={!isLoggedIn || isSubmittingComment}
-          maxLength={500}
+          maxLength={COMMENT_MAX_LENGTH}
           className="h-24 w-full resize-none rounded-md border border-slate-700 bg-[#070b16] px-3 py-2 text-sm text-white outline-none focus:border-neon-green disabled:cursor-not-allowed disabled:opacity-60"
         />
-        <div className="flex justify-end">
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-gray-400">
+            {commentInput.length}/{COMMENT_MAX_LENGTH}
+          </p>
           <Button
             type="submit"
             size="sm"
@@ -231,7 +236,7 @@ export default function CommentSection({
                 <textarea
                   value={editingCommentInput}
                   onChange={(e) => setEditingCommentInput(e.target.value)}
-                  maxLength={500}
+                  maxLength={COMMENT_MAX_LENGTH}
                   disabled={pendingCommentActionId === comment.id}
                   className="h-24 w-full resize-none rounded-md border border-slate-700 bg-[#070b16] px-3 py-2 text-sm text-white outline-none focus:border-neon-green disabled:cursor-not-allowed disabled:opacity-60"
                 />
