@@ -615,6 +615,7 @@ export type PlaylistDetail = {
       id: string;
       nickname: string | null;
       avatarUrl: string | null;
+      role: 'USER' | 'ADMIN';
     };
   }>;
   musicItems: Array<{
@@ -656,6 +657,7 @@ export type AlbumListDetail = {
       id: string;
       nickname: string | null;
       avatarUrl: string | null;
+      role: 'USER' | 'ADMIN';
     };
   }>;
   musicItems: Array<{
@@ -712,6 +714,7 @@ export async function fetchPlaylistDetail(id: string, viewerUserId?: string): Pr
               id: true,
               nickname: true,
               avatarUrl: true,
+              role: true,
             },
           },
         },
@@ -784,6 +787,7 @@ export async function fetchPlaylistDetail(id: string, viewerUserId?: string): Pr
         id: comment.user.id,
         nickname: comment.user.nickname,
         avatarUrl: comment.user.avatarUrl,
+        role: comment.user.role,
       },
     })),
     musicItems: playlist.tracks.map((entry) => ({
@@ -841,6 +845,7 @@ export async function fetchAlbumListDetail(id: string, viewerUserId?: string): P
               id: true,
               nickname: true,
               avatarUrl: true,
+              role: true,
             },
           },
         },
@@ -926,6 +931,7 @@ export async function fetchAlbumListDetail(id: string, viewerUserId?: string): P
         id: comment.user.id,
         nickname: comment.user.nickname,
         avatarUrl: comment.user.avatarUrl,
+        role: comment.user.role,
       },
     })),
     musicItems: albumList.albums.map((entry) => ({

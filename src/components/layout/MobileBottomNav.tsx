@@ -9,6 +9,7 @@ import type { ComponentType } from 'react';
 type MobileBottomNavProps = {
   user: User | null;
   nickname?: string | null;
+  isAdmin?: boolean;
 };
 
 type NavItem = {
@@ -18,7 +19,7 @@ type NavItem = {
   isActive: (pathname: string) => boolean;
 };
 
-export default function MobileBottomNav({ user, nickname }: MobileBottomNavProps) {
+export default function MobileBottomNav({ user, nickname, isAdmin = false }: MobileBottomNavProps) {
   const pathname = usePathname();
 
   const navItems: NavItem[] = [
@@ -61,7 +62,12 @@ export default function MobileBottomNav({ user, nickname }: MobileBottomNavProps
               }`}
             >
               <Icon className='h-5 w-5' />
-              {item.label === 'Profile' ? <span className='text-xs font-medium truncate'>{nickname}</span> : null}
+              {item.label === 'Profile' ? (
+                <span className='flex max-w-[90px] items-center gap-1 text-xs font-medium'>
+                  <span className='truncate'>{nickname}</span>
+                  {isAdmin ? <span className='shrink-0 text-[10px] text-[#39ff14]'>A</span> : null}
+                </span>
+              ) : null}
             </Link>
           );
         })}

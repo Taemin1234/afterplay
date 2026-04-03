@@ -7,7 +7,12 @@ import { usePathname, useRouter } from 'next/navigation';
 import IconButton from '@/components/ui/atoms/IconButton';
 import { createClient } from '@/utils/supabase/client';
 
-export default function LoggedInUI({ nickname }: { nickname?: string | null }) {
+type LoggedInUIProps = {
+  nickname?: string | null;
+  isAdmin?: boolean;
+};
+
+export default function LoggedInUI({ nickname, isAdmin = false }: LoggedInUIProps) {
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();
@@ -32,7 +37,14 @@ export default function LoggedInUI({ nickname }: { nickname?: string | null }) {
   return (
     <>
       <Link href='/mypage' className='hidden items-center justify-center gap-3 md:flex'>
-        <p>{nickname ?? '익명'}</p>
+        <div className='flex items-center gap-2'>
+          <p>{nickname ?? '익명'}</p>
+          {isAdmin ? (
+            <span className='rounded-full border border-[#39ff14]/50 bg-[#39ff14]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#39ff14]'>
+              ADMIN
+            </span>
+          ) : null}
+        </div>
         <IconButton variant='bg' as='span' icon={<User className='w-4 h-4' />} />
       </Link>
       <IconButton icon={<LogOut size={20} />} onClick={handleSignOut} />

@@ -19,7 +19,7 @@ export default async function MainLayout({
   const dbUser = user
     ? await prisma.user.findUnique({
         where: { id: user.id },
-        select: { nickname: true },
+        select: { nickname: true, role: true },
       })
     : null;
 
@@ -31,16 +31,17 @@ export default async function MainLayout({
   const emailName = user?.email?.split('@')[0] ?? null;
   const fallbackNickname = metadataName || emailName;
   const nickname = dbUser?.nickname ?? fallbackNickname ?? null;
+  const isAdmin = dbUser?.role === 'ADMIN';
 
   return (
     <>
-      <Header user={user} nickname={nickname} />
+      <Header user={user} nickname={nickname} isAdmin={isAdmin} />
       <main className='container mx-auto px-5 py-4 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-4 lg:py-8'>
         {children}
         {modal}
       </main>
       <ScrollToTopButton />
-      <MobileBottomNav user={user} nickname={nickname} />
+      <MobileBottomNav user={user} nickname={nickname} isAdmin={isAdmin} />
       {/* <Footer /> */}
     </>
   );

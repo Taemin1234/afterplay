@@ -29,6 +29,7 @@ type CommentWithAuthor = {
     id: string;
     nickname: string | null;
     avatarUrl: string | null;
+    role: 'USER' | 'ADMIN';
   };
 };
 

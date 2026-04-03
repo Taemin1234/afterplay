@@ -14,9 +14,10 @@ import LoggedOutUI from './LoggedOutUI';
 type HeaderProps = {
   user: User | null;
   nickname: string | null;
+  isAdmin?: boolean;
 };
 
-export default function Header({ user, nickname }: HeaderProps) {
+export default function Header({ user, nickname, isAdmin = false }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [query, setQuery] = useState('');
@@ -59,7 +60,7 @@ export default function Header({ user, nickname }: HeaderProps) {
           </div>
 
           <div className='items-center gap-4 md:flex'>
-            {user ? <LoggedInUI nickname={nickname} /> : <LoggedOutUI />}
+            {user ? <LoggedInUI nickname={nickname} isAdmin={isAdmin} /> : <LoggedOutUI />}
           </div>
         </div>
       </div>

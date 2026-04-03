@@ -15,6 +15,7 @@ export type ListComment = {
     id: string;
     nickname: string | null;
     avatarUrl: string | null;
+    role: 'USER' | 'ADMIN';
   };
 };
 
@@ -221,7 +222,14 @@ export default function CommentSection({
         {comments.map((comment) => (
           <li key={comment.id} className="rounded-lg border border-slate-800/80 bg-black/20 p-3">
             <div className="flex items-center justify-between text-xs text-gray-400">
-              <span>{comment.user.nickname ?? '탈퇴한 사용자'}</span>
+              <span className="inline-flex items-center gap-1.5">
+                <span>{comment.user.nickname ?? '탈퇴한 사용자'}</span>
+                {comment.user.role === 'ADMIN' ? (
+                  <span className="rounded-full border border-[#39ff14]/45 bg-[#39ff14]/15 px-1.5 py-0.5 text-[10px] font-semibold text-[#39ff14]">
+                    ADMIN
+                  </span>
+                ) : null}
+              </span>
               <span className="inline-flex items-center gap-2">
                 {formatDate(comment.createdAt)}
                 {isEditedComment(comment) && (
