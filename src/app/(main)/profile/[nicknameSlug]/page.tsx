@@ -4,6 +4,51 @@ import { fetchListItems } from '@/lib/music-lists';
 import { createSupabaseServerClient } from '@/utils/supabase/server';
 import prisma from '@/lib/prisma';
 import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
+import { SITE_NAME } from '@/lib/seo';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ nicknameSlug: string }>;
+}): Promise<Metadata> {
+  const { nicknameSlug: rawNicknameSlug } = await params;
+  let decodedNicknameSlug = rawNicknameSlug;
+  try {
+    decodedNicknameSlug = decodeURIComponent(rawNicknameSlug);
+  } catch {
+    decodedNicknameSlug = rawNicknameSlug;
+  }
+
+  const user = await prisma.user.findFirst({
+    where: {
+      OR: [{ nicknameSlug: rawNicknameSlug }, { nicknameSlug: decodedNicknameSlug }],
+    },
+    select: { nickname: true },
+  });
+
+  const nickname = user?.nickname ?? decodedNicknameSlug;
+  const title = `${nickname} 프로필`;
+  const description = `${nickname}님의 플레이리스트와 앨범리스트를 확인해보세요.`;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `/profile/${rawNicknameSlug}`,
+    },
+    openGraph: {
+      title: `${title} | ${SITE_NAME}`,
+      description,
+      url: `/profile/${rawNicknameSlug}`,
+      type: 'profile',
+    },
+    twitter: {
+      title: `${title} | ${SITE_NAME}`,
+      description,
+    },
+  };
+}
 
 export default async function UserProfile({ params }: { params: Promise<{ nicknameSlug: string }> }) {
   const { nicknameSlug: rawNicknameSlug } = await params;
