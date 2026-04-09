@@ -1,15 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { JetBrains_Mono } from 'next/font/google';
 import localFont from 'next/font/local'
 import { buildDefaultMetadata } from '@/lib/seo';
-
-const jetbrains = JetBrains_Mono({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  display: 'swap',
-  variable: '--font-jetbrains',
-});
 
 const pretendard = localFont({
   src: '../fonts/PretendardVariable.woff2',
@@ -32,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className={`${jetbrains.variable} ${pretendard.variable}`}>
+    <html lang="ko" className={pretendard.variable}>
       <body>
         {children}
       </body>

@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import Image from 'next/image';
-import { useMemo } from 'react';
+import { Suspense, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 import { createClient } from '@/utils/supabase/client';
@@ -29,7 +29,7 @@ function getOAuthQueryParams(provider: 'google' | 'spotify'): Record<string, str
   return { show_dialog: 'true' };
 }
 
-export default function LoginPage() {
+function LoginPageContent() {
   const searchParams = useSearchParams();
   const safeNext = useMemo(() => toSafeNext(searchParams.get('next')), [searchParams]);
 
@@ -101,5 +101,13 @@ export default function LoginPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageContent />
+    </Suspense>
   );
 }

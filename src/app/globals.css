@@ -4,6 +4,7 @@
 :root {
   --background: #0a0f1c;
   --foreground: #ededed;
+  --font-jetbrains: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
 }
 
 @theme inline {

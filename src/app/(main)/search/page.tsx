@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import SearchPageClient from '@/components/ui/organisms/SearchPageClient';
 import type { Metadata } from 'next';
 
@@ -10,5 +11,9 @@ export const metadata: Metadata = {
 };
 
 export default function SearchPage() {
-  return <SearchPageClient />;
+  return (
+    <Suspense fallback={null}>
+      <SearchPageClient />
+    </Suspense>
+  );
 }

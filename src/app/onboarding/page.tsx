@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Disc3, Sparkles } from 'lucide-react';
 
@@ -35,7 +35,7 @@ function toSafeNext(nextParam: string | null): string {
   return nextParam;
 }
 
-export default function OnboardingPage() {
+function OnboardingPageContent() {
   const [nickname, setNickname] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -125,6 +125,14 @@ export default function OnboardingPage() {
         </form>
       </div>
     </main>
+  );
+}
+
+export default function OnboardingPage() {
+  return (
+    <Suspense fallback={null}>
+      <OnboardingPageContent />
+    </Suspense>
   );
 }
 
