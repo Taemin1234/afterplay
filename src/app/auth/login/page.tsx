@@ -15,11 +15,54 @@ function toSafeNext(nextParam: string | null): string {
 
 function getLoginErrorMessage(code: string | null): string | null {
   if (code === 'oauth_provider_error') return '소셜 로그인 제공자에서 인증을 완료하지 못했습니다.';
+  if (code === 'oauth_provider_cancelled') return '로그인이 취소되었습니다. 권한 동의 후 다시 시도해주세요.';
+  if (code === 'oauth_spotify_email_unverified') {
+    return 'Spotify 계정의 이메일 인증이 완료되지 않았습니다. Spotify에서 이메일 인증 후 다시 시도해주세요.';
+  }
+  if (code === 'oauth_provider_misconfigured') return '로그인 연결 설정 문제로 인증을 완료하지 못했습니다. 관리자에게 문의해주세요.';
+  if (code === 'oauth_provider_unavailable') return '현재 해당 소셜 로그인을 사용할 수 없습니다. 잠시 후 다시 시도해주세요.';
+  if (code === 'oauth_rate_limited') return '요청이 많아 잠시 제한되었습니다. 잠시 후 다시 시도해주세요.';
+  if (code === 'oauth_network_error') return '네트워크 문제로 로그인에 실패했습니다. 연결 상태를 확인한 뒤 다시 시도해주세요.';
   if (code === 'oauth_code_missing') return '인증 코드가 전달되지 않았습니다. 다시 로그인해주세요.';
+  if (code === 'oauth_code_invalid') return '인증이 만료되었거나 유효하지 않습니다. 처음부터 다시 로그인해주세요.';
+  if (code === 'oauth_state_invalid') return '보안 검증에 실패했습니다. 브라우저를 새로고침한 뒤 다시 로그인해주세요.';
   if (code === 'oauth_callback_failed') return '로그인 세션 생성에 실패했습니다. 다시 시도해주세요.';
   if (code === 'email_not_available') return '이 소셜 계정에서 이메일을 확인할 수 없습니다. 다른 계정으로 시도해주세요.';
   if (code === 'email_already_registered') return '이미 다른 로그인 방식으로 가입된 이메일입니다. 기존 방식으로 로그인해주세요.';
+  if (code) return '로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.';
   return null;
+}
+
+function getFriendlyErrorDetail(detail: string | null): string | null {
+  if (!detail) return null;
+  const normalized = detail.toLowerCase();
+
+  if (normalized.includes('unverified email with spotify')) return null;
+  if (normalized.includes('access_denied') || normalized.includes('user denied')) {
+    return null;
+  }
+  if (
+    normalized.includes('invalid_grant') ||
+    normalized.includes('bad oauth state') ||
+    normalized.includes('code verifier') ||
+    normalized.includes('authorization code')
+  ) {
+    return null;
+  }
+  if (normalized.includes('redirect_uri') || normalized.includes('redirect url')) {
+    return null;
+  }
+  if (normalized.includes('provider is not enabled') || normalized.includes('unsupported provider')) {
+    return null;
+  }
+  if (normalized.includes('rate limit') || normalized.includes('too many requests')) {
+    return null;
+  }
+  if (normalized.includes('failed to fetch') || normalized.includes('network') || normalized.includes('timeout')) {
+    return null;
+  }
+
+  return process.env.NODE_ENV !== 'production' ? `개발용 상세: ${detail}` : null;
 }
 
 function getOAuthQueryParams(provider: 'google' | 'spotify'): Record<string, string> {
@@ -36,6 +79,7 @@ function LoginPageContent() {
   const errorCode = searchParams.get('error');
   const errorDetail = searchParams.get('detail');
   const loginError = useMemo(() => getLoginErrorMessage(errorCode), [errorCode]);
+  const friendlyErrorDetail = useMemo(() => getFriendlyErrorDetail(errorDetail), [errorDetail]);
 
   const handleOAuthLogin = async (provider: 'google' | 'spotify') => {
     const supabase = createClient();
@@ -70,10 +114,12 @@ function LoginPageContent() {
             <p className='text-xs text-gray-400 sm:text-sm'>나만의 플레이리스트를 만들고 공유해보세요.</p>
           </div>
 
-          {loginError ? (
+          {loginError || friendlyErrorDetail ? (
             <div className='mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200'>
-              <p>{loginError}</p>
-              {errorDetail ? <p className='mt-1 break-words text-xs text-red-200/90'>원인: {errorDetail}</p> : null}
+              <p>{loginError ?? '로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.'}</p>
+              {friendlyErrorDetail ? (
+                <p className='mt-1 break-words text-xs text-red-200/90'>안내: {friendlyErrorDetail}</p>
+              ) : null}
             </div>
           ) : null}
 
