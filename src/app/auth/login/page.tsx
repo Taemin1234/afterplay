@@ -65,7 +65,7 @@ function LoginPageContent() {
         <div className='w-full rounded-xl border border-[#39ff14]/20 bg-black/40 px-5 py-7 shadow-xl sm:rounded-2xl sm:px-8 sm:py-10'>
           <div className='mb-6 sm:mb-8'>
             <h1 className='mb-2 text-2xl font-bold tracking-tight text-white sm:text-3xl'>
-              After<span className='text-[#39ff14]'>Play</span>
+              <span className='text-[#39ff14]'>Dustpeak</span>Club
             </h1>
             <p className='text-xs text-gray-400 sm:text-sm'>나만의 플레이리스트를 만들고 공유해보세요.</p>
           </div>
@@ -79,7 +79,7 @@ function LoginPageContent() {
 
           <button
             onClick={() => handleOAuthLogin('google')}
-            className='flex w-full items-center justify-center gap-3 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-black shadow-sm transition-colors hover:bg-white/90 sm:py-3 sm:text-base'
+            className='flex w-full items-center justify-center gap-3 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-black shadow-sm transition-colors cursor-pointer hover:bg-white/90 sm:py-3 sm:text-base'
           >
             <span className='flex h-6 w-6 items-center justify-center rounded-full bg-white sm:h-7 sm:w-7'>
               <Image src='https://www.google.com/favicon.ico' alt='Google' width={16} height={16} className='h-4 w-4' />
@@ -89,7 +89,7 @@ function LoginPageContent() {
 
           <button
             onClick={() => handleOAuthLogin('spotify')}
-            className='mt-3 flex w-full items-center justify-center gap-3 rounded-full bg-[#39ff14] px-4 py-2.5 text-sm font-semibold text-black shadow-sm transition-colors hover:bg-[#39ff14]/90 sm:py-3 sm:text-base'
+            className='mt-3 flex w-full items-center justify-center gap-3 rounded-full bg-[#39ff14] px-4 py-2.5 text-sm font-semibold text-black shadow-sm transition-colors cursor-pointer hover:bg-[#39ff14]/90 sm:py-3 sm:text-base'
           >
             <span className='flex h-6 w-6 items-center justify-center rounded-full bg-black text-xs font-bold text-[#1DB954] sm:h-7 sm:w-7'>
               S

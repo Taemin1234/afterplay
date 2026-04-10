@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma';
 const RESERVED_WORDS = new Set([
   'admin',
   'afterplay',
+  'dustpeakclub',
   'api',
   'auth',
   'callback',
