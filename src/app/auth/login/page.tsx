@@ -133,7 +133,7 @@ function LoginPageContent() {
             Google 계정으로 계속하기
           </button>
 
-          <button
+          {/* <button
             onClick={() => handleOAuthLogin('spotify')}
             className='mt-3 flex w-full items-center justify-center gap-3 rounded-full bg-[#39ff14] px-4 py-2.5 text-sm font-semibold text-black shadow-sm transition-colors cursor-pointer hover:bg-[#39ff14]/90 sm:py-3 sm:text-base'
           >
@@ -141,9 +141,9 @@ function LoginPageContent() {
               S
             </span>
             Spotify 계정으로 계속하기
-          </button>
+          </button> */}
 
-          <p className='mt-4 text-center text-xs text-gray-500 break-keep sm:text-sm'>Google 또는 Spotify 인증으로 안전하게 로그인할 수 있어요.</p>
+          <p className='mt-4 text-center text-xs text-gray-500 break-keep sm:text-sm'>Google 인증으로 안전하게 로그인할 수 있어요.</p>
         </div>
       </div>
     </main>
