@@ -5,6 +5,9 @@ const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 const TOKEN_ENDPOINT = 'https://accounts.spotify.com/api/token';
 const SEARCH_ENDPOINT = 'https://api.spotify.com/v1/search';
 export type SpotifySearchType = 'track' | 'album' | 'artist';
+type SpotifySearchOptions = {
+  market?: string;
+};
 
 // Spotify 토큰 응답의 형태
 type SpotifyTokenResponse = {
@@ -72,9 +75,15 @@ export const getAccessToken = async () => {
 };
 
 // 2. 검색 함수 (곡 또는 앨범)
-const requestSpotifySearch = async (accessToken: string, query: string, type: SpotifySearchType) => {
+const requestSpotifySearch = async (
+  accessToken: string,
+  query: string,
+  type: SpotifySearchType,
+  options?: SpotifySearchOptions
+) => {
+  const market = options?.market && /^[A-Z]{2}$/.test(options.market) ? options.market : 'KR';
   const response = await fetch(
-    `${SEARCH_ENDPOINT}?q=${encodeURIComponent(query)}&type=${type}&limit=10&market=KR`,
+    `${SEARCH_ENDPOINT}?q=${encodeURIComponent(query)}&type=${type}&limit=10&market=${encodeURIComponent(market)}`,
     {
       headers: { Authorization: `Bearer ${accessToken}` },
       cache: 'no-store',
@@ -89,18 +98,18 @@ const requestSpotifySearch = async (accessToken: string, query: string, type: Sp
   return response.json();
 };
 
-export const searchSpotify = async (query: string, type: SpotifySearchType) => {
+export const searchSpotify = async (query: string, type: SpotifySearchType, options?: SpotifySearchOptions) => {
   const firstToken = await getAccessToken();
 
   try {
-    return await requestSpotifySearch(firstToken, query, type);
+    return await requestSpotifySearch(firstToken, query, type, options);
   } catch (firstError) {
     // If token became invalid, force-refresh token and retry once.
     cachedToken = null;
 
     try {
       const refreshedToken = await getAccessToken();
-      return await requestSpotifySearch(refreshedToken, query, type);
+      return await requestSpotifySearch(refreshedToken, query, type, options);
     } catch {
       throw firstError;
     }
