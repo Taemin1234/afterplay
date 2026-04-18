@@ -96,13 +96,6 @@
   - 닉네임이 없는 신규 사용자를 온보딩 페이지로 이동
   - 서버 컴포넌트와 Route Handler에서 현재 로그인 사용자 확인
 
-#### @supabase/ssr 0.8.0 / @supabase/supabase-js 2.93.3
-- **사용 목적**: Next.js App Router 환경에서 쿠키 기반 Supabase 세션 처리
-- **적용 위치**:
-  - 서버 클라이언트와 브라우저 클라이언트 분리
-  - 미들웨어 성격의 `proxy.ts`에서 세션 갱신
-  - 계정 삭제 시 Service Role Key를 활용한 Auth 사용자 삭제
-
 #### Spotify Web API
 - **사용 목적**: 곡, 앨범, 아티스트 검색 데이터 제공
 - **적용 위치**:
@@ -211,58 +204,6 @@ dustpeakclub/
 ├── package.json
 ├── tailwind.config.ts
 └── tsconfig.json
-```
-
----
-
-## 실행 방법
-
-### 1. 패키지 설치
-
-```bash
-npm install
-```
-
-### 2. 환경 변수 설정
-
-`.env` 파일에 아래 값이 필요합니다.
-
-```env
-DATABASE_URL=
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_PUBLIC_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-SPOTIFY_CLIENT_ID=
-SPOTIFY_CLIENT_SECRET=
-NEXT_PUBLIC_APP_URL=
-```
-
-### 3. Prisma Client 생성 및 마이그레이션
-
-```bash
-npm run postinstall
-npx prisma migrate dev
-```
-
-### 4. 개발 서버 실행
-
-```bash
-npm run dev
-```
-
-기본 주소는 `http://localhost:3000`입니다.
-
----
-
-## 주요 스크립트
-
-```bash
-npm run dev       # 개발 서버 실행
-npm run build     # 프로덕션 빌드
-npm run start     # 프로덕션 서버 실행
-npm run lint      # ESLint 검사
-npm run db:test   # 데이터베이스 연결 테스트
-npm run db:studio # Prisma Studio 실행
 ```
 
 ---
