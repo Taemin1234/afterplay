@@ -275,6 +275,7 @@ export default function MusicListForm({
                 placeholder="태그를 입력해주세요"
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
+                onClear={() => setTagInput('')}
                 onClick={handleAddTag}
                 onKeyDown={handleTagInputKeyDown}
               />

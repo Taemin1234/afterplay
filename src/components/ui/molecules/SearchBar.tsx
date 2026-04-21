@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 
 import IconButton from '../atoms/IconButton';
 import Input from '../atoms/Input';
@@ -14,6 +14,7 @@ interface SearchBarProps {
   value?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onClick?: () => void;
+  onClear?: () => void;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   autoFocus?: boolean;
 }
@@ -45,10 +46,23 @@ export default function SearchBar({
   value,
   onChange,
   onClick,
+  onClear,
   onKeyDown,
   autoFocus = false,
 }: SearchBarProps) {
   const isModalMode = mode === 'ui';
+  const hasValue = typeof value === 'string' && value.length > 0;
+
+  const handleClear = () => {
+    if (onClear) {
+      onClear();
+      return;
+    }
+
+    if (onChange) {
+      onChange({ target: { value: '' } } as React.ChangeEvent<HTMLInputElement>);
+    }
+  };
 
   const className = `flex h-11 w-full items-center border px-3 transition ${variantStyles[variant]} ${sizeStyles[size]} ${roundedStyles[rounded]}`;
 
@@ -63,6 +77,7 @@ export default function SearchBar({
         onKeyDown={onKeyDown}
         autoFocus={autoFocus}
       />
+      {!isModalMode && hasValue && <IconButton icon={<X size={10} />} onClick={handleClear} variant='bg' className='w-4! h-4! sm:w-4! sm:h-4!' />}
       <IconButton icon={<Search size={20} />} onClick={onClick} />
     </div>
   );

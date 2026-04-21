@@ -200,6 +200,7 @@ export default function SearchPageClient() {
         <SearchBar
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          onClear={() => setQuery('')}
           onClick={handleSearchSubmit}
           onKeyDown={handleSearchKeyDown}
           placeholder='게시글 제목/내용, 태그, 닉네임 검색'

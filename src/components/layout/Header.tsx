@@ -53,6 +53,7 @@ export default function Header({ user, nickname, isAdmin = false }: HeaderProps)
             <SearchBar
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onClear={() => setQuery('')}
               onClick={handleSearch}
               onKeyDown={handleSearchKeyDown}
               placeholder='게시글, 태그, 사용자 검색'
