@@ -369,19 +369,14 @@ export default function MusicListForm({
 
       {isModalOpen &&
         (isMobileViewport ? (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-[#070b16] px-4 py-4 sm:px-6 sm:py-6">
-            <div className="mx-auto w-full max-w-2xl">
-              <div className="mb-3 flex justify-end">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  rounded="full"
-                  icon={<X size={16} />}
+          <div className="fixed inset-0 z-60 overflow-y-auto bg-[#070b16] px-4 py-4 sm:px-6 sm:py-6">
+            <div className="mx-auto w-full max-w-2xl h-full">
+              <div className="absolute right-6 top-6 z-70">
+                <IconButton
+                  icon={<X size={18} />}
                   onClick={handleToggleModal}
-                  className="border-white/15 text-gray-200 hover:bg-white/10"
-                >
-                  닫기
-                </Button>
+                  className="border-white/15 text-white hover:bg-white/10 text-[0px]"
+                />
               </div>
               <SearchMusic
                 searchQuery={searchQuery}

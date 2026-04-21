@@ -23,7 +23,7 @@ interface SearchMusicProps {
 
 export default function SearchMusic({ searchQuery, setSearchQuery, searchType, searchResults, setSearchResults, onSelect, onClose }: SearchMusicProps) {
     return (
-        <div className="relative h-full w-full rounded-2xl border border-white/10 bg-[#0f0f10] p-6 shadow-2xl sm:p-8">
+        <div className="relative flex flex-col h-full w-full rounded-2xl border border-white/10 bg-[#0f0f10] p-6 shadow-2xl sm:p-8">
             <div className="mb-5 flex w-full items-center justify-between gap-4">
                 <div className="min-w-0">
                     <div className="text-base font-semibold text-white">
@@ -53,7 +53,7 @@ export default function SearchMusic({ searchQuery, setSearchQuery, searchType, s
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="mt-4 w-full max-h-[80vh] overflow-y-auto rounded-xl border border-white/10 bg-[#151517] shadow-2xl"
+                        className="mt-4 w-full min-h-0 overflow-y-auto rounded-xl border border-white/10 bg-[#151517] shadow-2xl"
                     >
                         {searchResults.map((item) => (
                             <li

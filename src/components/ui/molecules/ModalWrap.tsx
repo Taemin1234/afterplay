@@ -58,7 +58,7 @@ export default function ModalWrap({
             icon={<X size={18} />}
             variant="bg"
             onClick={handleClose}
-            className="absolute right-0 top-0 z-20 ml-auto"
+            className="absolute right-4 top-4 z-20 ml-auto"
           />
         )}
         {children}
