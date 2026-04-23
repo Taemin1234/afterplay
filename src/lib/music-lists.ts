@@ -37,7 +37,9 @@ type ResponsePayload = {
   nextCursor: string | null;
 };
 
-type CollectedItem = ResponseItem & {
+type CollectedRef = {
+  kind: 'PLAYLIST' | 'ALBUM_LIST';
+  refId: string;
   _cursor: FeedCursor;
 };
 
@@ -383,11 +385,11 @@ export async function fetchListItems(options: QueryOptions): Promise<ResponsePay
     visibilityAlbumList.visibility = 'PRIVATE';
   }
 
-  const collected: CollectedItem[] = [];
+  const collectedRefs: CollectedRef[] = [];
   let scanCursor = options.cursor;
 
-  for (let i = 0; i < 6 && collected.length < options.limit + 1; i += 1) {
-    const needed = options.limit + 1 - collected.length;
+  for (let i = 0; i < 6 && collectedRefs.length < options.limit + 1; i += 1) {
+    const needed = options.limit + 1 - collectedRefs.length;
     const take = Math.min(100, Math.max(options.limit + 1, needed * 3));
 
     const feedRows = await prisma.listFeed.findMany({
@@ -408,8 +410,8 @@ export async function fetchListItems(options: QueryOptions): Promise<ResponsePay
     const lastRow = feedRows[feedRows.length - 1];
     scanCursor = { createdAt: lastRow.createdAt.toISOString(), id: lastRow.id };
 
-    const playlistIds = feedRows.filter((row) => row.kind === 'PLAYLIST').map((row) => row.refId);
-    const albumListIds = feedRows.filter((row) => row.kind === 'ALBUM_LIST').map((row) => row.refId);
+    const playlistIds = [...new Set(feedRows.filter((row) => row.kind === 'PLAYLIST').map((row) => row.refId))];
+    const albumListIds = [...new Set(feedRows.filter((row) => row.kind === 'ALBUM_LIST').map((row) => row.refId))];
 
     const [playlists, albumLists] = await Promise.all([
       playlistIds.length
@@ -421,37 +423,6 @@ export async function fetchListItems(options: QueryOptions): Promise<ResponsePay
           },
           select: {
             id: true,
-            title: true,
-            story: true,
-            visibility: true,
-            authorId: true,
-            createdAt: true,
-            _count: {
-              select: {
-                likes: true,
-                comments: true,
-              },
-            },
-            tags: {
-              select: {
-                tag: {
-                  select: {
-                    name: true,
-                  },
-                },
-              },
-            },
-            tracks: {
-              orderBy: { order: 'asc' },
-              take: 3,
-              select: {
-                track: {
-                  select: {
-                    albumCover: true,
-                  },
-                },
-              },
-            },
           },
         })
         : [],
@@ -464,58 +435,115 @@ export async function fetchListItems(options: QueryOptions): Promise<ResponsePay
           },
           select: {
             id: true,
-            title: true,
-            story: true,
-            visibility: true,
-            authorId: true,
-            createdAt: true,
-            _count: {
-              select: {
-                likes: true,
-                comments: true,
-              },
-            },
-            tags: {
-              select: {
-                tag: {
-                  select: {
-                    name: true,
-                  },
-                },
-              },
-            },
-            albums: {
-              orderBy: { order: 'asc' },
-              take: 3,
-              select: {
-                album: {
-                  select: {
-                    coverImage: true,
-                  },
-                },
-              },
-            },
           },
         })
         : [],
     ]);
 
-    const playlistMap = new Map(playlists.map((playlist) => [playlist.id, playlist]));
-    const albumListMap = new Map(albumLists.map((albumList) => [albumList.id, albumList]));
+    const playlistIdSet = new Set(playlists.map((playlist) => playlist.id));
+    const albumListIdSet = new Set(albumLists.map((albumList) => albumList.id));
 
     for (const row of feedRows) {
-      if (row.kind === 'PLAYLIST') {
-        const playlist = playlistMap.get(row.refId);
-        if (!playlist) continue;
+      if (row.kind === 'PLAYLIST' && playlistIdSet.has(row.refId)) {
+        collectedRefs.push({
+          kind: 'PLAYLIST',
+          refId: row.refId,
+          _cursor: { createdAt: row.createdAt.toISOString(), id: row.id },
+        });
+      }
 
-        collected.push({
+      if (row.kind === 'ALBUM_LIST' && albumListIdSet.has(row.refId)) {
+        collectedRefs.push({
+          kind: 'ALBUM_LIST',
+          refId: row.refId,
+          _cursor: { createdAt: row.createdAt.toISOString(), id: row.id },
+        });
+      }
+
+      if (collectedRefs.length >= options.limit + 1) {
+        break;
+      }
+    }
+
+    if (feedRows.length < take) break;
+  }
+
+  const hasNext = collectedRefs.length > options.limit;
+  const pageRefs = hasNext ? collectedRefs.slice(0, options.limit) : collectedRefs;
+  const pagePlaylistIds = [...new Set(pageRefs.filter((item) => item.kind === 'PLAYLIST').map((item) => item.refId))];
+  const pageAlbumListIds = [...new Set(pageRefs.filter((item) => item.kind === 'ALBUM_LIST').map((item) => item.refId))];
+
+  const [playlists, albumLists] = await Promise.all([
+    pagePlaylistIds.length
+      ? prisma.playlist.findMany({
+        where: {
+          id: { in: pagePlaylistIds },
+          deletedAt: null,
+          ...visibilityPlaylist,
+        },
+        select: {
+          id: true,
+          title: true,
+          story: true,
+          visibility: true,
+          authorId: true,
+          createdAt: true,
+          author: { select: { nickname: true } },
+          _count: { select: { likes: true, comments: true } },
+          tags: { select: { tag: { select: { name: true } } } },
+          tracks: {
+            orderBy: { order: 'asc' },
+            take: 3,
+            select: { track: { select: { albumCover: true } } },
+          },
+        },
+      })
+      : [],
+    pageAlbumListIds.length
+      ? prisma.albumList.findMany({
+        where: {
+          id: { in: pageAlbumListIds },
+          deletedAt: null,
+          ...visibilityAlbumList,
+        },
+        select: {
+          id: true,
+          title: true,
+          story: true,
+          visibility: true,
+          authorId: true,
+          createdAt: true,
+          author: { select: { nickname: true } },
+          _count: { select: { likes: true, comments: true } },
+          tags: { select: { tag: { select: { name: true } } } },
+          albums: {
+            orderBy: { order: 'asc' },
+            take: 3,
+            select: { album: { select: { coverImage: true } } },
+          },
+        },
+      })
+      : [],
+  ]);
+
+  const playlistMap = new Map(playlists.map((playlist) => [playlist.id, playlist]));
+  const albumListMap = new Map(albumLists.map((albumList) => [albumList.id, albumList]));
+  const rendered: Array<{ item: ResponseItem; cursor: FeedCursor }> = [];
+
+  for (const ref of pageRefs) {
+    if (ref.kind === 'PLAYLIST') {
+      const playlist = playlistMap.get(ref.refId);
+      if (!playlist) continue;
+
+      rendered.push({
+        item: {
           kind: 'PLAYLIST',
           id: playlist.id,
           title: playlist.title,
           story: playlist.story,
           visibility: playlist.visibility,
           authorId: playlist.authorId,
-          authorNickname: null,
+          authorNickname: playlist.author.nickname,
           createdAt: playlist.createdAt.toISOString(),
           likesCount: playlist._count.likes,
           commentsCount: playlist._count.comments,
@@ -523,22 +551,24 @@ export async function fetchListItems(options: QueryOptions): Promise<ResponsePay
           previewImages: playlist.tracks
             .map((entry) => entry.track.albumCover)
             .filter((image): image is string => Boolean(image)),
-          _cursor: { createdAt: row.createdAt.toISOString(), id: row.id },
-        });
-        continue;
-      }
+        },
+        cursor: ref._cursor,
+      });
+      continue;
+    }
 
-      const albumList = albumListMap.get(row.refId);
-      if (!albumList) continue;
+    const albumList = albumListMap.get(ref.refId);
+    if (!albumList) continue;
 
-      collected.push({
+    rendered.push({
+      item: {
         kind: 'ALBUM_LIST',
         id: albumList.id,
         title: albumList.title,
         story: albumList.story,
         visibility: albumList.visibility,
         authorId: albumList.authorId,
-        authorNickname: null,
+        authorNickname: albumList.author.nickname,
         createdAt: albumList.createdAt.toISOString(),
         likesCount: albumList._count.likes,
         commentsCount: albumList._count.comments,
@@ -546,41 +576,15 @@ export async function fetchListItems(options: QueryOptions): Promise<ResponsePay
         previewImages: albumList.albums
           .map((entry) => entry.album.coverImage)
           .filter((image): image is string => Boolean(image)),
-        _cursor: { createdAt: row.createdAt.toISOString(), id: row.id },
-      });
-    }
-
-    if (feedRows.length < take) break;
+      },
+      cursor: ref._cursor,
+    });
   }
 
-  const hasNext = collected.length > options.limit;
-  const page = hasNext ? collected.slice(0, options.limit) : collected;
-  const authorIds = [...new Set(page.map((item) => item.authorId))];
-  const authors = authorIds.length
-    ? await prisma.user.findMany({
-        where: { id: { in: authorIds } },
-        select: { id: true, nickname: true },
-      })
-    : [];
-  const authorNicknameMap = new Map(authors.map((author) => [author.id, author.nickname]));
-
-  const nextCursor = hasNext ? encodeCursor(page[page.length - 1]._cursor) : null;
+  const nextCursor = hasNext && rendered.length > 0 ? encodeCursor(rendered[rendered.length - 1].cursor) : null;
 
   return {
-    items: page.map((item) => ({
-      kind: item.kind,
-      id: item.id,
-      title: item.title,
-      story: item.story,
-      visibility: item.visibility,
-      authorId: item.authorId,
-      authorNickname: authorNicknameMap.get(item.authorId) ?? null,
-      createdAt: item.createdAt,
-      likesCount: item.likesCount,
-      commentsCount: item.commentsCount,
-      tags: item.tags,
-      previewImages: item.previewImages,
-    })),
+    items: rendered.map((row) => row.item),
     nextCursor,
   };
 }

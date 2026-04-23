@@ -659,6 +659,8 @@ model ListFeed {
   @@unique([userId, kind, refId])
   @@index([userId, createdAt(sort: Desc), id(sort: Desc)])
   @@index([kind, refId])
+  @@index([createdAt(sort: Desc), id(sort: Desc)], map: "ListFeed_createdAt_id_desc_idx")
+  @@index([kind, createdAt(sort: Desc), id(sort: Desc)], map: "ListFeed_kind_createdAt_id_desc_idx")
 }
 
 model MusicSearchAlias {
