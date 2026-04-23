@@ -6,10 +6,8 @@ import { createSupabaseServerClient } from '@/utils/supabase/server';
 
 export default async function MainLayout({
   children,
-  modal,
 }: {
   children: React.ReactNode;
-  modal: React.ReactNode;
 }) {
   const supabase = await createSupabaseServerClient();
   const {
@@ -38,7 +36,6 @@ export default async function MainLayout({
       <Header user={user} nickname={nickname} isAdmin={isAdmin} />
       <main className='container mx-auto px-5 py-4 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-4 lg:py-8'>
         {children}
-        {modal}
       </main>
       <ScrollToTopButton />
       <MobileBottomNav user={user} nickname={nickname} isAdmin={isAdmin} />
