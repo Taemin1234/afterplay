@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
+import { after } from 'next/server';
 import { createSupabaseServerClient } from '@/utils/supabase/server';
 import {
   fetchAlbumListDetail,
@@ -42,33 +43,26 @@ export default async function MusicListDetailPage({
 
   const isLoggedIn = Boolean(user);
   const isOwner = isLoggedIn && item.author.id === user?.id;
+  const headerStore = await headers();
+  const rawForwardedFor = headerStore.get('x-forwarded-for');
+  const ip = rawForwardedFor?.split(',')[0]?.trim() || headerStore.get('x-real-ip') || '';
+  const userAgent = headerStore.get('user-agent') || '';
+  const fingerprintSeed = `${ip}|${userAgent}`;
+  const deviceId = fingerprintSeed === '|' ? undefined : createHash('sha256').update(fingerprintSeed).digest('hex');
 
-  // 조회수 카운트
-  try {
-    // 헤더에서 클라이언트 정보 추출
-    const headerStore = await headers();
-    // IP 추출
-    const rawForwardedFor = headerStore.get('x-forwarded-for');
-    const ip = rawForwardedFor?.split(',')[0]?.trim() || headerStore.get('x-real-ip') || '';
-    // 브라우저/기기정보 추출
-    const userAgent = headerStore.get('user-agent') || '';
-    // deviceId 생성하여 저장 (hash로 값을 가려서 저장)
-    const fingerprintSeed = `${ip}|${userAgent}`;
-    const deviceId = fingerprintSeed === '|'
-      ? undefined
-      : createHash('sha256').update(fingerprintSeed).digest('hex');
-
-      // 조회수 로직에 전달
-    await registerListView({
-      kind,
-      id,
-      authorId: item.author.id,
-      viewerUserId: user?.id,
-      deviceId,
-    });
-  } catch (error) {
-    console.error('Failed to register list view', error);
-  }
+  after(async () => {
+    try {
+      await registerListView({
+        kind,
+        id,
+        authorId: item.author.id,
+        viewerUserId: user?.id,
+        deviceId,
+      });
+    } catch (error) {
+      console.error('Failed to register list view', error);
+    }
+  });
 
   return (
     <ListDetailClient
