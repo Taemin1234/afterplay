@@ -1,6 +1,6 @@
 import MusicListDetailPage from '../../_components/MusicListDetailPage';
 import type { Metadata } from 'next';
-import { fetchPlaylistDetail } from '@/lib/music-lists';
+import { fetchPlaylistMetadata } from '@/lib/music-lists';
 import { SITE_NAME } from '@/lib/seo';
 
 export async function generateMetadata({
@@ -9,7 +9,7 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const item = await fetchPlaylistDetail(id);
+  const item = await fetchPlaylistMetadata(id);
 
   if (!item) {
     return {
@@ -18,9 +18,9 @@ export async function generateMetadata({
     };
   }
 
-  const author = item.author.nickname ?? '익명';
+  const author = item.authorNickname ?? '익명';
   const title = item.title;
-  const description = item.story || `${author}님의 플레이리스트를 감상해보세요.`;
+  const description = item.story || `${author}의 플레이리스트를 감상해보세요.`;
 
   return {
     title,
@@ -33,14 +33,12 @@ export async function generateMetadata({
       description,
       url: `/playlist/${id}`,
       type: 'article',
-      images: item.musicItems[0]?.albumImageUrl
-        ? [{ url: item.musicItems[0].albumImageUrl, alt: title }]
-        : undefined,
+      images: item.imageUrl ? [{ url: item.imageUrl, alt: title }] : undefined,
     },
     twitter: {
       title: `${title} | ${SITE_NAME}`,
       description,
-      images: item.musicItems[0]?.albumImageUrl ? [item.musicItems[0].albumImageUrl] : undefined,
+      images: item.imageUrl ? [item.imageUrl] : undefined,
     },
   };
 }

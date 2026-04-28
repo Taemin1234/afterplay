@@ -673,6 +673,91 @@ export type AlbumListDetail = {
   }>;
 };
 
+type ListMetadata = {
+  title: string;
+  story: string;
+  authorNickname: string | null;
+  imageUrl: string | null;
+};
+
+export async function fetchPlaylistMetadata(id: string): Promise<ListMetadata | null> {
+  const playlist = await prisma.playlist.findFirst({
+    where: {
+      id,
+      deletedAt: null,
+      visibility: 'PUBLIC',
+    },
+    select: {
+      title: true,
+      story: true,
+      author: {
+        select: {
+          nickname: true,
+        },
+      },
+      tracks: {
+        orderBy: { order: 'asc' },
+        take: 1,
+        select: {
+          track: {
+            select: {
+              albumCover: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!playlist) return null;
+
+  return {
+    title: playlist.title,
+    story: playlist.story,
+    authorNickname: playlist.author.nickname,
+    imageUrl: playlist.tracks[0]?.track.albumCover ?? null,
+  };
+}
+
+export async function fetchAlbumListMetadata(id: string): Promise<ListMetadata | null> {
+  const albumList = await prisma.albumList.findFirst({
+    where: {
+      id,
+      deletedAt: null,
+      visibility: 'PUBLIC',
+    },
+    select: {
+      title: true,
+      story: true,
+      author: {
+        select: {
+          nickname: true,
+        },
+      },
+      albums: {
+        orderBy: { order: 'asc' },
+        take: 1,
+        select: {
+          album: {
+            select: {
+              coverImage: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!albumList) return null;
+
+  return {
+    title: albumList.title,
+    story: albumList.story,
+    authorNickname: albumList.author.nickname,
+    imageUrl: albumList.albums[0]?.album.coverImage ?? null,
+  };
+}
+
 export async function fetchPlaylistDetail(id: string, viewerUserId?: string): Promise<PlaylistDetail | null> {
   const playlist = await prisma.playlist.findFirst({
     where: {
@@ -695,10 +780,29 @@ export async function fetchPlaylistDetail(id: string, viewerUserId?: string): Pr
       updatedAt: true,
       _count: {
         select: {
+          bookmarks: true,
+          comments: {
+            where: { deletedAt: null },
+          },
           likes: true,
         },
       },
+      author: {
+        select: {
+          id: true,
+          nickname: true,
+          nicknameSlug: true,
+          avatarUrl: true,
+        },
+      },
       likes: viewerUserId
+        ? {
+          where: { userId: viewerUserId },
+          select: { userId: true },
+          take: 1,
+        }
+        : false,
+      bookmarks: viewerUserId
         ? {
           where: { userId: viewerUserId },
           select: { userId: true },
@@ -751,16 +855,6 @@ export async function fetchPlaylistDetail(id: string, viewerUserId?: string): Pr
 
   if (!playlist) return null;
 
-  const author = await prisma.user.findUnique({
-    where: { id: playlist.authorId },
-    select: {
-      id: true,
-      nickname: true,
-      nicknameSlug: true,
-      avatarUrl: true,
-    },
-  });
-
   return {
     kind: 'PLAYLIST',
     id: playlist.id,
@@ -769,19 +863,19 @@ export async function fetchPlaylistDetail(id: string, viewerUserId?: string): Pr
     visibility: playlist.visibility,
     viewCount: playlist.viewCount,
     author: {
-      id: author?.id ?? playlist.authorId,
-      nickname: author?.nickname ?? null,
-      nicknameSlug: author?.nicknameSlug ?? null,
-      avatarUrl: author?.avatarUrl ?? null,
+      id: playlist.author.id,
+      nickname: playlist.author.nickname,
+      nicknameSlug: playlist.author.nicknameSlug,
+      avatarUrl: playlist.author.avatarUrl,
     },
     createdAt: playlist.createdAt.toISOString(),
     updatedAt: playlist.updatedAt.toISOString(),
     tags: playlist.tags.map((tagRow) => tagRow.tag.name),
     likesCount: playlist._count.likes,
-    commentsCount: playlist.comments.length,
-    bookmarksCount: 0,
+    commentsCount: playlist._count.comments,
+    bookmarksCount: playlist._count.bookmarks,
     viewerHasLiked: viewerUserId ? (playlist.likes?.length ?? 0) > 0 : false,
-    viewerHasBookmarked: false,
+    viewerHasBookmarked: viewerUserId ? (playlist.bookmarks?.length ?? 0) > 0 : false,
     comments: playlist.comments.map((comment) => ({
       id: comment.id,
       content: comment.content,
@@ -826,10 +920,29 @@ export async function fetchAlbumListDetail(id: string, viewerUserId?: string): P
       updatedAt: true,
       _count: {
         select: {
+          bookmarks: true,
+          comments: {
+            where: { deletedAt: null },
+          },
           likes: true,
         },
       },
+      author: {
+        select: {
+          id: true,
+          nickname: true,
+          nicknameSlug: true,
+          avatarUrl: true,
+        },
+      },
       likes: viewerUserId
+        ? {
+          where: { userId: viewerUserId },
+          select: { userId: true },
+          take: 1,
+        }
+        : false,
+      bookmarks: viewerUserId
         ? {
           where: { userId: viewerUserId },
           select: { userId: true },
@@ -882,29 +995,6 @@ export async function fetchAlbumListDetail(id: string, viewerUserId?: string): P
 
   if (!albumList) return null;
 
-  const [author, bookmarksCount, viewerHasBookmarked] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id: albumList.authorId },
-      select: {
-        id: true,
-        nickname: true,
-        nicknameSlug: true,
-        avatarUrl: true,
-      },
-    }),
-    prisma.$queryRawUnsafe<Array<{ count: bigint }>>(
-      'SELECT COUNT(*)::bigint AS "count" FROM "AlbumListBookmark" WHERE "albumListId" = $1',
-      albumList.id
-    ),
-    viewerUserId
-      ? prisma.$queryRawUnsafe<Array<{ count: bigint }>>(
-        'SELECT COUNT(*)::bigint AS "count" FROM "AlbumListBookmark" WHERE "albumListId" = $1 AND "userId" = $2',
-        albumList.id,
-        viewerUserId
-      )
-      : Promise.resolve([{ count: BigInt(0) }]),
-  ]);
-
   return {
     kind: 'ALBUM_LIST',
     id: albumList.id,
@@ -913,19 +1003,19 @@ export async function fetchAlbumListDetail(id: string, viewerUserId?: string): P
     visibility: albumList.visibility,
     viewCount: albumList.viewCount,
     author: {
-      id: author?.id ?? albumList.authorId,
-      nickname: author?.nickname ?? null,
-      nicknameSlug: author?.nicknameSlug ?? null,
-      avatarUrl: author?.avatarUrl ?? null,
+      id: albumList.author.id,
+      nickname: albumList.author.nickname,
+      nicknameSlug: albumList.author.nicknameSlug,
+      avatarUrl: albumList.author.avatarUrl,
     },
     createdAt: albumList.createdAt.toISOString(),
     updatedAt: albumList.updatedAt.toISOString(),
     tags: albumList.tags.map((tagRow) => tagRow.tag.name),
     likesCount: albumList._count.likes,
-    commentsCount: albumList.comments.length,
-    bookmarksCount: Number(bookmarksCount[0]?.count ?? 0),
+    commentsCount: albumList._count.comments,
+    bookmarksCount: albumList._count.bookmarks,
     viewerHasLiked: viewerUserId ? (albumList.likes?.length ?? 0) > 0 : false,
-    viewerHasBookmarked: Number(viewerHasBookmarked[0]?.count ?? 0) > 0,
+    viewerHasBookmarked: viewerUserId ? (albumList.bookmarks?.length ?? 0) > 0 : false,
     comments: albumList.comments.map((comment) => ({
       id: comment.id,
       content: comment.content,
