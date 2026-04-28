@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { unstable_cache } from 'next/cache';
 import { createSupabaseServerClient } from '@/utils/supabase/server';
 import {
   fetchListItems,
@@ -12,6 +13,33 @@ import {
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+const fetchUserListItemsCached = unstable_cache(
+  async (
+    userId: string,
+    type: 'all' | 'playlist' | 'albumlist',
+    sort: 'latest' | 'likes',
+    limit: number,
+    rawCursor: string | null,
+    visibility: 'all' | 'public' | 'private'
+  ) => {
+    const cursor = sort === 'latest' ? parseCursor(rawCursor) : null;
+    const likesOffset = sort === 'likes' ? parseLikesCursor(rawCursor) : 0;
+
+    return fetchListItems({
+      type,
+      sort,
+      limit,
+      cursor,
+      likesOffset,
+      feedUserId: userId,
+      authorId: userId,
+      visibility,
+    });
+  },
+  ['api-user-lists-v1'],
+  { revalidate: 15 }
+);
 
 type RouteContext = {
   params: Promise<{
@@ -31,22 +59,18 @@ export async function GET(request: Request, context: RouteContext) {
     const sort = parseListSort(searchParams.get('sort'));
     const limit = parseLimit(searchParams.get('limit'));
     const rawCursor = searchParams.get('cursor');
-    const cursor = sort === 'latest' ? parseCursor(rawCursor) : null;
-    const likesOffset = sort === 'likes' ? parseLikesCursor(rawCursor) : 0;
     const requestedVisibility = parseVisibilityScope(searchParams.get('visibility'));
 
     // Public-only requests can skip auth checks.
     if (requestedVisibility === 'public') {
-      const result = await fetchListItems({
+      const result = await fetchUserListItemsCached(
+        userId,
         type,
         sort,
         limit,
-        cursor,
-        likesOffset,
-        feedUserId: userId,
-        authorId: userId,
-        visibility: 'public',
-      });
+        rawCursor,
+        'public'
+      );
 
       return NextResponse.json({
         ...result,
@@ -64,16 +88,14 @@ export async function GET(request: Request, context: RouteContext) {
     const isOwner = user?.id === userId;
     const visibility = isOwner ? requestedVisibility : 'public';
 
-    const result = await fetchListItems({
+    const result = await fetchUserListItemsCached(
+      userId,
       type,
       sort,
       limit,
-      cursor,
-      likesOffset,
-      feedUserId: userId,
-      authorId: userId,
-      visibility,
-    });
+      rawCursor,
+      visibility
+    );
 
     return NextResponse.json({
       ...result,
