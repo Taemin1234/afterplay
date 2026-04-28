@@ -19,17 +19,9 @@ export default function ListItem({ item }: ListItemProps) {
   const visible = tags.slice(0, MAX);
   const rest = tags.length - visible.length;
 
-  const handleNavigate = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    const isMobileViewport = window.matchMedia("(max-width: 767px)").matches;
-    if (!isMobileViewport) return;
-
-    e.preventDefault();
-    window.location.assign(href);
-  };
-
   return (
     <li className="list-none rounded-xl border border-slate-800/70 bg-gradient-to-b from-[#101729] to-[#050816] p-3 shadow-[0_18px_45px_rgba(0,0,0,0.55)] transition-transform transition-colors duration-300 hover:border-neon-green/40 sm:p-4 md:hover:-translate-y-1">
-      <Link href={href} onClick={handleNavigate} className="group relative flex h-full flex-col justify-between gap-3">
+      <Link href={href} className="group relative flex h-full flex-col justify-between gap-3">
         <div>
           <div className="flex items-center justify-between gap-2">
             <Tag variant="subtle">{item.kind === "PLAYLIST" ? "PLAYLIST" : "ALBUMLIST"}</Tag>
