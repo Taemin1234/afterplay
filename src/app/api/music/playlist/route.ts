@@ -37,23 +37,41 @@ export async function POST(req: Request) {
             story,
             visibility,
             authorId: user.id,
-            tracks: {
-              create: musicItems.map((item, i) => ({
-                order: i,
-                track: {
-                  connectOrCreate: {
-                    where: { spotifyId: item.id },
-                    create: {
-                      spotifyId: item.id,
-                      title: item.name,
-                      artist: item.artist,
-                      albumCover: item.albumImageUrl ?? '',
-                    },
-                  },
-                },
-              })),
-            },
           },
+          select: {
+            id: true,
+            createdAt: true,
+          },
+        });
+
+        await tx.track.createMany({
+          data: musicItems.map((item) => ({
+            spotifyId: item.id,
+            title: item.name,
+            artist: item.artist,
+            albumCover: item.albumImageUrl ?? '',
+          })),
+          skipDuplicates: true,
+        });
+
+        const tracks = await tx.track.findMany({
+          where: { spotifyId: { in: musicItems.map((item) => item.id) } },
+          select: { id: true, spotifyId: true },
+        });
+        const trackIdBySpotifyId = new Map(tracks.map((track) => [track.spotifyId, track.id]));
+
+        await tx.playlistTrack.createMany({
+          data: musicItems
+            .map((item, index) => {
+              const trackId = trackIdBySpotifyId.get(item.id);
+              if (!trackId) return null;
+              return {
+                playlistId: playlist.id,
+                trackId,
+                order: index,
+              };
+            })
+            .filter((row): row is { playlistId: string; trackId: string; order: number } => row !== null),
         });
 
         if (tagRows.length > 0) {

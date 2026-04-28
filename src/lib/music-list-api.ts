@@ -76,16 +76,16 @@ export function uniqueMusicItems(musicItems: MusicItemPayload[]): MusicItemPaylo
 // 태그 db 저장
 export async function upsertTags(tags: string[]) {
   if (tags.length === 0) return [];
-  return Promise.all(
-    tags.map((name) =>
-      prisma.tag.upsert({
-        where: { name },
-        update: {},
-        create: { name },
-        select: { id: true },
-      })
-    )
-  );
+
+  await prisma.tag.createMany({
+    data: tags.map((name) => ({ name })),
+    skipDuplicates: true,
+  });
+
+  return prisma.tag.findMany({
+    where: { name: { in: tags } },
+    select: { id: true },
+  });
 }
 
 // body 요청 검증 / 데이터 정규화
