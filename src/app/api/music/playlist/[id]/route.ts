@@ -52,6 +52,10 @@ async function togglePlaylistLike(id: string, userId: string) {
   };
 }
 
+function isCommentAction(action: MusicDetailActionPayload['action']) {
+  return action === 'comment' || action === 'edit-comment' || action === 'delete-comment';
+}
+
 export async function GET(_request: Request, context: RouteContext) {
   try {
     const { id } = await context.params;
@@ -124,11 +128,24 @@ export async function POST(request: Request, context: RouteContext) {
       });
     }
 
-    await upsertDbUser(user);
+    if (!isCommentAction(body.action)) {
+      return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+    }
 
-    const playlist = await fetchPlaylistDetail(id, user.id);
+    const [playlist, dbUser] = await Promise.all([
+      findAccessiblePlaylist(id, user.id),
+      prisma.user.findUnique({
+        where: { id: user.id },
+        select: { role: true },
+      }),
+    ]);
+
     if (!playlist) {
       return NextResponse.json({ error: 'Playlist not found' }, { status: 404 });
+    }
+
+    if (body.action === 'comment' && !dbUser) {
+      await upsertDbUser(user);
     }
 
     const commentActionResponse = await handleCommentActions({
@@ -136,7 +153,7 @@ export async function POST(request: Request, context: RouteContext) {
       body,
       actor: {
         id: user.id,
-        role: user.role,
+        role: dbUser?.role ?? 'USER',
       },
       createComment: async (content) =>
         prisma.playlistComment.create({

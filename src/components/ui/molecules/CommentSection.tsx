@@ -113,7 +113,25 @@ export default function CommentSection({
     const content = editingCommentInput.trim();
     if (!content) return;
 
+    const previousComments = comments;
+    const previousEditingCommentId = editingCommentId;
+    const previousEditingCommentInput = editingCommentInput;
+    const updatedAt = new Date().toISOString();
+
     setPendingCommentActionId(commentId);
+    setComments((prev) =>
+      prev.map((comment) =>
+        comment.id === commentId
+          ? {
+              ...comment,
+              content,
+              updatedAt,
+            }
+          : comment
+      )
+    );
+    handleCancelEditComment();
+
     try {
       const res = await fetch(`/api/music/${apiSegment}/${itemId}`, {
         method: 'POST',
@@ -139,8 +157,10 @@ export default function CommentSection({
             : comment
         )
       );
-      handleCancelEditComment();
     } catch (error) {
+      setComments(previousComments);
+      setEditingCommentId(previousEditingCommentId);
+      setEditingCommentInput(previousEditingCommentInput);
       console.error(error);
       alert('댓글 수정 중 오류가 발생했습니다.');
     } finally {
@@ -154,7 +174,15 @@ export default function CommentSection({
     const ok = confirm('댓글을 삭제하시겠습니까?');
     if (!ok) return;
 
+    const previousComments = comments;
+
     setPendingCommentActionId(commentId);
+    setComments((prev) => prev.filter((comment) => comment.id !== commentId));
+    onCommentsCountChange(Math.max(0, comments.length - 1));
+    if (editingCommentId === commentId) {
+      handleCancelEditComment();
+    }
+
     try {
       const res = await fetch(`/api/music/${apiSegment}/${itemId}`, {
         method: 'POST',
@@ -169,11 +197,9 @@ export default function CommentSection({
       const data = await res.json();
 
       onCommentsCountChange(data.commentsCount);
-      setComments((prev) => prev.filter((comment) => comment.id !== commentId));
-      if (editingCommentId === commentId) {
-        handleCancelEditComment();
-      }
     } catch (error) {
+      setComments(previousComments);
+      onCommentsCountChange(previousComments.length);
       console.error(error);
       alert('댓글 삭제 중 오류가 발생했습니다.');
     } finally {
