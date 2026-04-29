@@ -143,22 +143,34 @@ export default function SearchPageClient() {
     }
 
     // 디바운스로 입력할때마다 요청 방지
+    const controller = new AbortController();
+
     const timer = setTimeout(async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(`/api/search?q=${encodeURIComponent(normalized)}`);
+        const params = new URLSearchParams({
+          q: normalized,
+          tab,
+        });
+        const response = await fetch(`/api/search?${params.toString()}`, {
+          signal: controller.signal,
+        });
         if (!response.ok) throw new Error('Search failed');
         const data: SearchResponse = await response.json();
-        setResults(data);
-      } catch {
+        setResults((prev) => ({ ...prev, ...data }));
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') return;
         setResults({ content: [], tag: [], music: [], users: [] });
       } finally {
         setIsLoading(false);
       }
     }, 300);
 
-    return () => clearTimeout(timer);
-  }, [query]);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [query, tab]);
 
   const updateUrl = (nextQuery: string, nextTab: SearchTab) => {
     const trimmed = nextQuery.trim();
