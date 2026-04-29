@@ -11,7 +11,6 @@ import {
 import {
   type MusicDetailActionPayload,
   handleCommentActions,
-  toggleBookmarkByRawSql,
 } from '@/lib/music-detail-route-helpers';
 
 export const runtime = 'nodejs';
@@ -49,6 +48,24 @@ async function togglePlaylistLike(id: string, userId: string) {
   return {
     likesCount,
     viewerHasLiked: !existing,
+  };
+}
+
+async function togglePlaylistBookmark(id: string, userId: string) {
+  const key = { userId_playlistId: { userId, playlistId: id } };
+  const existing = await prisma.playlistBookmark.findUnique({ where: key });
+
+  if (existing) {
+    await prisma.playlistBookmark.delete({ where: key });
+  } else {
+    await prisma.playlistBookmark.create({ data: { userId, playlistId: id } });
+  }
+
+  const bookmarksCount = await prisma.playlistBookmark.count({ where: { playlistId: id } });
+
+  return {
+    bookmarksCount,
+    viewerHasBookmarked: !existing,
   };
 }
 
@@ -113,12 +130,7 @@ export async function POST(request: Request, context: RouteContext) {
         return NextResponse.json({ error: 'Playlist not found' }, { status: 404 });
       }
 
-      const { bookmarksCount, viewerHasBookmarked } = await toggleBookmarkByRawSql({
-        userId: user.id,
-        tableName: 'PlaylistBookmark',
-        foreignKeyColumn: 'playlistId',
-        foreignKeyValue: id,
-      });
+      const { bookmarksCount, viewerHasBookmarked } = await togglePlaylistBookmark(id, user.id);
 
       return NextResponse.json({
         ok: true,
