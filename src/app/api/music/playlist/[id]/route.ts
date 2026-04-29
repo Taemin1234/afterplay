@@ -23,6 +23,35 @@ type RouteContext = {
   }>;
 };
 
+async function findAccessiblePlaylist(id: string, userId: string) {
+  return prisma.playlist.findFirst({
+    where: {
+      id,
+      deletedAt: null,
+      OR: [{ visibility: 'PUBLIC' }, { authorId: userId }],
+    },
+    select: { id: true },
+  });
+}
+
+async function togglePlaylistLike(id: string, userId: string) {
+  const key = { userId_playlistId: { userId, playlistId: id } };
+  const existing = await prisma.playlistLike.findUnique({ where: key });
+
+  if (existing) {
+    await prisma.playlistLike.delete({ where: key });
+  } else {
+    await prisma.playlistLike.create({ data: { userId, playlistId: id } });
+  }
+
+  const likesCount = await prisma.playlistLike.count({ where: { playlistId: id } });
+
+  return {
+    likesCount,
+    viewerHasLiked: !existing,
+  };
+}
+
 export async function GET(_request: Request, context: RouteContext) {
   try {
     const { id } = await context.params;
@@ -56,39 +85,30 @@ export async function POST(request: Request, context: RouteContext) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await upsertDbUser(user);
-
-    const playlist = await fetchPlaylistDetail(id, user.id);
-    if (!playlist) {
-      return NextResponse.json({ error: 'Playlist not found' }, { status: 404 });
-    }
-
     const body = (await request.json()) as MusicDetailActionPayload;
 
     if (body.action === 'toggle-like') {
-      const key = { userId_playlistId: { userId: user.id, playlistId: id } };
-      const existing = await prisma.playlistLike.findUnique({ where: key });
-
-      if (existing) {
-        await prisma.playlistLike.delete({ where: key });
-      } else {
-        await prisma.playlistLike.create({ data: { userId: user.id, playlistId: id } });
+      const playlist = await findAccessiblePlaylist(id, user.id);
+      if (!playlist) {
+        return NextResponse.json({ error: 'Playlist not found' }, { status: 404 });
       }
 
-      const [likesCount, viewerHasLiked] = await Promise.all([
-        prisma.playlistLike.count({ where: { playlistId: id } }),
-        prisma.playlistLike.count({ where: { playlistId: id, userId: user.id } }),
-      ]);
+      const { likesCount, viewerHasLiked } = await togglePlaylistLike(id, user.id);
 
       return NextResponse.json({
         ok: true,
         action: 'toggle-like',
         likesCount,
-        viewerHasLiked: viewerHasLiked > 0,
+        viewerHasLiked,
       });
     }
 
     if (body.action === 'toggle-bookmark') {
+      const playlist = await findAccessiblePlaylist(id, user.id);
+      if (!playlist) {
+        return NextResponse.json({ error: 'Playlist not found' }, { status: 404 });
+      }
+
       const { bookmarksCount, viewerHasBookmarked } = await toggleBookmarkByRawSql({
         userId: user.id,
         tableName: 'PlaylistBookmark',
@@ -102,6 +122,13 @@ export async function POST(request: Request, context: RouteContext) {
         bookmarksCount,
         viewerHasBookmarked,
       });
+    }
+
+    await upsertDbUser(user);
+
+    const playlist = await fetchPlaylistDetail(id, user.id);
+    if (!playlist) {
+      return NextResponse.json({ error: 'Playlist not found' }, { status: 404 });
     }
 
     const commentActionResponse = await handleCommentActions({

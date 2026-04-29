@@ -62,7 +62,13 @@ export default function ListDetailClient({
 
   const handleToggleLike = async () => {
     if (!requireLogin() || isLiking) return;
+    const previousViewerHasLiked = viewerHasLiked;
+    const previousLikesCount = likesCount;
+    const nextViewerHasLiked = !previousViewerHasLiked;
+
     setIsLiking(true);
+    setViewerHasLiked(nextViewerHasLiked);
+    setLikesCount((count) => Math.max(0, count + (nextViewerHasLiked ? 1 : -1)));
 
     try {
       const res = await fetch(`/api/music/${apiSegment}/${item.id}`, {
@@ -76,6 +82,8 @@ export default function ListDetailClient({
       setLikesCount(data.likesCount);
       setViewerHasLiked(data.viewerHasLiked);
     } catch (error) {
+      setViewerHasLiked(previousViewerHasLiked);
+      setLikesCount(previousLikesCount);
       console.error(error);
       alert('좋아요 처리 중 오류가 발생했습니다.');
     } finally {
@@ -85,7 +93,13 @@ export default function ListDetailClient({
 
   const handleToggleBookmark = async () => {
     if (!requireLogin() || isBookmarking) return;
+    const previousViewerHasBookmarked = viewerHasBookmarked;
+    const previousBookmarksCount = bookmarksCount;
+    const nextViewerHasBookmarked = !previousViewerHasBookmarked;
+
     setIsBookmarking(true);
+    setViewerHasBookmarked(nextViewerHasBookmarked);
+    setBookmarksCount((count) => Math.max(0, count + (nextViewerHasBookmarked ? 1 : -1)));
 
     try {
       const res = await fetch(`/api/music/${apiSegment}/${item.id}`, {
@@ -99,6 +113,8 @@ export default function ListDetailClient({
       setBookmarksCount(data.bookmarksCount);
       setViewerHasBookmarked(data.viewerHasBookmarked);
     } catch (error) {
+      setViewerHasBookmarked(previousViewerHasBookmarked);
+      setBookmarksCount(previousBookmarksCount);
       console.error(error);
       alert('북마크 처리 중 오류가 발생했습니다.');
     } finally {
