@@ -197,7 +197,6 @@ export async function GET(request: Request) {
         canonical: true,
         alias: true,
       },
-      take: 1000,
     });
 
     const compactQuery = compactTerm(query);
@@ -226,9 +225,8 @@ export async function GET(request: Request) {
     }
   }
 
-  // 검색어 개수 제한
-  const trackSearchTerms = [...trackTerms].slice(0, 20);
-  const albumSearchTerms = [...albumTerms].slice(0, 20);
+  const trackSearchTerms = [...trackTerms];
+  const albumSearchTerms = [...albumTerms];
 
   // 검색 동시 실행
   // 플레이리스트, 앨범리스트 제목/내용
