@@ -1,4 +1,4 @@
-﻿import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 import { getAdminUserOrNull } from '@/lib/admin-auth';
 import prisma from '@/lib/prisma';
@@ -13,19 +13,44 @@ function normalizeText(value: string | undefined) {
   return value?.trim().replace(/\s+/g, ' ') ?? '';
 }
 
-export async function GET() {
+function normalizePositiveInt(value: string | null, fallback: number, max: number) {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1) return fallback;
+  return Math.min(parsed, max);
+}
+
+export async function GET(request: Request) {
   try {
-    const admin = await getAdminUserOrNull();
+    const admin = await getAdminUserOrNull(); // 관리자인지 판단
     if (!admin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const rows = await prisma.musicSearchAlias.findMany({
-      orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
-      take: 300,
-    });
+    const { searchParams } = new URL(request.url);
+    const query = normalizeText(searchParams.get('q') ?? undefined);
+    const page = normalizePositiveInt(searchParams.get('page'), 1, 10000);
+    const pageSize = normalizePositiveInt(searchParams.get('pageSize'), 20, 100);
 
-    return NextResponse.json({ items: rows });
+    const where = query
+      ? {
+          OR: [
+            { canonical: { contains: query, mode: 'insensitive' as const } },
+            { alias: { contains: query, mode: 'insensitive' as const } },
+          ],
+        }
+      : undefined;
+
+    const [total, rows] = await prisma.$transaction([
+      prisma.musicSearchAlias.count({ where }),
+      prisma.musicSearchAlias.findMany({
+        where,
+        orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+    ]);
+
+    return NextResponse.json({ items: rows, total, page, pageSize });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to fetch aliases';
     console.error('[admin/search-aliases][GET]', error);
