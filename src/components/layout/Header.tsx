@@ -28,6 +28,7 @@ export default function Header({ user, nickname, isAdmin = false }: HeaderProps)
     const trimmed = query.trim();
     if (trimmed.length < 2) return;
     router.push(`/search?q=${encodeURIComponent(trimmed)}&tab=content`);
+    setQuery('');
   };
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
