@@ -110,6 +110,66 @@ function SearchUserList({ items }: { items: SearchUserItem[] }) {
   );
 }
 
+function SearchLoadingStatus() {
+  return (
+    <div className='flex items-center gap-2 text-sm text-slate-400' role='status' aria-live='polite' aria-label='검색 결과를 불러오는 중'>
+      <span className='relative flex h-4 w-4'>
+        <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-[#39ff14]/35' />
+        <span className='relative inline-flex h-4 w-4 rounded-full border border-[#39ff14]/70 bg-[#39ff14]/20' />
+      </span>
+      <span className='h-4 w-20 animate-pulse rounded bg-white/10' />
+    </div>
+  );
+}
+
+function SearchPostSkeleton() {
+  return (
+    <li className='rounded-lg border border-white/10 bg-white/5 p-4'>
+      <div className='animate-pulse space-y-3'>
+        <div className='flex items-center justify-between gap-2'>
+          <div className='h-5 w-20 rounded-full bg-[#39ff14]/15' />
+          <div className='h-4 w-16 rounded bg-white/10' />
+        </div>
+        <div className='space-y-2'>
+          <div className='h-5 w-3/5 rounded bg-white/10' />
+          <div className='h-4 w-full rounded bg-white/10' />
+          <div className='h-4 w-4/5 rounded bg-white/10' />
+        </div>
+        <div className='flex gap-2'>
+          <div className='h-5 w-14 rounded-full bg-[#39ff14]/10' />
+          <div className='h-5 w-16 rounded-full bg-[#39ff14]/10' />
+          <div className='h-5 w-12 rounded-full bg-[#39ff14]/10' />
+        </div>
+        <div className='h-4 w-28 rounded bg-white/10' />
+      </div>
+    </li>
+  );
+}
+
+function SearchUserSkeleton() {
+  return (
+    <li className='flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 p-3'>
+      <div className='h-10 w-10 animate-pulse rounded-full bg-white/10' />
+      <div className='animate-pulse space-y-2'>
+        <div className='h-4 w-24 rounded bg-white/10' />
+        <div className='h-3 w-16 rounded bg-white/10' />
+      </div>
+    </li>
+  );
+}
+
+function SearchResultsSkeleton({ tab }: { tab: SearchTab }) {
+  const isUserTab = tab === 'user';
+
+  return (
+    <ul className={isUserTab ? 'space-y-2' : 'space-y-3'} aria-label='검색 결과 로딩'>
+      {Array.from({ length: isUserTab ? 4 : 3 }).map((_, index) =>
+        isUserTab ? <SearchUserSkeleton key={`search-user-skeleton-${index}`} /> : <SearchPostSkeleton key={`search-post-skeleton-${index}`} />
+      )}
+    </ul>
+  );
+}
+
 export default function SearchPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -233,14 +293,22 @@ export default function SearchPageClient() {
 
       {query.trim().length < 2 ? (
         <p className='text-sm text-slate-400'>2글자 이상 입력하면 검색됩니다.</p>
+      ) : isLoading ? (
+        <SearchLoadingStatus />
       ) : (
-        <p className='text-sm text-slate-400'>{isLoading ? '검색 중...' : `${currentCount}개 결과`}</p>
+        <p className='text-sm text-slate-400'>{currentCount}개 결과</p>
       )}
 
-      {tab === 'content' && <SearchPostList items={results.content} />}
-      {tab === 'tag' && <SearchPostList items={results.tag} />}
-      {tab === 'music' && <SearchPostList items={results.music} />}
-      {tab === 'user' && <SearchUserList items={results.users} />}
+      {isLoading ? (
+        <SearchResultsSkeleton tab={tab} />
+      ) : (
+        <>
+          {tab === 'content' && <SearchPostList items={results.content} />}
+          {tab === 'tag' && <SearchPostList items={results.tag} />}
+          {tab === 'music' && <SearchPostList items={results.music} />}
+          {tab === 'user' && <SearchUserList items={results.users} />}
+        </>
+      )}
     </section>
   );
 }
