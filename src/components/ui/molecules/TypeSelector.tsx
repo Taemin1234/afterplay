@@ -70,7 +70,7 @@ export default function TypeSelector<T extends string>({
       {options.map((option) => (
         <label
           key={option.value}
-          className="flex-1 cursor-pointer md:flex-none"
+          className="flex-1 cursor-pointer"
         >
           <input
             type="radio"

@@ -285,9 +285,7 @@ export default function SearchPageClient() {
           options={tabOptions}
           onChange={handleTabChange}
           ariaLabel='검색 결과 탭'
-          variant='subtle'
-          size='sm'
-          className='w-full'
+          className='w-full md:max-w-full'
         />
       </div>
 
