@@ -47,43 +47,43 @@ model User {
   updatedAt DateTime @updatedAt
   deletedAt DateTime?
 
-  // ?닿? 留뚮뱺 由ъ뒪??
+  // 내가 만든 리스트
   playlists   Playlist[]
   albumLists  AlbumList[]
   artistLists ArtistList[]
 
-  // ?닿? 醫뗭븘?뷀븳 由ъ뒪??
+  // 내가 좋아요한 리스트
   playlistLikes   PlaylistLike[]
   albumListLikes  AlbumListLike[]
   artistListLikes ArtistListLike[]
 
-  // ?닿? ??遺곷쭏??
+  // 내가 한 북마크
   playlistBookmarks   PlaylistBookmark[]
   albumListBookmarks  AlbumListBookmark[]
   artistListBookmarks ArtistListBookmark[]
 
-  // ?닿? ???볤???
+  // 내가 쓴 댓글들
   playlistComments   PlaylistComment[]
   albumListComments  AlbumListComment[]
   artistListComments ArtistListComment[]
 
-  // 濡쒓렇??鍮꾨줈洹몄씤 議고쉶 異붿쟻
+  // 로그인/비로그인 조회 추적
   playlistViews   PlaylistViewEvent[]
   albumListViews  AlbumListViewEvent[]
   artistListViews ArtistListViewEvent[]
 
-  // ?붾줈??
+  // 팔로우
   following Follow[] @relation("UserFollows")
   followers Follow[] @relation("UserFollowers")
 
-  // 愿由ъ옄 異붿쿇 寃뚯떆臾?
+  // 관리자 추천 게시물
   featuredPlaylists   FeaturedPlaylist[]   @relation("FeaturedPlaylistSetBy")
   featuredAlbumLists  FeaturedAlbumList[]  @relation("FeaturedAlbumListSetBy")
   featuredArtistLists FeaturedArtistList[] @relation("FeaturedArtistListSetBy")
 }
 
 // --------------------------------------------------------
-// follow ?붾줈??
+// follow 팔로우
 // --------------------------------------------------------
 model Follow {
   followerId  String   @db.Uuid
@@ -93,13 +93,13 @@ model Follow {
   follower  User @relation("UserFollows", fields: [followerId], references: [id], onDelete: Cascade)
   following User @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
 
-  @@id([followerId, followingId]) // 以묐났 ?붾줈??諛⑹?
+  @@id([followerId, followingId]) // 중복 팔로우 방지
   @@index([followingId])
   @@index([followerId])
 }
 
 // --------------------------------------------------------
-// Playlist (怨??⑥쐞)
+// Playlist (곡 단위)
 // --------------------------------------------------------
 model Playlist {
   id         String     @id @default(uuid()) @db.Uuid
@@ -130,7 +130,7 @@ model Playlist {
   @@index([visibility])
 }
 
-// Spotify Track 罹먯떆 ?뚯씠釉?Spotify ?몃옓 ?뺣낫瑜??쒕퉬??DB??罹먯떆)
+// Spotify Track 캐시 테이블(Spotify 트랙 정보를 서비스 DB에 캐시)
 model Track {
   id        String @id @default(uuid()) @db.Uuid
   spotifyId String @unique
@@ -156,14 +156,14 @@ model PlaylistTrack {
   playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
   track    Track    @relation(fields: [trackId], references: [id], onDelete: Restrict)
 
-  @@unique([playlistId, order])   // 媛숈? ?뚮젅?대━?ㅽ듃?먯꽌 ?쒖꽌 以묐났 湲덉?
-  @@unique([playlistId, trackId]) // 媛숈? 怨?以묐났 鍮꾪뿀??
+  @@unique([playlistId, order])   // 같은 플레이리스트에서 순서 중복 금지
+  @@unique([playlistId, trackId]) // 같은 곡 중복 비허용
   @@index([playlistId])
   @@index([trackId])
 }
 
 // --------------------------------------------------------
-// AlbumList (?⑤쾾 ?⑥쐞) - Playlist? ?숈씪 ?쒖뒪??
+// AlbumList (앨범 단위) - Playlist와 동일 시스템
 // --------------------------------------------------------
 model AlbumList {
   id         String     @id @default(uuid()) @db.Uuid
@@ -194,7 +194,7 @@ model AlbumList {
   @@index([visibility])
 }
 
-// Spotify Album 罹먯떆 ?뚯씠釉?Spotify ?⑤쾾 ?뺣낫瑜??쒕퉬??DB??罹먯떆)
+// Spotify Album 캐시 테이블(Spotify 앨범 정보를 서비스 DB에 캐시)
 model Album {
   id        String @id @default(uuid()) @db.Uuid
   spotifyId String @unique
@@ -221,13 +221,14 @@ model AlbumEntry {
   album     Album     @relation(fields: [albumId], references: [id], onDelete: Restrict)
 
   @@unique([albumListId, order])
-  @@unique([albumListId, albumId]) // 媛숈? ?⑤쾾 以묐났 鍮꾪뿀??
+  @@unique([albumListId, albumId]) // 같은 앨범 중복 비허용
   @@index([albumListId])
   @@index([albumId])
 }
 
 // --------------------------------------------------------
-// ArtistList (?꾪떚?ㅽ듃 ?⑥쐞) - Playlist/AlbumList? ?숈씪 ?쒖뒪??// --------------------------------------------------------
+// ArtistList (아티스트 단위) - Playlist/AlbumList와 동일 시스템
+// --------------------------------------------------------
 model ArtistList {
   id         String     @id @default(uuid()) @db.Uuid
   title      String
@@ -257,7 +258,7 @@ model ArtistList {
   @@index([visibility])
 }
 
-// Spotify Artist 罹먯떆 ?뚯씠釉?Spotify ?꾪떚?ㅽ듃 ?뺣낫瑜??쒕퉬??DB??罹먯떆)
+// Spotify Artist 캐시 테이블(Spotify 아티스트 정보를 서비스 DB에 캐시)
 model Artist {
   id        String @id @default(uuid()) @db.Uuid
   spotifyId String @unique
@@ -289,7 +290,7 @@ model ArtistEntry {
 }
 
 // --------------------------------------------------------
-// Tags (怨듯넻 ?쒓렇) - ?쒓렇 臾몄옄?댁쓣 以묐났 ?놁씠 愿由ы븯??留덉뒪???뚯씠釉?
+// Tags (공통 태그) - 태그 문자열을 중복 없이 관리하는 마스터 테이블
 // --------------------------------------------------------
 model Tag {
   id   Int    @id @default(autoincrement())
@@ -334,7 +335,7 @@ model ArtistListTag {
 }
 
 // --------------------------------------------------------
-// Likes - Playlist / AlbumList 遺꾨━ (媛???덉쟾)
+// Likes - Playlist / AlbumList 분리 (가장 안전)
 // --------------------------------------------------------
 model PlaylistLike {
   userId     String   @db.Uuid
@@ -344,7 +345,7 @@ model PlaylistLike {
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
 
-  @@id([userId, playlistId]) // 以묐났 醫뗭븘???꾨꼍 諛⑹?
+  @@id([userId, playlistId]) // 중복 좋아요 완벽 방지
   @@index([playlistId])
 }
 
@@ -373,7 +374,7 @@ model ArtistListLike {
 }
 
 // --------------------------------------------------------
-// 遺곷쭏??
+// 북마크
 // --------------------------------------------------------
 model PlaylistBookmark {
   userId     String   @db.Uuid
@@ -412,7 +413,7 @@ model ArtistListBookmark {
 }
 
 // --------------------------------------------------------
-// 議고쉶??
+// 조회수
 // --------------------------------------------------------
 model PlaylistViewEvent {
   id            String   @id @default(uuid()) @db.Uuid
@@ -473,7 +474,7 @@ model ArtistListViewEvent {
 
 
 // --------------------------------------------------------
-// 愿由ъ옄 異붿쿇 寃뚯떆臾?
+// 관리자 추천 게시물
 // --------------------------------------------------------
 model FeaturedPlaylistSection {
   id          String   @id @default(uuid()) @db.Uuid
@@ -590,7 +591,7 @@ model FeaturedArtistList {
 }
 
 // --------------------------------------------------------
-// ?볤?
+// 댓글
 // --------------------------------------------------------
 model PlaylistComment {
   id      String @id @default(uuid()) @db.Uuid
@@ -647,7 +648,7 @@ model ArtistListComment {
 }
 
 // --------------------------------------------------------
-// ListFeed - ?꾩껜 ?쇰뱶
+// ListFeed - 전체 피드
 // --------------------------------------------------------
 model ListFeed {
   id        String   @id @default(uuid()) @db.Uuid

@@ -28,10 +28,10 @@ CREATE TABLE "FeaturedAlbumListSection" (
 
 -- Seed default sections used for backfill
 INSERT INTO "FeaturedPlaylistSection" ("id", "key", "name", "isActive", "priority", "createdAt", "updatedAt")
-VALUES ('11111111-1111-1111-1111-111111111111', 'featured', 'ÃßÃµ', true, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+VALUES ('11111111-1111-1111-1111-111111111111', 'featured', 'ì¶”ì²œ', true, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 INSERT INTO "FeaturedAlbumListSection" ("id", "key", "name", "isActive", "priority", "createdAt", "updatedAt")
-VALUES ('22222222-2222-2222-2222-222222222222', 'featured', 'ÃßÃµ', true, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+VALUES ('22222222-2222-2222-2222-222222222222', 'featured', 'ì¶”ì²œ', true, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- AlterTable
 ALTER TABLE "FeaturedPlaylist" ADD COLUMN "sectionId" UUID;
