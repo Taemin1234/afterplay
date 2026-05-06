@@ -8,9 +8,10 @@ import type { MusicListItem } from "@/types";
 
 interface ListItemProps {
   item: MusicListItem;
+  priority?: boolean;
 }
 
-export default function ListItem({ item }: ListItemProps) {
+export default function ListItem({ item, priority = false }: ListItemProps) {
   const href = item.kind === "PLAYLIST" ? `/playlist/${item.id}` : `/albumlist/${item.id}`;
   const coverImage = item.previewImages?.[0] ?? null;
 
@@ -67,6 +68,8 @@ export default function ListItem({ item }: ListItemProps) {
                   width={150}
                   height={150}
                   alt={item.title}
+                  priority={priority}
+                  fetchPriority={priority ? "high" : undefined}
                   className="rounded-xl border-2 border-white/5 object-cover sm:h-[150px] sm:w-[150px]"
                 />
               ) : (
