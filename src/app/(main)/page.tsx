@@ -1,5 +1,8 @@
 import MusicListBrowser from '@/components/ui/organisms/MusicListBrowser';
+import { fetchListItems } from '@/lib/music-lists';
 import type { Metadata } from 'next';
+
+export const revalidate = 15;
 
 export const metadata: Metadata = {
   title: 'dustpeakclub',
@@ -9,6 +12,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Home() {
-  return <MusicListBrowser initialType="all" limit={16} />;
+export default async function Home() {
+  const { items, nextCursor } = await fetchListItems({
+    type: 'all',
+    sort: 'latest',
+    limit: 16,
+    cursor: null,
+    visibility: 'public',
+  });
+
+  return <MusicListBrowser initialItems={items} initialNextCursor={nextCursor} initialType="all" limit={16} />;
 }
