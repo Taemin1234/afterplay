@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Disc, Headphones, Music } from 'lucide-react';
 import TypeSelector from '@/components/ui/molecules/TypeSelector';
 import MusicListGrid from '@/components/ui/organisms/MusicListGrid';
@@ -14,6 +14,7 @@ type MusicListBrowserProps = {
   initialType?: ListType;
   limit?: number;
   visibility?: VisibilityScope;
+  children?: ReactNode;
 };
 
 const typeOptions = [
@@ -34,6 +35,7 @@ export default function MusicListBrowser({
   initialType = 'all',
   limit = 16,
   visibility = 'public',
+  children,
 }: MusicListBrowserProps) {
   const [type, setType] = useState<ListType>(initialType);
   const [sort, setSort] = useState<ListSortOption>('latest');
@@ -41,6 +43,7 @@ export default function MusicListBrowser({
   const [isLoading, setIsLoading] = useState(initialItems === undefined);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(initialNextCursor ?? null);
+  const [isUsingServerInitialGrid, setIsUsingServerInitialGrid] = useState(Boolean(children && initialItems));
   // 초기 서버 데이터가 있으면 다시 fetch 방지
   const hydratedRef = useRef(false);
   const cacheRef = useRef<Map<string, { items: MusicListItem[]; nextCursor: string | null }>>(new Map());
@@ -103,6 +106,9 @@ export default function MusicListBrowser({
       setItems(cached.items);
       setNextCursor(cached.nextCursor);
       setIsLoading(false);
+      setIsUsingServerInitialGrid(
+        Boolean(children && type === initialType && sort === 'latest' && cached.items === initialItems)
+      );
       return;
     }
 
@@ -138,6 +144,7 @@ export default function MusicListBrowser({
         });
         setItems(data.items);
         setNextCursor(data.nextCursor);
+        setIsUsingServerInitialGrid(false);
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') return;
         console.error('Failed to load list items:', error);
@@ -149,7 +156,7 @@ export default function MusicListBrowser({
     load();
 
     return () => controller.abort();
-  }, [type, sort, userId, limit, visibility, initialItems, initialType, makeCacheKey]);
+  }, [type, sort, userId, limit, visibility, initialItems, initialType, makeCacheKey, children]);
 
   // 다음 페이지 요청
   const fetchNextPage = useCallback(async () => {
@@ -186,6 +193,7 @@ export default function MusicListBrowser({
           items: merged,
           nextCursor: data.nextCursor,
         });
+        setIsUsingServerInitialGrid(false);
         return merged;
       });
       setNextCursor(data.nextCursor);
@@ -258,7 +266,13 @@ export default function MusicListBrowser({
             리스트가 없습니다
           </p>
         ) : null}
-        {isLoading ? <MusicListGridSkeleton count={skeletonCount}/> : <MusicListGrid items={items} /> }
+        {isLoading ? (
+          <MusicListGridSkeleton count={skeletonCount}/>
+        ) : isUsingServerInitialGrid ? (
+          children
+        ) : (
+          <MusicListGrid items={items} />
+        )}
         {!isLoading && items.length > 0 ? (
           <div ref={sentinelRef} className="h-12 w-full">
             {isFetchingMore ? (

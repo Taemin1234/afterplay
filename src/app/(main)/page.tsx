@@ -1,4 +1,5 @@
 import MusicListBrowser from '@/components/ui/organisms/MusicListBrowser';
+import MusicListGrid from '@/components/ui/organisms/MusicListGrid';
 import { fetchListItems } from '@/lib/music-lists';
 import type { Metadata } from 'next';
 
@@ -21,5 +22,9 @@ export default async function Home() {
     visibility: 'public',
   });
 
-  return <MusicListBrowser initialItems={items} initialNextCursor={nextCursor} initialType="all" limit={16} />;
+  return (
+    <MusicListBrowser initialItems={items} initialNextCursor={nextCursor} initialType="all" limit={16}>
+      <MusicListGrid items={items} />
+    </MusicListBrowser>
+  );
 }
