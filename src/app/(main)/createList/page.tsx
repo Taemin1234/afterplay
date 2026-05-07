@@ -1,5 +1,3 @@
-'use client';
-
 import MusicListForm from '@/components/ui/organisms/MusicListForm';
 
 export default function CreateListPage() {

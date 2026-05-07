@@ -1,11 +1,9 @@
-﻿'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 
 import Button from '@/components/ui/atoms/Button';
-import NicknameEditor from '@/components/ui/molecules/NicknameEditor';
+import ProfileNicknameBlock from '@/components/ui/molecules/ProfileNicknameBlock';
 import ProfileFollowSection from '@/components/ui/organisms/ProfileFollowSection';
 
 interface ProfileInfoProps {
@@ -18,26 +16,6 @@ interface ProfileInfoProps {
   initialIsFollowing?: boolean;
 }
 
-function AvatarCircle({
-  nickname,
-  sizeClassName,
-}: {
-  nickname: string;
-  sizeClassName: string;
-}) {
-  const initial = nickname.trim().charAt(0).toUpperCase() || '?';
-
-  return (
-    <div
-      className={`flex shrink-0 items-center justify-center rounded-full bg-slate-700 font-semibold text-white ${sizeClassName}`}
-      aria-label={`${nickname} default profile image`}
-      role="img"
-    >
-      {initial}
-    </div>
-  );
-}
-
 export default function ProfileInfo({
   profileUserId,
   initialNickname,
@@ -47,15 +25,10 @@ export default function ProfileInfo({
   initialFollowingCount = 0,
   initialIsFollowing = false,
 }: ProfileInfoProps) {
-  const [nickname, setNickname] = useState(initialNickname);
-
   return (
     <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-[#39ff14]/20 bg-black/40 px-4 py-5 shadow-xl sm:flex-row sm:items-center sm:gap-6 md:px-8 md:py-10">
       <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-5">
-        <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-          <AvatarCircle nickname={nickname} sizeClassName="h-12 w-12 text-base sm:h-14 sm:w-14 sm:text-lg" />
-          <NicknameEditor initialNickname={nickname} isOwner={isOwner} onNicknameChange={setNickname} />
-        </div>
+        <ProfileNicknameBlock initialNickname={initialNickname} isOwner={isOwner} />
 
         <ProfileFollowSection
           profileUserId={profileUserId}
