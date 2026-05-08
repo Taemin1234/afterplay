@@ -17,13 +17,13 @@ export default async function Home() {
   const { items, nextCursor } = await fetchListItems({
     type: 'all',
     sort: 'latest',
-    limit: 16,
+    limit: 12,
     cursor: null,
     visibility: 'public',
   });
 
   return (
-    <MusicListBrowser initialItems={items} initialNextCursor={nextCursor} initialType="all" limit={16}>
+    <MusicListBrowser initialItems={items} initialNextCursor={nextCursor} initialType="all" limit={12}>
       <MusicListGrid items={items} />
     </MusicListBrowser>
   );
