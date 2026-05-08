@@ -6,6 +6,36 @@ import prisma from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { SITE_NAME } from '@/lib/seo';
+import { cache } from 'react';
+
+function decodeNicknameSlug(rawNicknameSlug: string) {
+  try {
+    return decodeURIComponent(rawNicknameSlug);
+  } catch {
+    return rawNicknameSlug;
+  }
+}
+
+const getProfileUser = cache(async (rawNicknameSlug: string) => {
+  const decodedNicknameSlug = decodeNicknameSlug(rawNicknameSlug);
+
+  return prisma.user.findFirst({
+    where: {
+      OR: [{ nicknameSlug: rawNicknameSlug }, { nicknameSlug: decodedNicknameSlug }],
+    },
+    select: {
+      id: true,
+      nickname: true,
+      avatarUrl: true,
+      _count: {
+        select: {
+          followers: true,
+          following: true,
+        },
+      },
+    },
+  });
+});
 
 export async function generateMetadata({
   params,
@@ -13,19 +43,8 @@ export async function generateMetadata({
   params: Promise<{ nicknameSlug: string }>;
 }): Promise<Metadata> {
   const { nicknameSlug: rawNicknameSlug } = await params;
-  let decodedNicknameSlug = rawNicknameSlug;
-  try {
-    decodedNicknameSlug = decodeURIComponent(rawNicknameSlug);
-  } catch {
-    decodedNicknameSlug = rawNicknameSlug;
-  }
-
-  const user = await prisma.user.findFirst({
-    where: {
-      OR: [{ nicknameSlug: rawNicknameSlug }, { nicknameSlug: decodedNicknameSlug }],
-    },
-    select: { nickname: true },
-  });
+  const decodedNicknameSlug = decodeNicknameSlug(rawNicknameSlug);
+  const user = await getProfileUser(rawNicknameSlug);
 
   const nickname = user?.nickname ?? decodedNicknameSlug;
   const title = `${nickname} 프로필`;
@@ -52,31 +71,7 @@ export async function generateMetadata({
 
 export default async function UserProfile({ params }: { params: Promise<{ nicknameSlug: string }> }) {
   const { nicknameSlug: rawNicknameSlug } = await params;
-
-  // Decode once so both raw and decoded slug can match.
-  let decodedNicknameSlug = rawNicknameSlug;
-  try {
-    decodedNicknameSlug = decodeURIComponent(rawNicknameSlug);
-  } catch {
-    decodedNicknameSlug = rawNicknameSlug;
-  }
-
-  const profileUser = await prisma.user.findFirst({
-    where: {
-      OR: [{ nicknameSlug: rawNicknameSlug }, { nicknameSlug: decodedNicknameSlug }],
-    },
-    select: {
-      id: true,
-      nickname: true,
-      avatarUrl: true,
-      _count: {
-        select: {
-          followers: true,
-          following: true,
-        },
-      },
-    },
-  });
+  const profileUser = await getProfileUser(rawNicknameSlug);
 
   if (!profileUser) {
     notFound();
