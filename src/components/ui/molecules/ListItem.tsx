@@ -22,7 +22,7 @@ export default function ListItem({ item, priority = false }: ListItemProps) {
     <li className="list-none rounded-xl border border-slate-800/70 bg-gradient-to-b from-[#101729] to-[#050816] p-3 shadow-[0_18px_45px_rgba(0,0,0,0.55)] transition-transform transition-colors duration-300 hover:border-neon-green/40 sm:p-4 md:hover:-translate-y-1">
       <Link href={href} className="group relative flex h-full flex-col justify-between gap-3">
         <div>
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
             <Tag variant="subtle">{item.kind === "PLAYLIST" ? "PLAYLIST" : "ALBUMLIST"}</Tag>
             <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
               <span className="max-w-[8rem] truncate text-xs text-gray-400 sm:max-w-[10rem] sm:text-sm">
@@ -36,7 +36,7 @@ export default function ListItem({ item, priority = false }: ListItemProps) {
             </div>
           </div>
 
-          <div className="relative my-4 flex h-40 items-center justify-center sm:mb-4 sm:h-48">
+          <div className="relative my-4 flex h-32 items-center justify-center sm:mb-4 sm:h-48">
             {item.previewImages[2] && (
               <div className="absolute left-1/2 z-0 translate-x-3 scale-75 opacity-40 blur-[1px] transition-transform duration-500 group-hover:translate-x-5 sm:scale-80">
                 <Image
@@ -44,7 +44,7 @@ export default function ListItem({ item, priority = false }: ListItemProps) {
                   width={130}
                   height={130}
                   alt="stack-3"
-                  className="rounded-lg object-cover shadow-2xl sm:h-[130px] sm:w-[130px]"
+                  className="h-24 w-24 rounded-lg object-cover shadow-2xl sm:h-[130px] sm:w-[130px]"
                 />
               </div>
             )}
@@ -55,7 +55,7 @@ export default function ListItem({ item, priority = false }: ListItemProps) {
                   width={140}
                   height={140}
                   alt="stack-2"
-                  className="rounded-lg object-cover shadow-xl sm:h-[140px] sm:w-[140px]"
+                  className="h-[104px] w-[104px] rounded-lg object-cover shadow-xl sm:h-[140px] sm:w-[140px]"
                 />
               </div>
             )}
@@ -68,10 +68,10 @@ export default function ListItem({ item, priority = false }: ListItemProps) {
                   alt={item.title}
                   priority={priority}
                   fetchPriority={priority ? "high" : undefined}
-                  className="rounded-xl border-2 border-white/5 object-cover sm:h-[150px] sm:w-[150px]"
+                  className="h-28 w-28 rounded-xl border-2 border-white/5 object-cover sm:h-[150px] sm:w-[150px]"
                 />
               ) : (
-                <div className="flex h-[150px] w-[150px] items-center justify-center rounded-xl border-2 border-white/5 bg-white/5 text-xs text-gray-400 sm:h-[150px] sm:w-[150px]">
+                <div className="flex h-28 w-28 items-center justify-center rounded-xl border-2 border-white/5 bg-white/5 text-xs text-gray-400 sm:h-[150px] sm:w-[150px]">
                   NO IMAGE
                 </div>
               )}
@@ -103,11 +103,14 @@ export default function ListItem({ item, priority = false }: ListItemProps) {
 
           <div className="mt-2 flex items-center justify-between border-t border-slate-800/70 pt-2 text-[11px] text-gray-500">
             <span className="text-xs">
-              {new Date(item.createdAt).toLocaleDateString("ko-KR", {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-              })}
+              {(() => {
+                const date = new Date(item.createdAt);
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, "0");
+                const day = String(date.getDate()).padStart(2, "0");
+
+                return `${year}.${month}.${day}`;
+              })()}
             </span>
             <div className="flex items-center gap-2.5">
               <div className="flex items-center gap-1 relative pr-2.5 after:content-[''] after:absolute after:right-0 after:top-1/2 after:h-3 after:w-px after:-translate-y-1/2 after:bg-gray-500">
@@ -125,4 +128,3 @@ export default function ListItem({ item, priority = false }: ListItemProps) {
     </li>
   );
 }
-
