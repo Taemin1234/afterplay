@@ -1,7 +1,8 @@
 ﻿'use client';
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { Disc, Headphones, Music } from 'lucide-react';
+import { ChevronDown, Disc, Headphones, Music } from 'lucide-react';
+import Button from '@/components/ui/atoms/Button';
 import TypeSelector from '@/components/ui/molecules/TypeSelector';
 import MusicListGrid from '@/components/ui/organisms/MusicListGrid';
 import MusicListGridSkeleton from "@/components/layout/MusicListGridSkeleton";
@@ -47,8 +48,6 @@ export default function MusicListBrowser({
   // 초기 서버 데이터가 있으면 다시 fetch 방지
   const hydratedRef = useRef(false);
   const cacheRef = useRef<Map<string, { items: MusicListItem[]; nextCursor: string | null }>>(new Map());
-  // 무한 스크롤 감지 Dom
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
   const isFetchingMoreRef = useRef(false);
   const skeletonCount = Math.min(limit, 8)
 
@@ -205,24 +204,6 @@ export default function MusicListBrowser({
     }
   }, [nextCursor, isLoading, userId, type, sort, limit, visibility, mergeItems, makeCacheKey]);
 
-  // IntersectionObserver 등록
-  useEffect(() => {
-    const target = sentinelRef.current;
-    if (!target) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries;
-        if (!entry?.isIntersecting) return;
-        void fetchNextPage();
-      },
-      { rootMargin: '180px 0px' }
-    );
-
-    observer.observe(target);
-    return () => observer.disconnect();
-  }, [fetchNextPage, type, sort, items.length]);
-
   return (
     <>
       {/* <div className="sticky top-0 left-0 right-0 -mx-5 z-40 bg-[#0a0f1c]  md:hidden">
@@ -273,11 +254,18 @@ export default function MusicListBrowser({
         ) : (
           <MusicListGrid items={items} />
         )}
-        {!isLoading && items.length > 0 ? (
-          <div ref={sentinelRef} className="h-12 w-full">
-            {isFetchingMore ? (
-              <p className="py-3 text-center text-sm text-gray-400">게시물을 불러오는 중...</p>
-            ) : null}
+        {!isLoading && items.length > 0 && nextCursor ? (
+          <div className="flex justify-center pt-2">
+            <Button
+              variant="outline"
+              rounded="md"
+              onClick={() => void fetchNextPage()}
+              disabled={isFetchingMore}
+              icon={<ChevronDown size={18} />}
+              className="bg-[#0a0f1c]/70 px-5"
+            >
+              {isFetchingMore ? '불러오는 중...' : '더보기'}
+            </Button>
           </div>
         ) : null}
       </section>
