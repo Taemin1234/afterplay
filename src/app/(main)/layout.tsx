@@ -1,4 +1,5 @@
 import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
 import MobileBottomNav from '@/components/layout/MobileBottomNav';
 import ScrollToTopButton from '@/components/layout/ScrollToTopButton';
 import prisma from '@/lib/prisma';
@@ -34,12 +35,12 @@ export default async function MainLayout({
   return (
     <>
       <Header user={user} nickname={nickname} isAdmin={isAdmin} />
-      <main className='container mx-auto px-5 py-4 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-4 lg:py-8'>
+      <main className='container mx-auto px-5 py-4 lg:py-8'>
         {children}
       </main>
+      <Footer />
       <ScrollToTopButton />
       <MobileBottomNav user={user} nickname={nickname} isAdmin={isAdmin} />
-      {/* <Footer /> */}
     </>
   );
 }
