@@ -45,8 +45,13 @@ export default function MobileBottomNav({ user, nickname, isAdmin = false }: Mob
 
   return (
     <nav
-      className='fixed bottom-0 left-0 right-0 z-50 border-t border-[#39ff14]/20 bg-[#0a0f1c]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden'
-      style={{ WebkitTransform: 'translateZ(0)' }}
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#39ff14]/18 bg-[linear-gradient(135deg,rgba(19,28,49,0.92),rgba(7,12,24,0.86)_48%,rgba(57,255,20,0.10))] shadow-[0_-8px_32px_rgba(0,0,0,0.42),inset_0_1px_0_rgba(57,255,20,0.10)] backdrop-blur-2xl backdrop-saturate-150 pb-[env(safe-area-inset-bottom)] md:hidden"
+      style={{
+        WebkitTransform: 'translateZ(0)',
+        transform: 'translateZ(0)',
+        WebkitBackdropFilter: 'blur(24px) saturate(150%)',
+        backdropFilter: 'blur(24px) saturate(150%)',
+      }}
     >
       <div className='mx-auto grid h-16 max-w-lg grid-cols-3'>
         {navItems.map((item) => {
@@ -58,7 +63,7 @@ export default function MobileBottomNav({ user, nickname, isAdmin = false }: Mob
               key={item.label}
               href={item.href}
               className={`flex flex-col items-center justify-center gap-1 transition-colors ${
-                active ? 'text-[#39ff14]' : 'text-zinc-400 hover:text-zinc-100'
+                active ? 'text-[#39ff14]' : 'text-slate-400 hover:text-slate-100'
               }`}
             >
               <Icon className='h-5 w-5' />
