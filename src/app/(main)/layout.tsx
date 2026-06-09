@@ -33,14 +33,14 @@ export default async function MainLayout({
   const isAdmin = dbUser?.role === 'ADMIN';
 
   return (
-    <>
+    <div className="flex min-h-dvh flex-col">
       <Header user={user} nickname={nickname} isAdmin={isAdmin} />
-      <main className='container mx-auto px-5 py-4 lx:px-0 lg:py-8'>
+      <main className='container mx-auto flex-1 px-3 py-4 lx:px-0 lg:py-8'>
         {children}
       </main>
       <Footer />
       <ScrollToTopButton />
       <MobileBottomNav user={user} nickname={nickname} isAdmin={isAdmin} />
-    </>
+    </div>
   );
 }

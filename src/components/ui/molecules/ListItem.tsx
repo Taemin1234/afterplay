@@ -112,12 +112,12 @@ export default function ListItem({ item, priority = false }: ListItemProps) {
                 return `${year}.${month}.${day}`;
               })()}
             </span>
-            <div className="flex items-center gap-2.5">
-              <div className="flex items-center gap-1 relative pr-2.5 after:content-[''] after:absolute after:right-0 after:top-1/2 after:h-3 after:w-px after:-translate-y-1/2 after:bg-gray-500">
+            <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-0.5 relative pr-1.5 after:content-[''] after:absolute after:right-0 after:top-1/2 after:h-3 after:w-px after:-translate-y-1/2 after:bg-gray-500">
                 <Heart size={15} />
                 <span className="text-xs sm:text-sm">{item.likesCount.toLocaleString()}</span>
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-0.5">
                 <MessageCircle size={15} />
                 <span className="text-xs sm:text-sm">{item.commentsCount.toLocaleString()}</span>
               </div>
