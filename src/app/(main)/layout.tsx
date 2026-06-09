@@ -35,7 +35,7 @@ export default async function MainLayout({
   return (
     <>
       <Header user={user} nickname={nickname} isAdmin={isAdmin} />
-      <main className='container mx-auto px-5 py-4 lg:py-8'>
+      <main className='container mx-auto px-5 py-4 lx:px-0 lg:py-8'>
         {children}
       </main>
       <Footer />
