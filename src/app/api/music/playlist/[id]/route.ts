@@ -22,14 +22,23 @@ type RouteContext = {
   }>;
 };
 
-async function findAccessiblePlaylist(id: string, userId: string) {
+async function getDbUserRole(userId: string) {
+  const dbUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
+
+  return dbUser?.role ?? 'USER';
+}
+
+async function findAccessiblePlaylist(id: string, userId: string, isAdmin = false) {
   return prisma.playlist.findFirst({
     where: {
       id,
       deletedAt: null,
-      OR: [{ visibility: 'PUBLIC' }, { authorId: userId }],
+      ...(isAdmin ? {} : { OR: [{ visibility: 'PUBLIC' }, { authorId: userId }] }),
     },
-    select: { id: true },
+    select: { id: true, visibility: true },
   });
 }
 
@@ -69,6 +78,60 @@ async function togglePlaylistBookmark(id: string, userId: string) {
   };
 }
 
+async function toggleFeaturedPlaylist(id: string, userId: string, sectionId: string, enabled: boolean) {
+  const [playlist, section] = await Promise.all([
+    prisma.playlist.findFirst({
+      where: { id, deletedAt: null },
+      select: { id: true, visibility: true },
+    }),
+    prisma.featuredPlaylistSection.findFirst({
+      where: { id: sectionId, isActive: true },
+      select: { id: true },
+    }),
+  ]);
+
+  if (!playlist) {
+    return NextResponse.json({ error: 'Playlist not found' }, { status: 404 });
+  }
+  if (playlist.visibility !== 'PUBLIC') {
+    return NextResponse.json({ error: '비공개 게시물은 특별게시물로 설정할 수 없습니다.' }, { status: 400 });
+  }
+  if (!section) {
+    return NextResponse.json({ error: 'Featured section not found' }, { status: 404 });
+  }
+
+  if (enabled) {
+    await prisma.featuredPlaylist.upsert({
+      where: { playlistId_sectionId: { playlistId: id, sectionId } },
+      update: {
+        isActive: true,
+        setByUserId: userId,
+      },
+      create: {
+        playlistId: id,
+        sectionId,
+        setByUserId: userId,
+      },
+    });
+  } else {
+    await prisma.featuredPlaylist.updateMany({
+      where: { playlistId: id, sectionId },
+      data: { isActive: false },
+    });
+  }
+
+  const featuredSettings = await prisma.featuredPlaylist.findMany({
+    where: { playlistId: id, isActive: true },
+    select: { sectionId: true },
+  });
+
+  return NextResponse.json({
+    ok: true,
+    action: 'toggle-featured',
+    featuredSectionIds: featuredSettings.map((setting) => setting.sectionId),
+  });
+}
+
 function isCommentAction(action: MusicDetailActionPayload['action']) {
   return action === 'comment' || action === 'edit-comment' || action === 'delete-comment';
 }
@@ -81,8 +144,9 @@ export async function GET(_request: Request, context: RouteContext) {
     }
 
     const user = await getAuthenticatedUser();
+    const isAdmin = user ? (await getDbUserRole(user.id)) === 'ADMIN' : false;
 
-    const playlist = await fetchPlaylistDetail(id, user?.id);
+    const playlist = await fetchPlaylistDetail(id, user?.id, { canViewPrivate: isAdmin });
     if (!playlist) {
       return NextResponse.json({ error: 'Playlist not found' }, { status: 404 });
     }
@@ -138,6 +202,18 @@ export async function POST(request: Request, context: RouteContext) {
         bookmarksCount,
         viewerHasBookmarked,
       });
+    }
+
+    if (body.action === 'toggle-featured') {
+      const role = await getDbUserRole(user.id);
+      if (role !== 'ADMIN') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+      if (!body.sectionId || typeof body.enabled !== 'boolean') {
+        return NextResponse.json({ error: 'sectionId and enabled are required' }, { status: 400 });
+      }
+
+      return toggleFeaturedPlaylist(id, user.id, body.sectionId, body.enabled);
     }
 
     if (!isCommentAction(body.action)) {
@@ -241,7 +317,7 @@ export async function POST(request: Request, context: RouteContext) {
   }
 }
 
-export async function DELETE(_request: Request, context: RouteContext) {
+export async function DELETE(request: Request, context: RouteContext) {
   try {
     const { id } = await context.params;
     if (!id) {
@@ -255,21 +331,30 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
     const playlist = await prisma.playlist.findFirst({
       where: { id, deletedAt: null },
-      select: { authorId: true },
+      select: { authorId: true, title: true },
     });
 
     if (!playlist) {
       return NextResponse.json({ error: 'Playlist not found' }, { status: 404 });
     }
 
-    if (playlist.authorId !== user.id) {
+    const role = await getDbUserRole(user.id);
+    if (playlist.authorId !== user.id && role !== 'ADMIN') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+    const body = (await request.json().catch(() => null)) as { confirmationTitle?: string } | null;
+    if (body?.confirmationTitle !== playlist.title) {
+      return NextResponse.json({ error: '게시물 제목 확인이 필요합니다.' }, { status: 400 });
     }
 
     await prisma.$transaction([
       prisma.playlist.update({
         where: { id },
         data: { deletedAt: new Date() },
+      }),
+      prisma.featuredPlaylist.updateMany({
+        where: { playlistId: id },
+        data: { isActive: false },
       }),
       prisma.listFeed.deleteMany({
         where: {
@@ -327,6 +412,13 @@ export async function PATCH(request: Request, context: RouteContext) {
         where: { id },
         data: { title, story, visibility },
       });
+
+      if (visibility === 'PRIVATE') {
+        await tx.featuredPlaylist.updateMany({
+          where: { playlistId: id },
+          data: { isActive: false },
+        });
+      }
 
       await Promise.all(
         musicItems.map((item) =>

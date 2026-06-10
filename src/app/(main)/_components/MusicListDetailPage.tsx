@@ -5,9 +5,11 @@ import { after } from 'next/server';
 import { createSupabaseServerClient } from '@/utils/supabase/server';
 import {
   fetchAlbumListDetail,
+  fetchFeaturedSections,
   fetchPlaylistDetail,
   registerListView,
 } from '@/lib/music-lists';
+import prisma from '@/lib/prisma';
 import ListDetailClient from '@/components/ui/organisms/ListDetailClient';
 
 type ListKind = 'playlist' | 'albumlist';
@@ -31,11 +33,18 @@ export default async function MusicListDetailPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const dbUser = user
+    ? await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { role: true },
+    })
+    : null;
+  const isAdmin = dbUser?.role === 'ADMIN';
 
   const item =
     kind === 'playlist'
-      ? await fetchPlaylistDetail(id, user?.id)
-      : await fetchAlbumListDetail(id, user?.id);
+      ? await fetchPlaylistDetail(id, user?.id, { canViewPrivate: isAdmin })
+      : await fetchAlbumListDetail(id, user?.id, { canViewPrivate: isAdmin });
 
   if (!item) {
     notFound();
@@ -43,6 +52,7 @@ export default async function MusicListDetailPage({
 
   const isLoggedIn = Boolean(user);
   const isOwner = isLoggedIn && item.author.id === user?.id;
+  const featuredSections = isAdmin ? await fetchFeaturedSections(kind) : [];
   const headerStore = await headers();
   const rawForwardedFor = headerStore.get('x-forwarded-for');
   const ip = rawForwardedFor?.split(',')[0]?.trim() || headerStore.get('x-real-ip') || '';
@@ -69,6 +79,8 @@ export default async function MusicListDetailPage({
       item={item}
       isLoggedIn={isLoggedIn}
       isOwner={isOwner}
+      isAdmin={isAdmin}
+      featuredSections={featuredSections}
       viewerUserId={user?.id ?? null}
       isModalContext={isModalContext}
     />

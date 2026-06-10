@@ -3,9 +3,11 @@ import prisma from '@/lib/prisma';
 
 // 프론트에서 보내는 요청 형태 정의
 export type MusicDetailActionPayload = {
-  action?: 'toggle-like' | 'toggle-bookmark' | 'comment' | 'edit-comment' | 'delete-comment';
+  action?: 'toggle-like' | 'toggle-bookmark' | 'toggle-featured' | 'comment' | 'edit-comment' | 'delete-comment';
   commentId?: string;
   content?: string;
+  sectionId?: string;
+  enabled?: boolean;
 };
 
 // 작업 수행 대상

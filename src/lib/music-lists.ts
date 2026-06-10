@@ -589,6 +589,16 @@ export async function fetchListItems(options: QueryOptions): Promise<ResponsePay
   };
 }
 
+export type FeaturedSectionOption = {
+  id: string;
+  key: string;
+  name: string;
+};
+
+type DetailOptions = {
+  canViewPrivate?: boolean;
+};
+
 export type PlaylistDetail = {
   kind: 'PLAYLIST';
   id: string;
@@ -610,6 +620,7 @@ export type PlaylistDetail = {
   bookmarksCount: number;
   viewerHasLiked: boolean;
   viewerHasBookmarked: boolean;
+  featuredSectionIds: string[];
   comments: Array<{
     id: string;
     content: string;
@@ -652,6 +663,7 @@ export type AlbumListDetail = {
   bookmarksCount: number;
   viewerHasLiked: boolean;
   viewerHasBookmarked: boolean;
+  featuredSectionIds: string[];
   comments: Array<{
     id: string;
     content: string;
@@ -758,12 +770,41 @@ export async function fetchAlbumListMetadata(id: string): Promise<ListMetadata |
   };
 }
 
-export async function fetchPlaylistDetail(id: string, viewerUserId?: string): Promise<PlaylistDetail | null> {
+export async function fetchFeaturedSections(kind: 'playlist' | 'albumlist'): Promise<FeaturedSectionOption[]> {
+  const select = {
+    id: true,
+    key: true,
+    name: true,
+  } as const;
+  const orderBy = [{ priority: 'asc' as const }, { createdAt: 'desc' as const }];
+
+  if (kind === 'playlist') {
+    return prisma.featuredPlaylistSection.findMany({
+      where: { isActive: true },
+      orderBy,
+      select,
+    });
+  }
+
+  return prisma.featuredAlbumListSection.findMany({
+    where: { isActive: true },
+    orderBy,
+    select,
+  });
+}
+
+export async function fetchPlaylistDetail(
+  id: string,
+  viewerUserId?: string,
+  options: DetailOptions = {}
+): Promise<PlaylistDetail | null> {
   const playlist = await prisma.playlist.findFirst({
     where: {
       id,
       deletedAt: null,
-      ...(viewerUserId
+      ...(options.canViewPrivate
+        ? {}
+        : viewerUserId
         ? {
           OR: [{ visibility: 'PUBLIC' }, { authorId: viewerUserId }],
         }
@@ -850,6 +891,10 @@ export async function fetchPlaylistDetail(id: string, viewerUserId?: string): Pr
           },
         },
       },
+      featuredSettings: {
+        where: { isActive: true },
+        select: { sectionId: true },
+      },
     },
   });
 
@@ -876,6 +921,7 @@ export async function fetchPlaylistDetail(id: string, viewerUserId?: string): Pr
     bookmarksCount: playlist._count.bookmarks,
     viewerHasLiked: viewerUserId ? (playlist.likes?.length ?? 0) > 0 : false,
     viewerHasBookmarked: viewerUserId ? (playlist.bookmarks?.length ?? 0) > 0 : false,
+    featuredSectionIds: playlist.featuredSettings.map((setting) => setting.sectionId),
     comments: playlist.comments.map((comment) => ({
       id: comment.id,
       content: comment.content,
@@ -898,12 +944,18 @@ export async function fetchPlaylistDetail(id: string, viewerUserId?: string): Pr
   };
 }
 
-export async function fetchAlbumListDetail(id: string, viewerUserId?: string): Promise<AlbumListDetail | null> {
+export async function fetchAlbumListDetail(
+  id: string,
+  viewerUserId?: string,
+  options: DetailOptions = {}
+): Promise<AlbumListDetail | null> {
   const albumList = await prisma.albumList.findFirst({
     where: {
       id,
       deletedAt: null,
-      ...(viewerUserId
+      ...(options.canViewPrivate
+        ? {}
+        : viewerUserId
         ? {
           OR: [{ visibility: 'PUBLIC' }, { authorId: viewerUserId }],
         }
@@ -990,6 +1042,10 @@ export async function fetchAlbumListDetail(id: string, viewerUserId?: string): P
           },
         },
       },
+      featuredSettings: {
+        where: { isActive: true },
+        select: { sectionId: true },
+      },
     },
   });
 
@@ -1016,6 +1072,7 @@ export async function fetchAlbumListDetail(id: string, viewerUserId?: string): P
     bookmarksCount: albumList._count.bookmarks,
     viewerHasLiked: viewerUserId ? (albumList.likes?.length ?? 0) > 0 : false,
     viewerHasBookmarked: viewerUserId ? (albumList.bookmarks?.length ?? 0) > 0 : false,
+    featuredSectionIds: albumList.featuredSettings.map((setting) => setting.sectionId),
     comments: albumList.comments.map((comment) => ({
       id: comment.id,
       content: comment.content,
