@@ -770,26 +770,15 @@ export async function fetchAlbumListMetadata(id: string): Promise<ListMetadata |
   };
 }
 
-export async function fetchFeaturedSections(kind: 'playlist' | 'albumlist'): Promise<FeaturedSectionOption[]> {
-  const select = {
-    id: true,
-    key: true,
-    name: true,
-  } as const;
-  const orderBy = [{ priority: 'asc' as const }, { createdAt: 'desc' as const }];
-
-  if (kind === 'playlist') {
-    return prisma.featuredPlaylistSection.findMany({
-      where: { isActive: true },
-      orderBy,
-      select,
-    });
-  }
-
-  return prisma.featuredAlbumListSection.findMany({
+export async function fetchFeaturedSections(): Promise<FeaturedSectionOption[]> {
+  return prisma.featuredSection.findMany({
     where: { isActive: true },
-    orderBy,
-    select,
+    orderBy: [{ priority: 'asc' }, { createdAt: 'desc' }],
+    select: {
+      id: true,
+      key: true,
+      name: true,
+    },
   });
 }
 
@@ -891,14 +880,18 @@ export async function fetchPlaylistDetail(
           },
         },
       },
-      featuredSettings: {
-        where: { isActive: true },
-        select: { sectionId: true },
-      },
     },
   });
 
   if (!playlist) return null;
+  const featuredSettings = await prisma.featuredItem.findMany({
+    where: {
+      kind: 'PLAYLIST',
+      refId: playlist.id,
+      isActive: true,
+    },
+    select: { sectionId: true },
+  });
 
   return {
     kind: 'PLAYLIST',
@@ -921,7 +914,7 @@ export async function fetchPlaylistDetail(
     bookmarksCount: playlist._count.bookmarks,
     viewerHasLiked: viewerUserId ? (playlist.likes?.length ?? 0) > 0 : false,
     viewerHasBookmarked: viewerUserId ? (playlist.bookmarks?.length ?? 0) > 0 : false,
-    featuredSectionIds: playlist.featuredSettings.map((setting) => setting.sectionId),
+    featuredSectionIds: featuredSettings.map((setting) => setting.sectionId),
     comments: playlist.comments.map((comment) => ({
       id: comment.id,
       content: comment.content,
@@ -1042,14 +1035,18 @@ export async function fetchAlbumListDetail(
           },
         },
       },
-      featuredSettings: {
-        where: { isActive: true },
-        select: { sectionId: true },
-      },
     },
   });
 
   if (!albumList) return null;
+  const featuredSettings = await prisma.featuredItem.findMany({
+    where: {
+      kind: 'ALBUM_LIST',
+      refId: albumList.id,
+      isActive: true,
+    },
+    select: { sectionId: true },
+  });
 
   return {
     kind: 'ALBUM_LIST',
@@ -1072,7 +1069,7 @@ export async function fetchAlbumListDetail(
     bookmarksCount: albumList._count.bookmarks,
     viewerHasLiked: viewerUserId ? (albumList.likes?.length ?? 0) > 0 : false,
     viewerHasBookmarked: viewerUserId ? (albumList.bookmarks?.length ?? 0) > 0 : false,
-    featuredSectionIds: albumList.featuredSettings.map((setting) => setting.sectionId),
+    featuredSectionIds: featuredSettings.map((setting) => setting.sectionId),
     comments: albumList.comments.map((comment) => ({
       id: comment.id,
       content: comment.content,

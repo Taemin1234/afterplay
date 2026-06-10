@@ -52,7 +52,7 @@ export default async function MusicListDetailPage({
 
   const isLoggedIn = Boolean(user);
   const isOwner = isLoggedIn && item.author.id === user?.id;
-  const featuredSections = isAdmin ? await fetchFeaturedSections(kind) : [];
+  const featuredSections = isAdmin ? await fetchFeaturedSections() : [];
   const headerStore = await headers();
   const rawForwardedFor = headerStore.get('x-forwarded-for');
   const ip = rawForwardedFor?.split(',')[0]?.trim() || headerStore.get('x-real-ip') || '';

@@ -84,7 +84,7 @@ async function toggleFeaturedAlbumList(id: string, userId: string, sectionId: st
       where: { id, deletedAt: null },
       select: { id: true, visibility: true },
     }),
-    prisma.featuredAlbumListSection.findFirst({
+    prisma.featuredSection.findFirst({
       where: { id: sectionId, isActive: true },
       select: { id: true },
     }),
@@ -101,27 +101,28 @@ async function toggleFeaturedAlbumList(id: string, userId: string, sectionId: st
   }
 
   if (enabled) {
-    await prisma.featuredAlbumList.upsert({
-      where: { albumListId_sectionId: { albumListId: id, sectionId } },
+    await prisma.featuredItem.upsert({
+      where: { sectionId_kind_refId: { sectionId, kind: 'ALBUM_LIST', refId: id } },
       update: {
         isActive: true,
         setByUserId: userId,
       },
       create: {
-        albumListId: id,
         sectionId,
+        kind: 'ALBUM_LIST',
+        refId: id,
         setByUserId: userId,
       },
     });
   } else {
-    await prisma.featuredAlbumList.updateMany({
-      where: { albumListId: id, sectionId },
+    await prisma.featuredItem.updateMany({
+      where: { kind: 'ALBUM_LIST', refId: id, sectionId },
       data: { isActive: false },
     });
   }
 
-  const featuredSettings = await prisma.featuredAlbumList.findMany({
-    where: { albumListId: id, isActive: true },
+  const featuredSettings = await prisma.featuredItem.findMany({
+    where: { kind: 'ALBUM_LIST', refId: id, isActive: true },
     select: { sectionId: true },
   });
 
@@ -352,8 +353,8 @@ export async function DELETE(request: Request, context: RouteContext) {
         where: { id },
         data: { deletedAt: new Date() },
       }),
-      prisma.featuredAlbumList.updateMany({
-        where: { albumListId: id },
+      prisma.featuredItem.updateMany({
+        where: { kind: 'ALBUM_LIST', refId: id },
         data: { isActive: false },
       }),
       prisma.listFeed.deleteMany({
@@ -414,8 +415,8 @@ export async function PATCH(request: Request, context: RouteContext) {
       });
 
       if (visibility === 'PRIVATE') {
-        await tx.featuredAlbumList.updateMany({
-          where: { albumListId: id },
+        await tx.featuredItem.updateMany({
+          where: { kind: 'ALBUM_LIST', refId: id },
           data: { isActive: false },
         });
       }

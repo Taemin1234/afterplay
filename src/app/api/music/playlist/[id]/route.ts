@@ -84,7 +84,7 @@ async function toggleFeaturedPlaylist(id: string, userId: string, sectionId: str
       where: { id, deletedAt: null },
       select: { id: true, visibility: true },
     }),
-    prisma.featuredPlaylistSection.findFirst({
+    prisma.featuredSection.findFirst({
       where: { id: sectionId, isActive: true },
       select: { id: true },
     }),
@@ -101,27 +101,28 @@ async function toggleFeaturedPlaylist(id: string, userId: string, sectionId: str
   }
 
   if (enabled) {
-    await prisma.featuredPlaylist.upsert({
-      where: { playlistId_sectionId: { playlistId: id, sectionId } },
+    await prisma.featuredItem.upsert({
+      where: { sectionId_kind_refId: { sectionId, kind: 'PLAYLIST', refId: id } },
       update: {
         isActive: true,
         setByUserId: userId,
       },
       create: {
-        playlistId: id,
         sectionId,
+        kind: 'PLAYLIST',
+        refId: id,
         setByUserId: userId,
       },
     });
   } else {
-    await prisma.featuredPlaylist.updateMany({
-      where: { playlistId: id, sectionId },
+    await prisma.featuredItem.updateMany({
+      where: { kind: 'PLAYLIST', refId: id, sectionId },
       data: { isActive: false },
     });
   }
 
-  const featuredSettings = await prisma.featuredPlaylist.findMany({
-    where: { playlistId: id, isActive: true },
+  const featuredSettings = await prisma.featuredItem.findMany({
+    where: { kind: 'PLAYLIST', refId: id, isActive: true },
     select: { sectionId: true },
   });
 
@@ -352,8 +353,8 @@ export async function DELETE(request: Request, context: RouteContext) {
         where: { id },
         data: { deletedAt: new Date() },
       }),
-      prisma.featuredPlaylist.updateMany({
-        where: { playlistId: id },
+      prisma.featuredItem.updateMany({
+        where: { kind: 'PLAYLIST', refId: id },
         data: { isActive: false },
       }),
       prisma.listFeed.deleteMany({
@@ -414,8 +415,8 @@ export async function PATCH(request: Request, context: RouteContext) {
       });
 
       if (visibility === 'PRIVATE') {
-        await tx.featuredPlaylist.updateMany({
-          where: { playlistId: id },
+        await tx.featuredItem.updateMany({
+          where: { kind: 'PLAYLIST', refId: id },
           data: { isActive: false },
         });
       }
