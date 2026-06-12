@@ -2,8 +2,21 @@
 
 
 :root {
+  /* 딥네이비 */
   --app-background: #0a0f1c;
+  /* 아이보리 */
+  /* --app-background: #f5f0e3; */
   --point-color: #39ff14;
+  /* 핑크 */
+  /* --point-color: #ff60ff;  */
+  /* 파랑 */
+  /* --point-color: #6200ff; */
+  /* 하늘 */
+  /* --point-color: #1bd4ff; */
+  /* 빨강 */
+  /* --point-color: #ff4653; */
+  /* 오렌지 */
+  /* --point-color: #ff5700; */
   --point-color-rgb: 57 255 20;
   --background: var(--app-background);
   --foreground: #ededed;
