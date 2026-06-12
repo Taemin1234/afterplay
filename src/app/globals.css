@@ -2,7 +2,10 @@
 
 
 :root {
-  --background: #0a0f1c;
+  --app-background: #0a0f1c;
+  --point-color: #39ff14;
+  --point-color-rgb: 57 255 20;
+  --background: var(--app-background);
   --foreground: #ededed;
   --font-jetbrains: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
 }
@@ -12,12 +15,14 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-pretendard);
   --font-mono: var(--font-jetbrains);
-  --color-neon-green: #39ff14;
+  --color-app-bg: var(--app-background);
+  --color-point: var(--point-color);
+  --color-neon-green: var(--point-color);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0f1c;
+    --background: var(--app-background);
     --foreground: #ededed;
   }
 }

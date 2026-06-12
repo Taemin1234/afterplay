@@ -57,7 +57,7 @@ export default function TypeSelector<T extends string>({
         : "gap-1.5 px-3 py-1.5 text-xs sm:gap-2 sm:px-4 sm:py-2 sm:text-sm";
 
     return `w-full inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium transition-all ${solidSizeClass} ${
-      active ? "bg-[#39FF14] text-black" : "text-gray-500 hover:text-white"
+      active ? "bg-point text-black" : "text-gray-500 hover:text-white"
     }`;
   };
 

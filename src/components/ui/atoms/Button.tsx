@@ -1,5 +1,6 @@
 interface ButtonProps {
   variant?: 'primary' | 'danger' | 'outline';
+  color?: 'point' | 'white' | 'black';
   size?: 'sm' | 'md' | 'lg';
   rounded?: 'none' | 'md' | 'full';
   children: React.ReactNode;
@@ -14,6 +15,7 @@ interface ButtonProps {
 
 export default function Button({
   variant = 'primary',
+  color = 'point',
   size = 'md',
   rounded = 'md',
   children,
@@ -25,9 +27,22 @@ export default function Button({
   type = 'button',
   as = 'button',
 }: ButtonProps) {
+  const colorStyles = {
+    primary: {
+      point: 'bg-point text-black hover:bg-point/90',
+      white: 'bg-white text-black hover:bg-white/90',
+      black: 'bg-black text-white hover:bg-black/90',
+    },
+    outline: {
+      point: 'border border-point text-point hover:bg-point/10',
+      white: 'border border-white/20 text-white hover:bg-white/10',
+      black: 'border border-black text-black hover:bg-black/10',
+    },
+  };
+
   const variantStyles = {
-    primary: 'bg-[#39ff14] text-black font-bold',
-    outline: 'border border-[#39ff14] text-[#39ff14] hover:bg-[#39ff14]/10',
+    primary: `${colorStyles.primary[color]} font-bold`,
+    outline: colorStyles.outline[color],
     danger: 'border border-red-400/40 text-red-300 hover:bg-red-600',
   };
 

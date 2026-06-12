@@ -251,7 +251,7 @@ export default function CommentSection({
               <span className="inline-flex items-center gap-1.5">
                 <span>{comment.user.nickname ?? '탈퇴한 사용자'}</span>
                 {comment.user.role === 'ADMIN' ? (
-                  <span className="rounded-full border border-[#39ff14]/45 bg-[#39ff14]/15 px-1.5 py-0.5 text-[10px] font-semibold text-[#39ff14]">
+                  <span className="rounded-full border border-point/45 bg-point/15 px-1.5 py-0.5 text-[10px] font-semibold text-point">
                     ADMIN
                   </span>
                 ) : null}

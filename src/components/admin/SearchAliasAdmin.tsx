@@ -221,7 +221,7 @@ export default function SearchAliasAdmin() {
           className='rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white'
         />
 
-        <Button type='submit' variant='outline' size='sm' disabled={isSaving} className='bg-[#39ff14]/10 justify-center  disabled:opacity-50'>
+        <Button type='submit' variant='outline' size='sm' disabled={isSaving} className='bg-point/10 justify-center  disabled:opacity-50'>
           {isSaving ? '저장 중...' : '별칭 추가'}
         </Button>
       </form>
@@ -234,7 +234,7 @@ export default function SearchAliasAdmin() {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder='원본명 또는 별칭 검색'
-            className='min-w-0 flex-1 rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-[#39ff14]'
+            className='min-w-0 flex-1 rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-point'
           />
           {searchInput ? (
             <button
@@ -309,7 +309,7 @@ export default function SearchAliasAdmin() {
                             <button
                               type='button'
                               onClick={() => saveEdit(item.id)}
-                              className='rounded-md border border-[#39ff14]/40 bg-[#39ff14]/10 px-2 py-1 text-xs text-[#39ff14]'
+                              className='rounded-md border border-point/40 bg-point/10 px-2 py-1 text-xs text-point'
                             >
                               저장
                             </button>
@@ -368,7 +368,7 @@ export default function SearchAliasAdmin() {
                   aria-current={pageNumber === page ? 'page' : undefined}
                   className={`h-9 min-w-9 rounded-md border px-3 text-sm ${
                     pageNumber === page
-                      ? 'border-[#39ff14]/60 bg-[#39ff14]/10 text-[#39ff14]'
+                      ? 'border-point/60 bg-point/10 text-point'
                       : 'border-slate-700 text-slate-300 hover:bg-white/5'
                   }`}
                 >

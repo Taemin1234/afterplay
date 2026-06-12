@@ -48,7 +48,7 @@ export default function ScrollToTopButton() {
       type="button"
       onClick={scrollToTop}
       aria-label="맨 위로 가기"
-      className={`fixed right-4 z-40 inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#39ff14]/40 bg-[#0a0f1c]/85 text-[#39ff14] shadow-[0_12px_30px_rgba(0,0,0,0.45)] backdrop-blur transition-all cursor-pointer hover:bg-[#39ff14]/15 md:right-6 ${
+      className={`fixed right-4 z-40 inline-flex h-11 w-11 items-center justify-center rounded-full border border-point/40 bg-app-bg/85 text-point shadow-[0_12px_30px_rgba(0,0,0,0.45)] backdrop-blur transition-all cursor-pointer hover:bg-point/15 md:right-6 ${
         isVisible
           ? `${visiblePosition} translate-y-0 opacity-100`
           : `pointer-events-none ${hiddenPosition} translate-y-3 opacity-0`

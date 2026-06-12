@@ -100,7 +100,7 @@ export default function PrivacyPage() {
   return (
     <article className="mx-auto max-w-3xl py-6 sm:py-10">
       <header className="border-b border-slate-800 pb-6">
-        <p className="text-sm font-medium text-[#39ff14]">Privacy Policy</p>
+        <p className="text-sm font-medium text-point">Privacy Policy</p>
         <h1 className="mt-2 text-3xl font-bold text-white sm:text-4xl">개인정보처리방침</h1>
         <p className="mt-4 text-sm leading-6 text-zinc-400">
           DustpeakClub은 이용자의 개인정보를 소중하게 다루며, 개인정보 보호 관련 법령에 따라 다음과 같이
@@ -116,7 +116,7 @@ export default function PrivacyPage() {
             <ul className="mt-3 space-y-2 text-sm leading-6 text-zinc-400">
               {section.items.map((item) => (
                 <li key={item} className="flex gap-2">
-                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#39ff14]/70" />
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-point/70" />
                   <span>{item}</span>
                 </li>
               ))}

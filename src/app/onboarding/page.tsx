@@ -77,13 +77,13 @@ function OnboardingPageContent() {
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#050816] px-6 py-14">
-      <div className="pointer-events-none absolute -left-24 top-16 h-64 w-64 rounded-full bg-[#39ff14]/10 blur-3xl" />
+      <div className="pointer-events-none absolute -left-24 top-16 h-64 w-64 rounded-full bg-point/10 blur-3xl" />
       <div className="pointer-events-none absolute -right-24 bottom-8 h-72 w-72 rounded-full bg-cyan-400/10 blur-3xl" />
 
-      <div className="relative w-full max-w-md rounded-2xl border border-[#39ff14]/20 bg-[#0b1224]/85 p-7 shadow-[0_24px_80px_rgba(0,0,0,0.55)] backdrop-blur">
+      <div className="relative w-full max-w-md rounded-2xl border border-point/20 bg-[#0b1224]/85 p-7 shadow-[0_24px_80px_rgba(0,0,0,0.55)] backdrop-blur">
         <div className="mb-7 flex items-center gap-3">
-          <div className="rounded-full bg-[#39ff14]/10 p-2">
-            <Disc3 className="h-5 w-5 text-[#39ff14]" />
+          <div className="rounded-full bg-point/10 p-2">
+            <Disc3 className="h-5 w-5 text-point" />
           </div>
           <div>
             <h1 className="text-xl font-semibold text-white">너의 닉네임은?</h1>
@@ -101,7 +101,7 @@ function OnboardingPageContent() {
             placeholder="영문 16자 / 한글 8자"
             value={nickname}
             onChange={(e) => setNickname(clampNicknameByUnits(e.target.value, NICKNAME_MAX_UNITS))}
-            className="w-full rounded-xl border border-slate-700 bg-[#070d1d] px-4 py-3 text-sm text-white outline-none transition focus:border-[#39ff14]/70 focus:ring-2 focus:ring-[#39ff14]/20"
+            className="w-full rounded-xl border border-slate-700 bg-[#070d1d] px-4 py-3 text-sm text-white outline-none transition focus:border-point/70 focus:ring-2 focus:ring-point/20"
             required
             minLength={2}
             maxLength={16}
@@ -109,7 +109,7 @@ function OnboardingPageContent() {
 
           <div className="flex items-center justify-between text-xs text-gray-500">
             <span className="inline-flex items-center gap-1">
-              <Sparkles className="h-3.5 w-3.5 text-[#39ff14]" />
+              <Sparkles className="h-3.5 w-3.5 text-point" />
               영문 16자, 한글 8자까지 입력할 수 있어요.
             </span>
             <span>{nicknameUnits}/{NICKNAME_MAX_UNITS}</span>
@@ -118,7 +118,7 @@ function OnboardingPageContent() {
           <button
             type="submit"
             disabled={loading || nicknameUnits < 2 || nicknameUnits > NICKNAME_MAX_UNITS}
-            className="mt-2 w-full rounded-xl bg-[#39ff14] py-3 text-sm font-bold text-black transition hover:bg-[#5cff3a] disabled:cursor-not-allowed disabled:bg-[#39ff14]/35 disabled:text-black/60 cursor-pointer"
+            className="mt-2 w-full rounded-xl bg-point py-3 text-sm font-bold text-black transition hover:bg-point/90 disabled:cursor-not-allowed disabled:bg-point/35 disabled:text-black/60 cursor-pointer"
           >
             {loading ? '저장중...' : '계속하기'}
           </button>
@@ -135,4 +135,3 @@ export default function OnboardingPage() {
     </Suspense>
   );
 }
-

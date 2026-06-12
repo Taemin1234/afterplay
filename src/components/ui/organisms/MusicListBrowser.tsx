@@ -206,7 +206,7 @@ export default function MusicListBrowser({
 
   return (
     <>
-      {/* <div className="sticky top-0 left-0 right-0 -mx-5 z-40 bg-[#0a0f1c]  md:hidden">
+      {/* <div className="sticky top-0 left-0 right-0 -mx-5 z-40 bg-app-bg  md:hidden">
         <TypeSelector
             name={userId ? 'user-list-type-mobile' : 'home-list-type-mobile'}
             ariaLabel="List type mobile"
@@ -262,7 +262,7 @@ export default function MusicListBrowser({
               onClick={() => void fetchNextPage()}
               disabled={isFetchingMore}
               icon={<ChevronDown size={18} />}
-              className="bg-[#0a0f1c]/70 px-5"
+              className="bg-app-bg/70 px-5"
             >
               {isFetchingMore ? '불러오는 중...' : '더보기'}
             </Button>

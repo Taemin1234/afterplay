@@ -54,17 +54,17 @@ function SearchPostList({ items }: { items: MusicListItem[] }) {
           <li key={`${item.kind}-${item.id}`}>
             <Link
               href={href}
-              className='block rounded-lg border border-white/10 bg-white/5 p-4 transition-colors hover:border-[#39ff14]/40'
+              className='block rounded-lg border border-white/10 bg-white/5 p-4 transition-colors hover:border-point/40'
             >
               <div className='mb-2 flex items-center justify-between gap-2 text-xs text-slate-400'>
-                <span className='rounded-full border border-[#39ff14]/30 px-2 py-0.5 text-[#39ff14]'>{badge}</span>
+                <span className='rounded-full border border-point/30 px-2 py-0.5 text-point'>{badge}</span>
                 <span>{new Date(item.createdAt).toLocaleDateString('ko-KR')}</span>
               </div>
               <h3 className='line-clamp-1 text-base font-semibold text-white'>{item.title}</h3>
               <p className='mt-1 line-clamp-2 text-sm text-slate-300'>{item.story}</p>
               <div className='mt-3 flex flex-wrap gap-2'>
                 {item.tags.slice(0, 4).map((tag) => (
-                  <span key={tag} className='rounded-full bg-[#39ff14]/10 px-2 py-0.5 text-xs text-[#39ff14]'>
+                  <span key={tag} className='rounded-full bg-point/10 px-2 py-0.5 text-xs text-point'>
                     #{tag}
                   </span>
                 ))}
@@ -93,7 +93,7 @@ function SearchUserList({ items }: { items: SearchUserItem[] }) {
           <li key={user.id}>
             <Link
               href={href}
-              className='flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 p-3 transition-colors hover:border-[#39ff14]/40'
+              className='flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 p-3 transition-colors hover:border-point/40'
             >
               <div className='flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-sm text-white'>
                 {user.nickname.slice(0, 1).toUpperCase()}
@@ -114,8 +114,8 @@ function SearchLoadingStatus() {
   return (
     <div className='flex items-center gap-2 text-sm text-slate-400' role='status' aria-live='polite' aria-label='검색 결과를 불러오는 중'>
       <span className='relative flex h-4 w-4'>
-        <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-[#39ff14]/35' />
-        <span className='relative inline-flex h-4 w-4 rounded-full border border-[#39ff14]/70 bg-[#39ff14]/20' />
+        <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-point/35' />
+        <span className='relative inline-flex h-4 w-4 rounded-full border border-point/70 bg-point/20' />
       </span>
       <span className='h-4 w-20 animate-pulse rounded bg-white/10' />
     </div>
@@ -127,7 +127,7 @@ function SearchPostSkeleton() {
     <li className='rounded-lg border border-white/10 bg-white/5 p-4'>
       <div className='animate-pulse space-y-3'>
         <div className='flex items-center justify-between gap-2'>
-          <div className='h-5 w-20 rounded-full bg-[#39ff14]/15' />
+          <div className='h-5 w-20 rounded-full bg-point/15' />
           <div className='h-4 w-16 rounded bg-white/10' />
         </div>
         <div className='space-y-2'>
@@ -136,9 +136,9 @@ function SearchPostSkeleton() {
           <div className='h-4 w-4/5 rounded bg-white/10' />
         </div>
         <div className='flex gap-2'>
-          <div className='h-5 w-14 rounded-full bg-[#39ff14]/10' />
-          <div className='h-5 w-16 rounded-full bg-[#39ff14]/10' />
-          <div className='h-5 w-12 rounded-full bg-[#39ff14]/10' />
+          <div className='h-5 w-14 rounded-full bg-point/10' />
+          <div className='h-5 w-16 rounded-full bg-point/10' />
+          <div className='h-5 w-12 rounded-full bg-point/10' />
         </div>
         <div className='h-4 w-28 rounded bg-white/10' />
       </div>

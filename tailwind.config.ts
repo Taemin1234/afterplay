@@ -12,8 +12,12 @@ module.exports = {
           mono: ['var(--font-jetbrains)'],
         },
         colors: {
+          app: {
+            bg: 'var(--app-background)',
+          },
+          point: 'var(--point-color)',
           neon: {
-            green: '#39ff14',
+            green: 'var(--point-color)',
           },
         },
       },

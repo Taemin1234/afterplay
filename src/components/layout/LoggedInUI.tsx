@@ -40,7 +40,7 @@ export default function LoggedInUI({ nickname, isAdmin = false }: LoggedInUIProp
         <div className='flex items-center gap-2'>
           <p>{nickname ?? '익명'}</p>
           {isAdmin ? (
-            <span className='rounded-full border border-[#39ff14]/50 bg-[#39ff14]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#39ff14]'>
+            <span className='rounded-full border border-point/50 bg-point/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-point'>
               ADMIN
             </span>
           ) : null}

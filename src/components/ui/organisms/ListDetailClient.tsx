@@ -369,6 +369,7 @@ export default function ListDetailClient({
             <div className="flex gap-2 sm:w-auto sm:flex-wrap sm:items-center">
               <Button
                 variant="outline"
+                color='white'
                 size="sm"
                 rounded="full"
                 onClick={handleToggleLike}
@@ -381,6 +382,7 @@ export default function ListDetailClient({
 
               <Button
                 variant="outline"
+                color='white'
                 size="sm"
                 rounded="full"
                 onClick={handleToggleBookmark}
@@ -393,6 +395,7 @@ export default function ListDetailClient({
 
               <Button
                 variant="outline"
+                color='white'
                 size="sm"
                 rounded="full"
                 onClick={goToTarget}
@@ -404,6 +407,7 @@ export default function ListDetailClient({
 
               <Button
                 variant="outline"
+                color='white'
                 size="sm"
                 rounded="full"
                 onClick={handleShare}

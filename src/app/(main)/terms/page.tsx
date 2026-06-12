@@ -95,7 +95,7 @@ export default function TermsPage() {
   return (
     <article className="mx-auto max-w-3xl py-6 sm:py-10">
       <header className="border-b border-slate-800 pb-6">
-        <p className="text-sm font-medium text-[#39ff14]">Terms of Service</p>
+        <p className="text-sm font-medium text-point">Terms of Service</p>
         <h1 className="mt-2 text-3xl font-bold text-white sm:text-4xl">이용약관</h1>
         <p className="mt-4 text-sm leading-6 text-zinc-400">
           본 약관은 DustpeakClub 서비스를 이용하는 데 필요한 기본적인 권리와 책임을 정합니다.
@@ -110,7 +110,7 @@ export default function TermsPage() {
             <ul className="mt-3 space-y-2 text-sm leading-6 text-zinc-400">
               {section.items.map((item) => (
                 <li key={item} className="flex gap-2">
-                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#39ff14]/70" />
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-point/70" />
                   <span>{item}</span>
                 </li>
               ))}
