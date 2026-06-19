@@ -10,6 +10,7 @@ type LoginErrorCode =
   | 'oauth_provider_unavailable'
   | 'oauth_rate_limited'
   | 'oauth_network_error'
+  | 'oauth_identity_already_linked'
   | 'oauth_code_missing'
   | 'oauth_code_invalid'
   | 'oauth_state_invalid'
@@ -42,8 +43,11 @@ function toErrorText(value: string | null | undefined): string {
 function classifyProviderError(providerError: string, detail: string | null): LoginErrorCode {
   const combined = `${providerError} ${detail ?? ''}`.toLowerCase();
 
-  if (combined.includes('access_denied') || combined.includes('user denied')) return 'oauth_provider_cancelled';
   if (combined.includes('unverified email with spotify')) return 'oauth_spotify_email_unverified';
+  if (combined.includes('identity_already_exists') || combined.includes('identity is already linked')) {
+    return 'oauth_identity_already_linked';
+  }
+  if (combined.includes('access_denied') || combined.includes('user denied')) return 'oauth_provider_cancelled';
   if (combined.includes('redirect_uri') || combined.includes('redirect url')) return 'oauth_provider_misconfigured';
   if (combined.includes('provider is not enabled') || combined.includes('unsupported provider')) return 'oauth_provider_unavailable';
   if (combined.includes('rate limit') || combined.includes('too many requests')) return 'oauth_rate_limited';
@@ -56,6 +60,9 @@ function classifyExchangeError(detail: string | null): LoginErrorCode {
   const normalized = toErrorText(detail);
 
   if (normalized.includes('unverified email with spotify')) return 'oauth_spotify_email_unverified';
+  if (normalized.includes('identity_already_exists') || normalized.includes('identity is already linked')) {
+    return 'oauth_identity_already_linked';
+  }
   if (normalized.includes('invalid_grant') || normalized.includes('authorization code') || normalized.includes('code verifier')) {
     return 'oauth_code_invalid';
   }
