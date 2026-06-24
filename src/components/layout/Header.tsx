@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import type { User } from '@supabase/supabase-js';
-import { Disc3 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -40,12 +39,11 @@ export default function Header({ user, nickname, isAdmin = false }: HeaderProps)
 
   return (
     <header className={isSearchPage ? 'hidden md:block' : 'block'}>
-      <div className='w-full border-b border-point/20 bg-app-bg/80 backdrop-blur-md md:sticky md:top-0 md:z-50 md:block'>
+      <div className='w-full border-b-2 border-point/20 bg-app-bg/80 backdrop-blur-md md:sticky md:top-0 md:z-50 md:block'>
         <div className='container mx-auto flex h-16 items-center justify-between px-4'>
           <Link href='/' className='group flex items-center gap-2'>
-            <Image src="/logo.png" alt='로고' width={225} height={50} className="h-auto w-[clamp(140px,25vw,225px)]" priority/>
+            <Image src="/main_logo.png" alt='로고' width={225} height={53} className="h-auto w-[clamp(140px,25vw,225px)]" priority/>
           </Link>
-
           <div className='mx-8 hidden max-w-md flex-1 md:block'>
             <SearchBar
               value={query}

@@ -25,7 +25,7 @@ export default function ListItem({ item, priority = false }: ListItemProps) {
           <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
             <Tag variant="subtle">{item.kind === "PLAYLIST" ? "PLAYLIST" : "ALBUMLIST"}</Tag>
             <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-              <span className="max-w-[8rem] truncate text-xs text-gray-400 sm:max-w-[10rem] sm:text-sm">
+              <span className="max-w-[8rem] truncate text-xs text-gray sm:max-w-[10rem] sm:text-sm">
                 By {item.authorNickname ?? '탈퇴한 사용자'}
               </span>
               {item.visibility === "PRIVATE" ? (
@@ -85,7 +85,7 @@ export default function ListItem({ item, priority = false }: ListItemProps) {
             <h3 className="line-clamp-2 text-base font-semibold text-white transition-colors group-hover:text-neon-green sm:text-lg">
               {item.title}
             </h3>
-            <p className="line-clamp-1 text-sm leading-relaxed text-gray-400">
+            <p className="line-clamp-1 text-sm leading-relaxed text-gray-200">
               {item.story ?? ""}
             </p>
           </div>
@@ -101,7 +101,7 @@ export default function ListItem({ item, priority = false }: ListItemProps) {
             {rest > 0 && <Tag variant="subtle">+{rest}</Tag>}
           </div>
 
-          <div className="mt-2 flex items-center justify-between border-t border-slate-800/70 pt-2 text-[11px] text-gray-500">
+          <div className="mt-2 flex items-center justify-between border-t border-slate-800/70 pt-2 text-[11px] text-gray-300">
             <span className="text-xs">
               {(() => {
                 const date = new Date(item.createdAt);
