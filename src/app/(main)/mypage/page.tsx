@@ -67,7 +67,7 @@ export default async function MyPage({ searchParams }: TabProps) {
       <div className='flex flex-col gap-4 mt-4 sm:flex-row md:justify-between'>
         <Link
           href="/mypage/dashboard"
-          className="group inline-flex justify-center w-full items-center gap-1 rounded-lg border border-neon-green/35 bg-[#0b1020] px-3.5 py-2.5 text-sm font-semibold text-neon-green shadow-[0_10px_24px_rgba(0,0,0,0.35)] transition-all duration-300 hover:-translate-y-0.5 hover:border-neon-green/60 hover:bg-[#11192e] md:w-fit"
+          className="group inline-flex justify-center w-full items-center gap-1 rounded-lg border border-neon-point/35 bg-[#0b1020] px-3.5 py-2.5 text-sm font-semibold text-neon-point shadow-[0_10px_24px_rgba(0,0,0,0.35)] transition-all duration-300 hover:-translate-y-0.5 hover:border-neon-point/60 hover:bg-[#11192e] md:w-fit"
         >
           <span>대시보드</span>
           <ArrowUpRight className='h-4 w-4' />
@@ -83,7 +83,7 @@ export default async function MyPage({ searchParams }: TabProps) {
               scroll={false}
               className={`shrink-0 whitespace-nowrap pb-2 text-sm transition-colors sm:text-base ${
                 activeTab === 'created'
-                  ? 'border-b-2 border-neon-green font-semibold text-neon-green'
+                  ? 'border-b-2 border-neon-point font-semibold text-neon-point'
                   : 'text-gray-400 hover:text-gray-200'
               }`}
             >
@@ -94,7 +94,7 @@ export default async function MyPage({ searchParams }: TabProps) {
               scroll={false}
               className={`shrink-0 whitespace-nowrap pb-2 text-sm transition-colors sm:text-base ${
                 activeTab === 'liked'
-                  ? 'border-b-2 border-neon-green font-semibold text-neon-green'
+                  ? 'border-b-2 border-neon-point font-semibold text-neon-point'
                   : 'text-gray-400 hover:text-gray-200'
               }`}
             >
@@ -105,7 +105,7 @@ export default async function MyPage({ searchParams }: TabProps) {
               scroll={false}
               className={`shrink-0 whitespace-nowrap pb-2 text-sm transition-colors sm:text-base ${
                 activeTab === 'bookmarked'
-                  ? 'border-b-2 border-neon-green font-semibold text-neon-green'
+                  ? 'border-b-2 border-neon-point font-semibold text-neon-point'
                   : 'text-gray-400 hover:text-gray-200'
               }`}
             >
@@ -114,7 +114,7 @@ export default async function MyPage({ searchParams }: TabProps) {
             </nav>
             <Link
               href="/createList"
-              className="hidden text-center rounded-md bg-neon-green px-3 py-2 text-sm font-semibold text-black transition-opacity hover:opacity-90 sm:w-auto sm:inline-block"
+              className="hidden text-center rounded-md bg-neon-point px-3 py-2 text-sm font-semibold text-black transition-opacity hover:opacity-90 sm:w-auto sm:inline-block"
             >
               새 플리 만들기
             </Link>
@@ -537,7 +537,7 @@ function EmptyState({title, description, ctaHref, ctaLabel,}: { title: string; d
       <p className="mt-2 text-sm text-gray-400">{description}</p>
       <Link
         href={ctaHref}
-        className="mt-5 inline-flex w-full items-center justify-center rounded-md border border-neon-green/60 px-4 py-2 text-sm font-medium text-neon-green transition-colors hover:bg-neon-green/10 sm:w-auto"
+        className="mt-5 inline-flex w-full items-center justify-center rounded-md border border-neon-point/60 px-4 py-2 text-sm font-medium text-neon-point transition-colors hover:bg-neon-point/10 sm:w-auto"
       >
         {ctaLabel}
       </Link>

@@ -214,7 +214,7 @@ export default function CommentSection({
       {!isLoggedIn && (
         <p className="mt-2 text-sm text-gray-400">
           댓글 작성은 로그인이 필요합니다.{` `}
-          <Link href={loginHref} className="text-neon-green">
+          <Link href={loginHref} className="text-neon-point">
             로그인하기
           </Link>
         </p>
@@ -227,7 +227,7 @@ export default function CommentSection({
           placeholder={isLoggedIn ? '댓글을 입력해주세요.' : '로그인 후 댓글을 작성할 수 있습니다.'}
           disabled={!isLoggedIn || isSubmittingComment}
           maxLength={COMMENT_MAX_LENGTH}
-          className="h-24 w-full resize-none rounded-md border border-slate-700 bg-[#070b16] px-3 py-2 text-sm text-white outline-none focus:border-neon-green disabled:cursor-not-allowed disabled:opacity-60"
+          className="h-24 w-full resize-none rounded-md border border-slate-700 bg-[#070b16] px-3 py-2 text-sm text-white outline-none focus:border-neon-point disabled:cursor-not-allowed disabled:opacity-60"
         />
         <div className="flex items-center justify-between">
           <p className="text-xs text-gray-400">
@@ -272,7 +272,7 @@ export default function CommentSection({
                   onChange={(e) => setEditingCommentInput(e.target.value)}
                   maxLength={COMMENT_MAX_LENGTH}
                   disabled={pendingCommentActionId === comment.id}
-                  className="h-24 w-full resize-none rounded-md border border-slate-700 bg-[#070b16] px-3 py-2 text-sm text-white outline-none focus:border-neon-green disabled:cursor-not-allowed disabled:opacity-60"
+                  className="h-24 w-full resize-none rounded-md border border-slate-700 bg-[#070b16] px-3 py-2 text-sm text-white outline-none focus:border-neon-point disabled:cursor-not-allowed disabled:opacity-60"
                 />
                 <div className="flex items-center justify-end gap-2">
                   <Button

@@ -388,7 +388,7 @@ export default function ListDetailClient({
                 onClick={handleToggleBookmark}
                 disabled={!isLoggedIn || isBookmarking}
                 icon={viewerHasBookmarked ? <Bookmark size={16} fill="#39ff14" strokeWidth={0} /> : <Bookmark size={16} />}
-                className={`justify-center border-0 bg-white/5 text-xs hover:bg-white/10 sm:w-auto sm:text-sm ${viewerHasBookmarked ? 'text-neon-green' : 'text-gray-300'}`}
+                className={`justify-center border-0 bg-white/5 text-xs hover:bg-white/10 sm:w-auto sm:text-sm ${viewerHasBookmarked ? 'text-neon-point' : 'text-gray-300'}`}
               >
                 <span className='hidden sm:inline-block'>북마크</span> {bookmarksCount}
               </Button>

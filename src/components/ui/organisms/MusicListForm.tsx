@@ -212,7 +212,7 @@ export default function MusicListForm({
   return (
     <div className="flex items-center justify-center">
       <motion.div className="relative w-full rounded-2xl border border-gray-800 bg-[#121212] py-5 px-3 md:p-8">
-        <h2 className="mb-6 font-sans text-2xl font-bold text-neon-green">{pageTitle}</h2>
+        <h2 className="mb-6 font-sans text-2xl font-bold text-neon-point">{pageTitle}</h2>
 
         <div className="flex flex-col items-end justify-between sm:flex-row sm:items-center">
           <div className={`w-full ${lockType ? 'pointer-events-none opacity-70' : ''}`}>
@@ -239,10 +239,10 @@ export default function MusicListForm({
               />
 
               <div
-                className={`relative flex h-8 w-14 items-center rounded-full p-1 transition-colors duration-300 ${form.visibility === 'PUBLIC' ? 'bg-gray-800' : 'bg-neon-green/30'}`}
+                className={`relative flex h-8 w-14 items-center rounded-full p-1 transition-colors duration-300 ${form.visibility === 'PUBLIC' ? 'bg-gray-800' : 'bg-neon-point/30'}`}
               >
                 <motion.div
-                  className={`flex h-6 w-6 items-center justify-center rounded-full shadow-md ${form.visibility === 'PUBLIC' ? 'bg-gray-600' : 'bg-neon-green/30'}`}
+                  className={`flex h-6 w-6 items-center justify-center rounded-full shadow-md ${form.visibility === 'PUBLIC' ? 'bg-gray-600' : 'bg-neon-point/30'}`}
                   layout
                   transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                   initial={false}
@@ -290,7 +290,7 @@ export default function MusicListForm({
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.8 }}
-                    className="flex items-center gap-1 rounded-full border border-neon-green/30 bg-neon-green/10 px-3 py-1 text-sm text-neon-green"
+                    className="flex items-center gap-1 rounded-full border border-neon-point/30 bg-neon-point/10 px-3 py-1 text-sm text-neon-point"
                   >
                     #{tag}
                     <button

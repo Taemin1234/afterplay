@@ -20,11 +20,11 @@ export default function Tag({
   const variantStyles = {
     subtle:
       "inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-xs font-medium tracking-wide text-gray-300",
-    neon: "inline-flex items-center rounded-md bg-neon-green/5 px-2 py-1 text-xs text-neon-green/70",
+    neon: "inline-flex items-center rounded-md bg-neon-point/5 px-2 py-1 text-xs text-neon-point/70",
   };
 
   const interactiveStyles = clickable
-    ? "cursor-pointer transition-colors hover:bg-neon-green/10 hover:text-neon-green"
+    ? "cursor-pointer transition-colors"
     : "";
 
   const classNames = `${variantStyles[variant]} ${interactiveStyles} ${className}`.trim();

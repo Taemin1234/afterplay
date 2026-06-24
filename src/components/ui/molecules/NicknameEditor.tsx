@@ -90,7 +90,7 @@ export default function NicknameEditor({
             className="w-36 sm:w-44"
           />
           <IconButton
-            icon={<Check className="text-neon-green" size={20} />}
+            icon={<Check className="text-neon-point" size={20} />}
             onClick={handleUpdate}
             disabled={isLoading}
           />

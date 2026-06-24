@@ -19,7 +19,7 @@ export default function ListItem({ item, priority = false }: ListItemProps) {
   const rest = tags.length - visible.length;
 
   return (
-    <li className="list-none rounded-xl border border-slate-800/70 bg-gradient-to-b from-[#101729] to-[#050816] p-3 shadow-[0_18px_45px_rgba(0,0,0,0.55)] transition-transform transition-colors duration-300 hover:border-neon-green/40 sm:p-4 md:hover:-translate-y-1">
+    <li className="list-none rounded-xl border border-slate-800/70 bg-gradient-to-b from-[#101729] to-[#050816] p-3 shadow-[0_18px_45px_rgba(0,0,0,0.55)] transition-transform transition-colors duration-300 hover:border-neon-point/40 sm:p-4 md:hover:-translate-y-1">
       <Link href={href} className="group relative flex h-full flex-col justify-between gap-3">
         <div>
           <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
@@ -76,13 +76,13 @@ export default function ListItem({ item, priority = false }: ListItemProps) {
                 </div>
               )}
               <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-                <PlayCircle className="h-10 w-10 text-neon-green sm:h-12 sm:w-12" />
+                <PlayCircle className="h-10 w-10 text-neon-point sm:h-12 sm:w-12" />
               </div>
             </div>
           </div>
 
           <div className="space-y-1">
-            <h3 className="line-clamp-2 text-base font-semibold text-white transition-colors group-hover:text-neon-green sm:text-lg">
+            <h3 className="line-clamp-2 text-base font-semibold text-white transition-colors group-hover:text-neon-point sm:text-lg">
               {item.title}
             </h3>
             <p className="line-clamp-1 text-sm leading-relaxed text-gray-200">

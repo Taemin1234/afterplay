@@ -21,7 +21,7 @@ interface SearchBarProps {
 
 const variantStyles = {
   primary: 'border-slate-700 bg-slate-900/60 focus-within:border-point focus-within:ring-2 focus-within:ring-point/25',
-  form: 'bg-black border border-gray-800 p-3 rounded-md text-white outline-none focus:border-neon-green resize-none',
+  form: 'bg-black border border-gray-800 p-3 rounded-md text-white outline-none focus:border-neon-point resize-none',
   danger: 'bg-red-500 text-white hover:bg-red-600',
 };
 

@@ -2,7 +2,7 @@
 
 
 :root {
-  --app-background: #120d0c;
+  --app-background: #0e0e0e;
   --point-color: #ff4128;
   --point-color-rgb: 57 255 20;
   --background: var(--app-background);
@@ -17,7 +17,7 @@
   --font-mono: var(--font-jetbrains);
   --color-app-bg: var(--app-background);
   --color-point: var(--point-color);
-  --color-neon-green: var(--point-color);
+  --color-neon-point: var(--point-color);
 }
 
 @media (prefers-color-scheme: dark) {

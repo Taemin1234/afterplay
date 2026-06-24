@@ -60,7 +60,7 @@ function PopularPlaylistCard({
   return (
     <article className="rounded-xl border border-slate-800 bg-slate-900/35 p-4">
       <p className="text-xs text-slate-400">{title}</p>
-      <Link href={href} className="mt-2 block truncate text-sm font-semibold text-white hover:text-neon-green">
+      <Link href={href} className="mt-2 block truncate text-sm font-semibold text-white hover:text-neon-point">
         {playlistTitle}
       </Link>
       <p className="mt-2 text-xs text-slate-300">

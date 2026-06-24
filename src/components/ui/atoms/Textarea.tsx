@@ -5,7 +5,7 @@ interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement
   export default function Textarea({ variant = 'form' ,placeholder, value, onChange, className = '', ...props }: TextareaProps) {
   
     const variantStyles = {
-      form: 'rounded-md border border-gray-800 bg-black px-3 py-2.5 outline-none focus:border-neon-green',
+      form: 'rounded-md border border-gray-800 bg-black px-3 py-2.5 outline-none focus:border-neon-point',
       none: 'bg-transparent focus:outline-none placeholder:text-slate-500'
     };
   
