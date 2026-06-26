@@ -4,7 +4,7 @@
 :root {
   --app-background: #0e0e0e;
   --point-color: #ff4128;
-  --point-color-rgb: 57 255 20;
+  --point-color-rgb: 255 65 40;;
   --background: var(--app-background);
   --foreground: #ededed;
   --font-jetbrains: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
