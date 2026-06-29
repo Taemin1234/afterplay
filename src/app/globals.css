@@ -4,6 +4,7 @@
 :root {
   --app-background: #0e0e0e;
   --point-color: #ff4128;
+  --bg2 : #171717;
   --point-color-rgb: 255 65 40;;
   --background: var(--app-background);
   --foreground: #ededed;
@@ -18,6 +19,7 @@
   --color-app-bg: var(--app-background);
   --color-point: var(--point-color);
   --color-neon-point: var(--point-color);
+  --color-bg2: var(--bg2);
 }
 
 @media (prefers-color-scheme: dark) {

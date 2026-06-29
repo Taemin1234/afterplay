@@ -19,7 +19,7 @@ export default function ListItem({ item, priority = false }: ListItemProps) {
   const rest = tags.length - visible.length;
 
   return (
-    <li className="list-none rounded-xl border border-slate-800/70 bg-gradient-to-b from-[#101729] to-[#050816] p-3 shadow-[0_18px_45px_rgba(0,0,0,0.55)] transition-transform transition-colors duration-300 hover:border-neon-point/40 sm:p-4 md:hover:-translate-y-1">
+    <li className="list-none rounded-xl border border-[rgba(255,65,40,0.45)] bg-bg2 p-3 shadow-[0_18px_45px_rgba(0,0,0,0.55)] transition-transform transition-colors duration-300 hover:border-neon-point/40 sm:p-4 md:hover:-translate-y-1">
       <Link href={href} className="group relative flex h-full flex-col justify-between gap-3">
         <div>
           <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
