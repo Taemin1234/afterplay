@@ -11,15 +11,58 @@
   --font-jetbrains: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
 }
 
+@font-face {
+  font-family: 'Daeojamjil';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2302_01@1.0/TheJamsil1Thin.woff2') format('woff2');
+  font-weight: 100;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Daeojamjil';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2302_01@1.0/TheJamsil2Light.woff2') format('woff2');
+  font-weight: 300;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Daeojamjil';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2302_01@1.0/TheJamsil3Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Daeojamjil';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2302_01@1.0/TheJamsil4Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Daeojamjil';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2302_01@1.0/TheJamsil5Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Daeojamjil';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2302_01@1.0/TheJamsil6ExtraBold.woff2') format('woff2');
+  font-weight: 800;
+  font-display: swap;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-pretendard);
   --font-mono: var(--font-jetbrains);
+  --font-daeojamjil: 'Daeojamjil', var(--font-pretendard), sans-serif;
   --color-app-bg: var(--app-background);
   --color-point: var(--point-color);
   --color-neon-point: var(--point-color);
-  --color-bg2: var(--bg2);
+  --color-bg2: var(--bg2)
 }
 
 @media (prefers-color-scheme: dark) {
@@ -39,5 +82,9 @@ body {
   .container {
     width: 100%;
     max-width: 1280px;
+  }
+
+  .font-daeojamjil {
+    font-family: 'Daeojamjil', var(--font-pretendard), sans-serif;
   }
 }

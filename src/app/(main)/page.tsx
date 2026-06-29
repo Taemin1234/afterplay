@@ -23,8 +23,11 @@ export default async function Home() {
   });
 
   return (
-    <MusicListBrowser initialItems={items} initialNextCursor={nextCursor} initialType="all" limit={12}>
-      <MusicListGrid items={items} />
-    </MusicListBrowser>
+    <>
+      <h1 className='font-daeojamjil text-4xl font-bold'><span className='text-neon-point'>DPC</span> 리스트</h1>
+      <MusicListBrowser initialItems={items} initialNextCursor={nextCursor} initialType="all" limit={12}>
+        <MusicListGrid items={items} />
+      </MusicListBrowser>
+    </>
   );
 }
