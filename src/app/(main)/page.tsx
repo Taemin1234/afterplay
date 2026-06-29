@@ -24,7 +24,7 @@ export default async function Home() {
 
   return (
     <>
-      <h1 className='font-daeojamjil text-4xl font-bold'><span className='text-neon-point'>DPC</span> 리스트</h1>
+      <h1 className='font-Paperozi relative before:content before:absolute before:w-full before:h-0.5 before:bg-neon-point/80 before:left-0 before:right-0 before:bottom-0 text-3xl md:text-5xl font-bold mt-5 md:mt-10 mb-5 pb-3'><span className='text-neon-point'>DPC</span> 리스트</h1>
       <MusicListBrowser initialItems={items} initialNextCursor={nextCursor} initialType="all" limit={12}>
         <MusicListGrid items={items} />
       </MusicListBrowser>
