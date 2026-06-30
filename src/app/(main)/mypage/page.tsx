@@ -5,7 +5,9 @@ import ProfileInfo from '@/components/ui/organisms/ProfileInfo';
 import MusicListBrowser from '@/components/ui/organisms/MusicListBrowser';
 import MusicListGrid from '@/components/ui/organisms/MusicListGrid';
 import MusicListGridSkeleton from '@/components/layout/MusicListGridSkeleton';
+import DismissibleNotice from '@/components/ui/molecules/DismissibleNotice';
 import AccountDeletionButton from '@/components/ui/organisms/AccountDeletionButton';
+import SpotifyConnectButton from '@/components/ui/organisms/SpotifyConnectButton';
 import prisma from '@/lib/prisma';
 import { getUserSummaryStats } from '@/lib/dashboard-stats';
 import { createSupabaseServerClient } from '@/utils/supabase/server';
@@ -13,11 +15,11 @@ import type { MusicListItem } from '@/types';
 import { ArrowUpRight } from 'lucide-react'
 
 interface TabProps {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; spotify?: string }>;
 }
 
 export default async function MyPage({ searchParams }: TabProps) {
-  const { tab } = await searchParams;
+  const { tab, spotify } = await searchParams;
   const activeTab = tab === 'liked' || tab === 'bookmarked' ? tab : 'created';
 
   const supabase = await createSupabaseServerClient();
@@ -48,6 +50,8 @@ export default async function MyPage({ searchParams }: TabProps) {
   const initialNickname = me?.nickname || metadataName || '익명';
   const summaryStats = await getUserSummaryStats(user.id);
   const createdCount = summaryStats.createdCount;
+  // 유저 정보를 가져오고 spotify가 연결되어 있는지 확인(boolean)
+  const isSpotifyConnected = user.identities?.some((identity) => identity.provider === 'spotify') ?? false;
 
   const createdTabHref = '/mypage?tab=created';
   const likedTabHref = '/mypage?tab=liked';
@@ -64,16 +68,30 @@ export default async function MyPage({ searchParams }: TabProps) {
         initialFollowingCount={me?._count.following ?? 0}
         initialIsFollowing={false}
       />
-      <div className='flex flex-col gap-4 mt-4 sm:flex-row md:justify-between'>
-        <Link
-          href="/mypage/dashboard"
-          className="group inline-flex justify-center w-full items-center gap-1 rounded-lg border border-neon-point/35 bg-[#0b1020] px-3.5 py-2.5 text-sm font-semibold text-neon-point shadow-[0_10px_24px_rgba(0,0,0,0.35)] transition-all duration-300 hover:-translate-y-0.5 hover:border-neon-point/60 hover:bg-[#11192e] md:w-fit"
-        >
-          <span>대시보드</span>
-          <ArrowUpRight className='h-4 w-4' />
-        </Link>
+      <div className='flex flex-col gap-4 mt-4 md:flex-row md:items-center md:justify-between'>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Link
+            href="/mypage/dashboard"
+            className="group inline-flex justify-center w-full items-center gap-1 rounded-lg border border-neon-point/35 bg-[#0b1020] px-3.5 py-2.5 text-sm font-semibold text-neon-point shadow-[0_10px_24px_rgba(0,0,0,0.35)] transition-all duration-300 hover:-translate-y-0.5 hover:border-neon-point/60 hover:bg-[#11192e] sm:w-auto"
+          >
+            <span>대시보드</span>
+            <ArrowUpRight className='h-4 w-4' />
+          </Link>
+          <SpotifyConnectButton isConnected={isSpotifyConnected} />
+        </div>
         <AccountDeletionButton />
       </div>
+      {/* SpotifyConnectButton에서 보낸 쿼리 값으로 판단 */}
+      {spotify === 'connected' && isSpotifyConnected ? (
+        <DismissibleNotice variant="success" autoHideMs={5000}>
+          Spotify 계정이 연결되었습니다.
+        </DismissibleNotice>
+      ) : null}
+      {spotify === 'error' ? (
+        <DismissibleNotice variant="error">
+          Spotify 연결을 완료하지 못했습니다. 권한 동의 후 다시 시도하거나 다른 계정에 연결되었는지 확인해주세요.
+        </DismissibleNotice>
+      ) : null}
       <section className="mt-8 sm:mt-10">
         <div className="mb-5 border-b border-slate-800 pb-3 sm:mb-6 sm:pb-2">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
