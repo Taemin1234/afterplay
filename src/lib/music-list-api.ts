@@ -64,7 +64,7 @@ export async function upsertDbUser(user: {
 // 태그 정리
 export function cleanTags(tags: string[] | undefined): string[] {
   if (!Array.isArray(tags)) return [];
-  return [...new Set(tags.map((tag) => tag.trim()).filter(Boolean))].slice(0, 10);
+  return [...new Set(tags.map((tag) => tag.replace(/\s+/g, '')).filter(Boolean))].slice(0, 10);
 }
 
 // 중복 곡 제거

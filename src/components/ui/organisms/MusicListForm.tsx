@@ -49,6 +49,8 @@ const typeOptions = [
   { value: 'album', label: '앨범리스트', icon: <Disc size={16} /> },
 ] as const;
 
+const normalizeTag = (tag: string) => tag.replace(/\s+/g, '');
+
 export default function MusicListForm({
   pageTitle = '새 리스트 만들기',
   submitLabel = '등록하기',
@@ -107,7 +109,7 @@ export default function MusicListForm({
   };
 
   const handleAddTag = () => {
-    const tag = tagInput.trim();
+    const tag = normalizeTag(tagInput);
     if (!tag) return;
 
     setForm((prev) => {
@@ -274,7 +276,7 @@ export default function MusicListForm({
                 variant="form"
                 placeholder="태그를 입력해주세요"
                 value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
+                onChange={(e) => setTagInput(normalizeTag(e.target.value))}
                 onClear={() => setTagInput('')}
                 onClick={handleAddTag}
                 onKeyDown={handleTagInputKeyDown}
