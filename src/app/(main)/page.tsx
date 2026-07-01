@@ -1,5 +1,6 @@
 import MusicListBrowser from '@/components/ui/organisms/MusicListBrowser';
 import MusicListGrid from '@/components/ui/organisms/MusicListGrid';
+import ParticleLogoIntro from '@/components/ui/organisms/ParticleLogoIntro';
 import { fetchListItems } from '@/lib/music-lists';
 import type { Metadata } from 'next';
 
@@ -24,6 +25,7 @@ export default async function Home() {
 
   return (
     <>
+      <ParticleLogoIntro />
       <h1 className='font-paperlogy relative before:content before:absolute before:w-full before:h-0.5 before:bg-neon-point/80 before:left-0 before:right-0 before:bottom-0 text-3xl md:text-5xl font-bold mt-5 md:mt-10 mb-5 pb-3'><span className='text-neon-point'>DPC</span> 리스트</h1>
       <MusicListBrowser initialItems={items} initialNextCursor={nextCursor} initialType="all" limit={12}>
         <MusicListGrid items={items} />
