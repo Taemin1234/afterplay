@@ -101,36 +101,20 @@ function redirectToLoginWithError(origin: string, next: string, code: LoginError
   return NextResponse.redirect(url);
 }
 
-// 스포티파이 연결결과 url 표시
-function redirectToSpotifyLinkResult(origin: string, next: string, status: 'connected' | 'error') {
-  const url = new URL(next, origin);
-  url.searchParams.set('spotify', status);
-  return NextResponse.redirect(url);
-}
-
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const origin = resolveRequestOrigin(request);
   const code = searchParams.get('code'); // OAuth provider가 넘겨준 인증 코드
   const safeNext = toSafeNext(searchParams.get('next')); // 로그인 후 갈 경로
-  const isSpotifyLinkMode = searchParams.get('mode') === 'spotify-link'; // 일반 콜백이 아니라 spotify 연결 콜백으로 표시
   const providerError = searchParams.get('error');
   const providerErrorDescription = searchParams.get('error_description');
 
   if (providerError) {
-    if (isSpotifyLinkMode) {
-      return redirectToSpotifyLinkResult(origin, safeNext, 'error');
-    }
-
     const errorCode = classifyProviderError(providerError, providerErrorDescription);
     return redirectToLoginWithError(origin, safeNext, errorCode, providerErrorDescription ?? providerError);
   }
 
   if (!code) {
-    if (isSpotifyLinkMode) {
-      return redirectToSpotifyLinkResult(origin, safeNext, 'error');
-    }
-
     return redirectToLoginWithError(origin, safeNext, 'oauth_code_missing');
   }
 
@@ -141,10 +125,6 @@ export async function GET(request: Request) {
   // 인증코드오류, 세션교환실패, user 정보없는 경우 로그인 페이지로 다시 전달
   if (exchangeError || !data.user) {
     const detail = exchangeError?.message ?? null;
-    if (isSpotifyLinkMode) {
-      return redirectToSpotifyLinkResult(origin, safeNext, 'error');
-    }
-
     const errorCode = classifyExchangeError(detail);
     return redirectToLoginWithError(origin, safeNext, errorCode, detail);
   }
@@ -160,11 +140,6 @@ export async function GET(request: Request) {
   });
 
   if (!existingUser) {
-    if (isSpotifyLinkMode) {
-      await supabase.auth.signOut();
-      return redirectToSpotifyLinkResult(origin, safeNext, 'error');
-    }
-
     // 이메일이 없으면 로그인 거부
     if (!normalizedEmail) {
       await supabase.auth.signOut();
@@ -180,9 +155,6 @@ export async function GET(request: Request) {
     // 이미 다른 방식으로 가입된 이메일이면 새계정처럼 못들어오게 함
     if (existingByEmail && existingByEmail.id !== id) {
       await supabase.auth.signOut();
-      if (isSpotifyLinkMode) {
-        return redirectToSpotifyLinkResult(origin, safeNext, 'error');
-      }
       return redirectToLoginWithError(origin, safeNext, 'email_already_registered');
     }
 
