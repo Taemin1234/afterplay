@@ -242,8 +242,8 @@ export default function ListDetailClient({
 
   return (
     <section className="mx-auto w-full max-w-5xl space-y-4 sm:space-y-6">
-      <article className="overflow-hidden rounded-2xl border border-slate-800/70 bg-gradient-to-b from-[#131c31] to-[#070c18] px-4 py-6 shadow-[0_24px_60px_rgba(0,0,0,0.45)] sm:px-6 sm:py-8">
-        <header className="space-y-4 border-b border-slate-800/70 pb-4 sm:space-y-5">
+      <article className="overflow-hidden rounded-2xl border border-white/10 bg-bg2 px-4 py-6 shadow-[0_24px_60px_rgba(0,0,0,0.35)] sm:px-6 sm:py-8">
+        <header className="space-y-4 border-b border-white/10 pb-4 sm:space-y-5">
           <div>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
               <div className="flex min-w-0 flex-1 items-start gap-2.5 sm:gap-3">
@@ -424,7 +424,7 @@ export default function ListDetailClient({
           {item.musicItems.map((music) => (
             <li
               key={`${music.id}-${music.order}`}
-              className="flex items-center gap-2 rounded-lg border border-slate-800/70 bg-black/15 p-2 sm:gap-3 sm:p-2.5"
+              className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/15 p-2 sm:gap-3 sm:p-2.5"
             >
               <span className="w-5 shrink-0 text-center text-xs text-gray-400 sm:w-6">{music.order + 1}</span>
               <Image

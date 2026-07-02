@@ -68,7 +68,7 @@ export default async function MyPage({ searchParams }: TabProps) {
         <div className="flex flex-col gap-2 sm:flex-row">
           <Link
             href="/mypage/dashboard"
-            className="group inline-flex justify-center w-full items-center gap-1 rounded-lg border border-neon-point/35 bg-[#0b1020] px-3.5 py-2.5 text-sm font-semibold text-neon-point shadow-[0_10px_24px_rgba(0,0,0,0.35)] transition-all duration-300 hover:-translate-y-0.5 hover:border-neon-point/60 hover:bg-[#11192e] sm:w-auto"
+            className="group inline-flex justify-center w-full items-center gap-1 rounded-lg border border-neon-point/35 bg-bg2 px-3.5 py-2.5 text-sm font-semibold text-neon-point shadow-[0_10px_24px_rgba(0,0,0,0.35)] transition-all duration-300 hover:-translate-y-0.5 hover:border-neon-point/60 hover:bg-neon-point/6 sm:w-auto"
           >
             <span>대시보드</span>
             <ArrowUpRight className='h-4 w-4' />

@@ -45,7 +45,7 @@ export default function MobileBottomNav({ user, nickname, isAdmin = false }: Mob
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-point/[0.18] bg-[linear-gradient(135deg,rgba(19,28,49,0.92),rgba(7,12,24,0.86)_48%,rgb(var(--point-color-rgb)_/_0.10))] shadow-[0_-8px_32px_rgba(0,0,0,0.42),inset_0_1px_0_rgb(var(--point-color-rgb)_/_0.10)] backdrop-blur-2xl backdrop-saturate-150 pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-point/[0.18] bg-[linear-gradient(135deg,rgba(23,23,23,0.94),rgba(14,14,14,0.88)_48%,rgb(var(--point-color-rgb)_/_0.14))] shadow-[0_-8px_32px_rgba(0,0,0,0.42),inset_0_1px_0_rgb(var(--point-color-rgb)_/_0.12)] backdrop-blur-2xl backdrop-saturate-150 pb-[env(safe-area-inset-bottom)] md:hidden"
       style={{
         WebkitTransform: 'translateZ(0)',
         transform: 'translateZ(0)',

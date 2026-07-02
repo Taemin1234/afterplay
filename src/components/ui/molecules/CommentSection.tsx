@@ -208,7 +208,7 @@ export default function CommentSection({
   };
 
   return (
-    <section ref={targetRef} className="rounded-2xl border border-slate-800/70 bg-[#0b1020] p-6">
+    <section ref={targetRef} className="rounded-2xl border border-white/10 bg-bg2 p-6">
       <h2 className="text-lg font-semibold text-white">댓글</h2>
 
       {!isLoggedIn && (

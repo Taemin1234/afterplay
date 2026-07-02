@@ -26,7 +26,7 @@ export default function ProfileInfo({
   initialIsFollowing = false,
 }: ProfileInfoProps) {
   return (
-    <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-point/20 bg-black/40 px-4 py-5 shadow-xl sm:flex-row sm:items-center sm:gap-6 md:px-8 md:py-10">
+    <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-point/20 bg-bg2 px-4 py-5 shadow-xl sm:flex-row sm:items-center sm:gap-6 md:px-8 md:py-10">
       <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-5">
         <ProfileNicknameBlock initialNickname={initialNickname} isOwner={isOwner} />
 
