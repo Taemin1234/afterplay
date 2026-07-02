@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import NextImage from "next/image";
 
 type Particle = {
   x: number; // 현재 위치
@@ -17,16 +18,27 @@ type Particle = {
 
 const LOGO_SRC = "/dpc_icon.png";
 // 로고 모이는 시간
-const GATHER_DURATION = 2000;
+const GATHER_DURATION = 1800;
 // 유지 시간
-const HOLD_DURATION = 400;
+const HOLD_DURATION = 500;
 // 사라지는 시간
-const FADE_DURATION = 300;
+const FADE_DURATION = 400;
 const TOTAL_DURATION = GATHER_DURATION + HOLD_DURATION + FADE_DURATION;
 // 파티클 개수
 const TARGET_PARTICLE_COUNT = 2600;
 const BACKGROUND = "#0e0e0e";
 const POINT = "#ff4128";
+
+function getLogoSize(image: HTMLImageElement, width: number, height: number) {
+  const logoMaxWidth = Math.min(width * 0.55, 420);
+  const logoMaxHeight = Math.min(height * 0.36, 420);
+  const logoScale = Math.min(logoMaxWidth / image.naturalWidth, logoMaxHeight / image.naturalHeight);
+
+  return {
+    logoWidth: Math.max(1, Math.floor(image.naturalWidth * logoScale)),
+    logoHeight: Math.max(1, Math.floor(image.naturalHeight * logoScale)),
+  };
+}
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
@@ -47,7 +59,7 @@ function randomScreenPosition(width: number, height: number) {
 
 // 로고 이미지 불러오기
 async function loadLogoImage() {
-  const image = new Image();
+  const image = new window.Image();
   image.src = LOGO_SRC;
   image.decoding = "async";
   await image.decode();
@@ -57,11 +69,7 @@ async function loadLogoImage() {
 // 로고 이미지를 분석하여 파티클 배열 생성
 function buildParticles(image: HTMLImageElement, width: number, height: number) {
   // 로고 크기 계산
-  const logoMaxWidth = Math.min(width * 0.55, 420);
-  const logoMaxHeight = Math.min(height * 0.36, 420);
-  const logoScale = Math.min(logoMaxWidth / image.naturalWidth, logoMaxHeight / image.naturalHeight);
-  const logoWidth = Math.max(1, Math.floor(image.naturalWidth * logoScale));
-  const logoHeight = Math.max(1, Math.floor(image.naturalHeight * logoScale));
+  const { logoWidth, logoHeight } = getLogoSize(image, width, height);
 
   // 임시 canvas 생성
   const sampleCanvas = document.createElement("canvas");
@@ -121,8 +129,11 @@ export default function ParticleLogoIntro() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animationRef = useRef<number | null>(null);
   const particlesRef = useRef<Particle[]>([]);
+  const brandVisibleRef = useRef(false);
   const [isVisible, setIsVisible] = useState(true);
   const [isLeaving, setIsLeaving] = useState(false);
+  const [isBrandVisible, setIsBrandVisible] = useState(false);
+  const [brandTop, setBrandTop] = useState("calc(50% + 150px)");
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -146,6 +157,9 @@ export default function ParticleLogoIntro() {
       canvas.style.height = `${height}px`;
       context.setTransform(dpr, 0, 0, dpr, 0, 0);
       particlesRef.current = buildParticles(image, width, height);
+
+      const { logoHeight } = getLogoSize(image, width, height);
+      setBrandTop(`${height / 2 + logoHeight / 2}px`);
     };
 
     const finish = () => {
@@ -176,13 +190,14 @@ export default function ParticleLogoIntro() {
           const width = window.innerWidth;
           const height = window.innerHeight;
           const gatherProgress = clamp(elapsed / GATHER_DURATION, 0, 1);
-          const fadeProgress =
-            elapsed <= GATHER_DURATION + HOLD_DURATION
-              ? 0
-              : clamp((elapsed - GATHER_DURATION - HOLD_DURATION) / FADE_DURATION, 0, 1);
+
+          if (!brandVisibleRef.current && gatherProgress >= 0.82) {
+            brandVisibleRef.current = true;
+            setIsBrandVisible(true);
+          }
 
           context.clearRect(0, 0, width, height);
-          context.globalAlpha = 1 - fadeProgress;
+          context.globalAlpha = 1;
           context.fillStyle = BACKGROUND;
           context.fillRect(0, 0, width, height);
           context.globalCompositeOperation = "lighter";
@@ -242,12 +257,21 @@ export default function ParticleLogoIntro() {
 
   return (
     <div
-      className={`fixed inset-0 z-[100] overflow-hidden bg-[#0e0e0e] transition-opacity duration-500 ${
+      className={`fixed inset-0 z-[100] overflow-hidden bg-[#0e0e0e] transition-opacity duration-300 ${
         isLeaving ? "pointer-events-none opacity-0" : "opacity-100"
       }`}
       aria-label="dustpeakclub intro animation"
     >
       <canvas ref={canvasRef} className="h-full w-full" />
+      <div
+        className={`pointer-events-none absolute left-1/2 -translate-x-1/2 text-center transition-opacity duration-700 ${
+          isBrandVisible ? "opacity-100" : "opacity-0"
+        }`}
+        style={{ top: brandTop }}
+      >
+        <NextImage src="/main_logo.png" alt='로고' width={225} height={53} className="h-auto w-[clamp(140px,25vw,225px)] mx-auto" priority/>
+        <p className="font-paperlogy text-center text-lg md:text-2xl font-bold">Collect your dust. Build our peak</p>
+      </div>
       <button
         type="button"
         onClick={skip}
