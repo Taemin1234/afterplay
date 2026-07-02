@@ -5,13 +5,14 @@ import { useEffect, useRef, useState } from "react";
 type Particle = {
   x: number; // 현재 위치
   y: number; // 현재 위치
-  vx: number; // 점의 이동속도
-  vy: number; // 점의 이동속도
+  startX: number; // 점의 이동속도
+  startY: number; // 점의 출발위치
   tx: number; // 점의 도착위치
   ty: number; // 점의 도착위치
   radius: number; // 점의 크기
   color: string; // 점색상
   delay: number; // 출발 타이밍 부여
+  driftSeed: number; // 파티클 회전 속도
 };
 
 const LOGO_SRC = "/dpc_icon.png";
@@ -31,24 +32,17 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
-// 모이는 애니메이션
-function easeOutCubic(value: number) {
-  return 1 - Math.pow(1 - value, 3);
+// 파티클이 모이는 애니메이션
+function easeInOutCubic(value: number) {
+    return value < 0.5 ? 4 * value * value * value : 1 - Math.pow(-2 * value + 2, 3) / 2;
 }
 
 // 랜덤위치 생성
-// edge === 0 화면 위쪽 바깥.
-// edge === 1 화면 오른쪽 바깥.
-// edge === 2 화면 아래쪽 바깥.
-// edge === 3 화면 왼쪽 바깥.
-function randomEdgePosition(width: number, height: number) {
-  const edge = Math.floor(Math.random() * 4);
-
-  if (edge === 0) return { x: Math.random() * width, y: -40 - Math.random() * height * 0.25 };
-  if (edge === 1) return { x: width + 40 + Math.random() * width * 0.25, y: Math.random() * height };
-  if (edge === 2) return { x: Math.random() * width, y: height + 40 + Math.random() * height * 0.25 };
-
-  return { x: -40 - Math.random() * width * 0.25, y: Math.random() * height };
+function randomScreenPosition(width: number, height: number) {
+    return {
+        x: Math.random() * width,
+        y: Math.random() * height,
+    };
 }
 
 // 로고 이미지 불러오기
@@ -101,20 +95,21 @@ function buildParticles(image: HTMLImageElement, width: number, height: number) 
 
       if (alpha < 80) continue;
 
-      const start = randomEdgePosition(width, height);
+      const start = randomScreenPosition(width, height);
       const isPointParticle = Math.random() < 0.12;
       const opacity = isPointParticle ? 0.9 : 0.48 + Math.random() * 0.34;
 
       particles.push({
         x: start.x,
         y: start.y,
-        vx: 0,
-        vy: 0,
+        startX: start.x,
+        startY: start.y,
         tx: offsetX + x + (Math.random() - 0.5) * sampleStep * 0.45,
         ty: offsetY + y + (Math.random() - 0.5) * sampleStep * 0.45,
         radius: Math.max(1, sampleStep * (0.34 + Math.random() * 0.24)),
         color: isPointParticle ? POINT : `rgba(255,255,255,${opacity.toFixed(2)})`,
-        delay: Math.random() * 0.22,
+        delay: Math.random() * 0.18,
+        driftSeed: Math.random() * Math.PI * 2,
       });
     }
   }
@@ -181,7 +176,6 @@ export default function ParticleLogoIntro() {
           const width = window.innerWidth;
           const height = window.innerHeight;
           const gatherProgress = clamp(elapsed / GATHER_DURATION, 0, 1);
-          const easedProgress = easeOutCubic(gatherProgress);
           const fadeProgress =
             elapsed <= GATHER_DURATION + HOLD_DURATION
               ? 0
@@ -194,15 +188,19 @@ export default function ParticleLogoIntro() {
           context.globalCompositeOperation = "lighter";
 
           for (const particle of particlesRef.current) {
-            const localProgress = clamp((easedProgress - particle.delay) / (1 - particle.delay), 0, 1);
-            const spring = 0.035 + localProgress * 0.105;
-            const damping = 0.76 + localProgress * 0.12;
-            const drift = (1 - localProgress) * 0.9;
+            const localProgress = clamp((gatherProgress - particle.delay) / (1 - particle.delay), 0, 1);
+            const easedProgress = easeInOutCubic(localProgress);
+            const driftAmount = Math.pow(1 - easedProgress, 1.7) * 12;
+            const driftX = Math.sin(now * 0.001 + particle.driftSeed) * driftAmount;
+            const driftY = Math.cos(now * 0.0009 + particle.driftSeed) * driftAmount;
 
-            particle.vx = (particle.vx + (particle.tx - particle.x) * spring) * damping;
-            particle.vy = (particle.vy + (particle.ty - particle.y) * spring) * damping;
-            particle.x += particle.vx + Math.sin(now * 0.0016 + particle.tx * 0.018) * drift;
-            particle.y += particle.vy + Math.cos(now * 0.0014 + particle.ty * 0.018) * drift;
+            particle.x = particle.startX + (particle.tx - particle.startX) * easedProgress + driftX;
+            particle.y = particle.startY + (particle.ty - particle.startY) * easedProgress + driftY;
+
+            if (localProgress >= 0.985) {
+              particle.x = particle.tx;
+              particle.y = particle.ty;
+            }
 
             context.beginPath();
             context.fillStyle = particle.color;
