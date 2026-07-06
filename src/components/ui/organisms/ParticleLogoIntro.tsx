@@ -28,7 +28,7 @@ const TOTAL_DURATION = GATHER_DURATION + HOLD_DURATION + FADE_DURATION;
 const TARGET_PARTICLE_COUNT = 2600;
 const BACKGROUND = "#0e0e0e";
 const POINT = "#ff4128";
-// const INTRO_SEEN_KEY = "dustpeakclub:intro-seen";
+const INTRO_SEEN_KEY = "dustpeakclub:intro-seen";
 
 function getLogoSize(image: HTMLImageElement, width: number, height: number) {
   const logoMaxWidth = Math.min(width * 0.55, 420);
@@ -131,26 +131,26 @@ export default function ParticleLogoIntro() {
   const animationRef = useRef<number | null>(null);
   const particlesRef = useRef<Particle[]>([]);
   const brandVisibleRef = useRef(false);
-//   const [shouldPlay, setShouldPlay] = useState(false);
-  const [isVisible, setIsVisible] = useState(true); // false
+  const [shouldPlay, setShouldPlay] = useState(false);
+  const [isVisible, setIsVisible] = useState(false); 
   const [isLeaving, setIsLeaving] = useState(false);
   const [isBrandVisible, setIsBrandVisible] = useState(false);
   const [brandTop, setBrandTop] = useState("calc(50% + 150px)");
 
-//   useEffect(() => {
-//     if (window.localStorage.getItem(INTRO_SEEN_KEY) === "true") return;
+  useEffect(() => {
+    if (window.localStorage.getItem(INTRO_SEEN_KEY) === "true") return;
 
-//     window.localStorage.setItem(INTRO_SEEN_KEY, "true");
-//     const frameId = window.requestAnimationFrame(() => {
-//       setShouldPlay(true);
-//       setIsVisible(true);
-//     });
+    window.localStorage.setItem(INTRO_SEEN_KEY, "true");
+    const frameId = window.requestAnimationFrame(() => {
+      setShouldPlay(true);
+      setIsVisible(true);
+    });
 
-//     return () => window.cancelAnimationFrame(frameId);
-//   }, []);
+    return () => window.cancelAnimationFrame(frameId);
+  }, []);
 
   useEffect(() => {
-    // if (!shouldPlay) return;
+    if (!shouldPlay) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
