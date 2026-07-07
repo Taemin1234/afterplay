@@ -31,6 +31,16 @@ enum MusicAliasType {
   ARTIST_NAME
 }
 
+enum PollItemType {
+  TRACK
+  ALBUM
+}
+
+enum PollStatus {
+  OPEN
+  CLOSED
+}
+
 // --------------------------------------------------------
 // User (Supabase Auth user.id = UUID)
 // --------------------------------------------------------
@@ -66,11 +76,15 @@ model User {
   playlistComments   PlaylistComment[]
   albumListComments  AlbumListComment[]
   artistListComments ArtistListComment[]
+  musicPollComments  MusicPollComment[]
 
   // 로그인/비로그인 조회 추적
   playlistViews   PlaylistViewEvent[]
   albumListViews  AlbumListViewEvent[]
   artistListViews ArtistListViewEvent[]
+
+  createdMusicPolls MusicPoll[]     @relation("MusicPollCreatedBy")
+  musicPollVotes    MusicPollVote[]
 
   // 팔로우
   following Follow[] @relation("UserFollows")
@@ -140,6 +154,7 @@ model Track {
   updatedAt DateTime @updatedAt
 
   playlists PlaylistTrack[]
+  pollOptions MusicPollOption[]
 }
 
 model PlaylistTrack {
@@ -202,6 +217,7 @@ model Album {
   updatedAt DateTime @updatedAt
 
   albumLists AlbumEntry[]
+  pollOptions MusicPollOption[]
 }
 
 model AlbumEntry {
@@ -633,6 +649,103 @@ model MusicSearchAlias {
   @@unique([type, canonical, alias])
   @@index([alias])
   @@index([canonical])
+}
+
+// --------------------------------------------------------
+// Music Polls - 관리자 생성형 곡/앨범 대결 투표
+// --------------------------------------------------------
+model MusicPoll {
+  id          String       @id @default(uuid()) @db.Uuid
+  title       String
+  description String?      @db.Text
+  itemType    PollItemType
+  status      PollStatus   @default(OPEN)
+
+  startsAt DateTime?
+  endsAt   DateTime?
+  closedAt DateTime?
+
+  createdById String @db.Uuid
+  createdBy   User   @relation("MusicPollCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+
+  options  MusicPollOption[]
+  votes    MusicPollVote[]
+  comments MusicPollComment[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([status, startsAt, endsAt])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@index([createdById])
+}
+
+model MusicPollOption {
+  id     String @id @default(uuid()) @db.Uuid
+  pollId String @db.Uuid
+  order  Int
+
+  trackId String? @db.Uuid
+  albumId String? @db.Uuid
+
+  spotifyId           String
+  titleSnapshot       String
+  artistSnapshot      String
+  imageUrlSnapshot    String
+  releaseDateSnapshot String?
+
+  poll  MusicPoll @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  track Track?    @relation(fields: [trackId], references: [id], onDelete: Restrict)
+  album Album?    @relation(fields: [albumId], references: [id], onDelete: Restrict)
+  votes MusicPollVote[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([pollId, order])
+  @@index([pollId])
+  @@index([trackId])
+  @@index([albumId])
+  @@index([titleSnapshot])
+}
+
+model MusicPollVote {
+  id       String  @id @default(uuid()) @db.Uuid
+  pollId   String  @db.Uuid
+  optionId String  @db.Uuid
+  userId   String? @db.Uuid
+
+  poll   MusicPoll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  option MusicPollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  user   User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([pollId, userId])
+  @@index([pollId, optionId])
+  @@index([optionId])
+  @@index([userId])
+}
+
+model MusicPollComment {
+  id      String @id @default(uuid()) @db.Uuid
+  content String
+
+  pollId String @db.Uuid
+  userId String @db.Uuid
+
+  poll MusicPoll @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  user User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([pollId, createdAt])
+  @@index([userId])
 }
 
 

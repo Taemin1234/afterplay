@@ -73,12 +73,22 @@ export async function DELETE() {
         data: { authorId: DELETED_USER_ID },
       });
 
+      await tx.musicPoll.updateMany({
+        where: { createdById: user.id },
+        data: { createdById: DELETED_USER_ID },
+      });
+
       await tx.playlistComment.updateMany({
         where: { userId: user.id },
         data: { userId: DELETED_USER_ID },
       });
 
       await tx.albumListComment.updateMany({
+        where: { userId: user.id },
+        data: { userId: DELETED_USER_ID },
+      });
+
+      await tx.musicPollComment.updateMany({
         where: { userId: user.id },
         data: { userId: DELETED_USER_ID },
       });
