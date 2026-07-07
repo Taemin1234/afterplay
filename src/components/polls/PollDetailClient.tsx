@@ -42,7 +42,7 @@ function itemTypeLabel(type: PollDetail['itemType']) {
 
 function statusLabel(poll: PollDetail) {
   if (poll.isClosed) return '종료';
-  if (!poll.endsAt) return '무기한 진행';
+  if (!poll.endsAt) return '진행중';
   return `마감 ${formatDate(poll.endsAt)}`;
 }
 
@@ -67,7 +67,7 @@ function OptionPanel({
     <button
       type="button"
       onClick={onSelect}
-      className={`relative min-w-0 rounded-lg border p-3 text-left transition-all duration-300 ${
+      className={`relative min-w-0 rounded-lg border p-3 text-left transition-all duration-300 cursor-pointer ${
         isSelected ? 'scale-[1.025] border-point bg-point/10 shadow-[0_0_24px_rgba(57,255,20,0.12)]' : 'border-white/10 bg-bg2'
       } ${isDimmed ? 'scale-[0.975] opacity-55' : ''}`}
     >
@@ -248,7 +248,7 @@ export default function PollDetailClient({ initialPoll, isLoggedIn, viewerUserId
             {poll.description ? <p className="mt-3 whitespace-pre-line text-sm text-slate-300 sm:text-base">{poll.description}</p> : null}
           </div>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-500">
-            <span>생성 {formatShortDate(poll.createdAt)}</span>
+            <span>{formatShortDate(poll.createdAt)}</span>
             <span>마감 {formatDate(poll.endsAt)}</span>
             <span className="inline-flex items-center gap-1">
               <MessageCircle className="h-3.5 w-3.5" />
@@ -278,7 +278,6 @@ export default function PollDetailClient({ initialPoll, isLoggedIn, viewerUserId
         </div>
 
         {voteError ? <p className="mt-4 text-sm text-red-300">{voteError}</p> : null}
-        {!canSeeResults ? <p className="mt-4 text-sm text-slate-400">투표 후 결과 비중이 공개됩니다.</p> : null}
         {canSeeResults && poll.results ? (
           <p className="mt-4 text-sm text-slate-400">선택한 후보: {selectedOption?.title ?? '선택됨'}</p>
         ) : null}

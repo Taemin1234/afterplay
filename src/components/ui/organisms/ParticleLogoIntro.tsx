@@ -261,7 +261,7 @@ export default function ParticleLogoIntro() {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
       removeResizeListener?.();
     };
-  }, []); // shouldPlay
+  }, [shouldPlay]);
 
   const skip = () => {
     if (animationRef.current) cancelAnimationFrame(animationRef.current);

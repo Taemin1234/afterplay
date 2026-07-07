@@ -24,7 +24,7 @@ function itemTypeLabel(type: PollListItem['itemType']) {
 
 function statusLabel(poll: PollListItem) {
   if (poll.isClosed) return '종료';
-  if (!poll.endsAt) return '무기한';
+  if (!poll.endsAt) return '진행중';
   return `마감 ${formatDate(poll.endsAt)}`;
 }
 
@@ -36,7 +36,7 @@ export default function PollCard({ poll }: PollCardProps) {
       href={`/polls/${poll.id}`}
       className="group block overflow-hidden rounded-lg border border-white/10 bg-bg2 transition-colors hover:border-point/50"
     >
-      <div className="relative grid grid-cols-[1fr_auto_1fr] items-stretch bg-black/30">
+      <div className="relative grid grid-cols-[1fr_1fr] items-stretch bg-black/30">
         {[first, second].map((option, index) => (
           <div key={option.id} className="min-w-0 p-3">
             <div className="aspect-square overflow-hidden rounded-md bg-black/30">
@@ -60,9 +60,9 @@ export default function PollCard({ poll }: PollCardProps) {
             <span className="sr-only">후보 {index + 1}</span>
           </div>
         ))}
-        <div className="flex w-11 items-center justify-center border-x border-white/10 bg-black/35">
+        {/* <div className="flex w-11 items-center justify-center border-x border-white/10 bg-black/35">
           <span className="rounded-full border border-point/40 bg-point/10 px-2 py-1 text-xs font-bold text-point">VS</span>
-        </div>
+        </div> */}
       </div>
 
       <div className="space-y-3 p-4">
@@ -80,7 +80,7 @@ export default function PollCard({ poll }: PollCardProps) {
         </div>
 
         <div className="flex items-center justify-between text-xs text-slate-500">
-          <span>생성 {formatDate(poll.createdAt)}</span>
+          <span>{formatDate(poll.createdAt)}</span>
           <span className="inline-flex items-center gap-3">
             {poll.results ? (
               <span className="inline-flex items-center gap-1">
