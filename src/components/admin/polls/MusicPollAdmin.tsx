@@ -16,6 +16,11 @@ type MusicSearchItem = {
   releaseDate?: string | null;
 };
 
+type SelectedPollOption = {
+  musicItem: MusicSearchItem;
+  description: string;
+};
+
 type PollOption = {
   id: string;
   order: number;
@@ -24,6 +29,7 @@ type PollOption = {
   artist: string;
   imageUrl: string;
   releaseDate: string | null;
+  description: string | null;
   result: {
     votesCount: number;
     percentage: number;
@@ -55,7 +61,7 @@ type EditablePollState = {
   isUnlimited: boolean;
 };
 
-const emptyOptionSlots: [MusicSearchItem | null, MusicSearchItem | null] = [null, null];
+const emptyOptionSlots: [SelectedPollOption | null, SelectedPollOption | null] = [null, null];
 
 function toDatetimeLocal(value: string | null) {
   if (!value) return '';
@@ -112,7 +118,7 @@ export default function MusicPollAdmin() {
   const [description, setDescription] = useState('');
   const [endsAt, setEndsAt] = useState('');
   const [isUnlimited, setIsUnlimited] = useState(true);
-  const [selectedOptions, setSelectedOptions] = useState<[MusicSearchItem | null, MusicSearchItem | null]>(emptyOptionSlots);
+  const [selectedOptions, setSelectedOptions] = useState<[SelectedPollOption | null, SelectedPollOption | null]>(emptyOptionSlots);
   const [selectedSlot, setSelectedSlot] = useState<0 | 1>(0);
   const [musicSearchInput, setMusicSearchInput] = useState('');
   const [musicResults, setMusicResults] = useState<MusicSearchItem[]>([]);
@@ -124,7 +130,13 @@ export default function MusicPollAdmin() {
   const [pendingPollId, setPendingPollId] = useState<string | null>(null);
 
   const canCreate = useMemo(
-    () => Boolean(title.trim() && selectedOptions[0] && selectedOptions[1] && selectedOptions[0]?.id !== selectedOptions[1]?.id),
+    () =>
+      Boolean(
+        title.trim()
+          && selectedOptions[0]
+          && selectedOptions[1]
+          && selectedOptions[0]?.musicItem.id !== selectedOptions[1]?.musicItem.id
+      ),
     [title, selectedOptions]
   );
 
@@ -214,8 +226,11 @@ export default function MusicPollAdmin() {
 
   const selectMusicItem = (item: MusicSearchItem) => {
     setSelectedOptions((prev) => {
-      const next: [MusicSearchItem | null, MusicSearchItem | null] = [...prev] as [MusicSearchItem | null, MusicSearchItem | null];
-      next[selectedSlot] = item;
+      const next: [SelectedPollOption | null, SelectedPollOption | null] = [...prev] as [
+        SelectedPollOption | null,
+        SelectedPollOption | null,
+      ];
+      next[selectedSlot] = { musicItem: item, description: next[selectedSlot]?.description ?? '' };
       return next;
     });
     setSelectedSlot(selectedSlot === 0 ? 1 : 0);
@@ -225,11 +240,27 @@ export default function MusicPollAdmin() {
 
   const removeSelectedOption = (slot: 0 | 1) => {
     setSelectedOptions((prev) => {
-      const next: [MusicSearchItem | null, MusicSearchItem | null] = [...prev] as [MusicSearchItem | null, MusicSearchItem | null];
+      const next: [SelectedPollOption | null, SelectedPollOption | null] = [...prev] as [
+        SelectedPollOption | null,
+        SelectedPollOption | null,
+      ];
       next[slot] = null;
       return next;
     });
     setSelectedSlot(slot);
+  };
+
+  const updateSelectedOptionDescription = (slot: 0 | 1, description: string) => {
+    setSelectedOptions((prev) => {
+      const next: [SelectedPollOption | null, SelectedPollOption | null] = [...prev] as [
+        SelectedPollOption | null,
+        SelectedPollOption | null,
+      ];
+      if (next[slot]) {
+        next[slot] = { ...next[slot], description };
+      }
+      return next;
+    });
   };
 
   const handleCreate = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -239,7 +270,7 @@ export default function MusicPollAdmin() {
 
     const first = selectedOptions[0];
     const second = selectedOptions[1];
-    if (!first || !second || first.id === second.id) return;
+    if (!first || !second || first.musicItem.id === second.musicItem.id) return;
 
     setIsCreating(true);
     try {
@@ -252,8 +283,8 @@ export default function MusicPollAdmin() {
           itemType,
           endsAt: isUnlimited ? null : fromDatetimeLocal(endsAt),
           options: [
-            { musicItem: first },
-            { musicItem: second },
+            { musicItem: first.musicItem, description: first.description },
+            { musicItem: second.musicItem, description: second.description },
           ],
         }),
       });
@@ -474,29 +505,40 @@ export default function MusicPollAdmin() {
                     {isActive ? <span className="text-point">선택 중</span> : null}
                   </div>
                   {option ? (
-                    <div className="flex gap-3">
-                      <Image
-                        src={option.albumImageUrl || '/dpc_icon.png'}
-                        alt={option.name}
-                        width={80}
-                        height={80}
-                        className="h-20 w-20 rounded-md object-cover"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <p className="line-clamp-2 text-sm font-semibold text-white">{option.name}</p>
-                        <p className="mt-1 truncate text-xs text-slate-400">{option.artist}</p>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeSelectedOption(slot);
-                          }}
-                          className="mt-3 inline-flex items-center gap-1 rounded border border-red-400/40 px-2 py-1 text-xs text-red-300"
-                        >
-                          <X className="h-3 w-3" />
-                          제거
-                        </button>
+                    <div className="space-y-3">
+                      <div className="flex gap-3">
+                        <Image
+                          src={option.musicItem.albumImageUrl || '/dpc_icon.png'}
+                          alt={option.musicItem.name}
+                          width={80}
+                          height={80}
+                          className="h-20 w-20 rounded-md object-cover"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="line-clamp-2 text-sm font-semibold text-white">{option.musicItem.name}</p>
+                          <p className="mt-1 truncate text-xs text-slate-400">{option.musicItem.artist}</p>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeSelectedOption(slot);
+                            }}
+                            className="mt-3 inline-flex items-center gap-1 rounded border border-red-400/40 px-2 py-1 text-xs text-red-300"
+                          >
+                            <X className="h-3 w-3" />
+                            제거
+                          </button>
+                        </div>
                       </div>
+                      <textarea
+                        value={option.description}
+                        onClick={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => e.stopPropagation()}
+                        onChange={(e) => updateSelectedOptionDescription(slot, e.target.value)}
+                        maxLength={500}
+                        placeholder={`후보 ${slot + 1} 설명`}
+                        className="h-20 w-full resize-none rounded-md border border-slate-700 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-point"
+                      />
                     </div>
                   ) : (
                     <div className="flex h-24 items-center justify-center text-sm text-slate-500">검색 결과에서 후보를 선택하세요.</div>

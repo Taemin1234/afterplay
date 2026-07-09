@@ -13,6 +13,7 @@ export type PollMusicItemPayload = {
 
 export type PollOptionPayload = {
   id?: string;
+  description?: string | null;
   musicItem: PollMusicItemPayload;
 };
 
@@ -42,6 +43,7 @@ type PollResultRow = {
 
 const POLL_TITLE_MAX_LENGTH = 120;
 const POLL_DESCRIPTION_MAX_LENGTH = 500;
+const POLL_OPTION_DESCRIPTION_MAX_LENGTH = 500;
 
 export function isPollClosed(poll: { status: PollStatusValue; endsAt: Date | null; closedAt?: Date | null }) {
   return poll.status === 'CLOSED' || Boolean(poll.closedAt) || (poll.endsAt !== null && poll.endsAt <= new Date());
@@ -122,6 +124,7 @@ function normalizePollOption(option: PollOptionPayload): PollOptionPayload | { e
   const item = option.musicItem;
   if (!item || typeof item !== 'object') return { error: 'option musicItem is required' };
 
+  const description = option.description?.trim() || null;
   const id = item.id?.trim();
   const name = item.name?.trim();
   const artist = item.artist?.trim();
@@ -131,9 +134,13 @@ function normalizePollOption(option: PollOptionPayload): PollOptionPayload | { e
   if (!id || !name || !artist) {
     return { error: 'option id, name, and artist are required' };
   }
+  if (description && description.length > POLL_OPTION_DESCRIPTION_MAX_LENGTH) {
+    return { error: `option description must be ${POLL_OPTION_DESCRIPTION_MAX_LENGTH} characters or less` };
+  }
 
   return {
     id: option.id,
+    description,
     musicItem: {
       id,
       name,
@@ -300,6 +307,7 @@ export async function serializePoll(pollId: string, viewerUserId?: string | null
         artist: option.artistSnapshot,
         imageUrl: option.imageUrlSnapshot,
         releaseDate: option.releaseDateSnapshot,
+        description: option.description,
         trackId: option.trackId,
         albumId: option.albumId,
         result: canSeeResults
@@ -353,6 +361,7 @@ export async function serializePollListItem(pollId: string, viewerUserId?: strin
       artist: option.artist,
       imageUrl: option.imageUrl,
       releaseDate: option.releaseDate,
+      description: option.description,
       result: option.result,
     })),
     viewerVote: poll.viewerVote,

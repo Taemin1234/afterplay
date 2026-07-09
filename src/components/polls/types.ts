@@ -14,6 +14,7 @@ export type PollOption = {
   artist: string;
   imageUrl: string;
   releaseDate: string | null;
+  description: string | null;
   trackId?: string | null;
   albumId?: string | null;
   result: PollOptionResult | null;

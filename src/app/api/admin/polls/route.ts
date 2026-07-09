@@ -91,6 +91,7 @@ export async function POST(request: Request) {
               artistSnapshot: option.musicItem.artist,
               imageUrlSnapshot: option.musicItem.albumImageUrl,
               releaseDateSnapshot: option.musicItem.releaseDate ?? null,
+              description: option.description ?? null,
               ...(itemType === 'TRACK' ? { trackId: musicId } : { albumId: musicId }),
             };
           }),

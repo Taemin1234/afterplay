@@ -83,6 +83,7 @@ function OptionPanel({
         <p className="line-clamp-2 text-lg font-semibold text-white">{option.title}</p>
         <p className="mt-1 truncate text-sm text-slate-400">{option.artist}</p>
         {option.releaseDate ? <p className="mt-1 text-xs text-slate-500">발매 {option.releaseDate}</p> : null}
+        {option.description ? <p className="mt-3 whitespace-pre-line text-sm leading-6 text-slate-300">{option.description}</p> : null}
       </div>
       {canSeeResults && option.result ? (
         <div className="mt-4">
