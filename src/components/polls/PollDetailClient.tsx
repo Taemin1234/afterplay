@@ -380,7 +380,7 @@ export default function PollDetailClient({ initialPoll, isLoggedIn, viewerUserId
 
       {poll.relatedPolls.length > 0 ? (
         <section className="space-y-3">
-          <h2 className="text-lg font-semibold text-white">이 후보들의 다른 대결</h2>
+          <h2 className="text-lg font-semibold text-white">이 후보들의 다른 대결은?</h2>
           <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {poll.relatedPolls.map((item) => (
               <li key={item.id}>
@@ -393,7 +393,7 @@ export default function PollDetailClient({ initialPoll, isLoggedIn, viewerUserId
 
       {poll.otherPolls.length > 0 ? (
         <section className="space-y-3">
-          <h2 className="text-lg font-semibold text-white">다른 최신 투표</h2>
+          <h2 className="text-lg font-semibold text-white">다른 선택도 해볼까요?</h2>
           <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {poll.otherPolls.map((item) => (
               <li key={item.id}>
