@@ -50,8 +50,8 @@ export default function PollListClient({ initialPolls }: PollListClientProps) {
     <section className="mx-auto w-full max-w-6xl space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white sm:text-3xl">투표</h1>
-          <p className="mt-2 text-sm text-slate-400">두 곡 또는 두 앨범 중 마음이 가는 쪽을 골라보세요.</p>
+          <h1 className="text-2xl font-bold text-white sm:text-3xl">취향 Pick</h1>
+          <p className="mt-2 text-sm text-slate-400">오늘의 취향은 어느쪽인가요?</p>
         </div>
         <div className="inline-flex w-fit rounded-md border border-white/10 bg-black/25 p-1">
           {[
@@ -89,7 +89,7 @@ export default function PollListClient({ initialPolls }: PollListClientProps) {
       </div>
 
       {error ? <p className="rounded-md border border-red-500/30 bg-red-950/20 px-3 py-2 text-sm text-red-200">{error}</p> : null}
-      {isLoading ? <p className="py-8 text-center text-sm text-slate-400">투표 목록을 불러오는 중...</p> : null}
+      {isLoading ? <p className="py-8 text-center text-sm text-slate-400">목록을 불러오는 중...</p> : null}
       {!isLoading && polls.length === 0 ? (
         <p className="rounded-lg border border-white/10 bg-bg2 py-12 text-center text-sm text-slate-500">표시할 투표가 없습니다.</p>
       ) : null}

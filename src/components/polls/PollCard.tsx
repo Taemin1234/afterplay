@@ -19,7 +19,7 @@ function formatDate(value: string | null) {
 }
 
 function itemTypeLabel(type: PollListItem['itemType']) {
-  return type === 'TRACK' ? '노래' : '앨범';
+  return type === 'TRACK' ? 'Song' : 'Album';
 }
 
 function statusLabel(poll: PollListItem) {
@@ -49,8 +49,10 @@ export default function PollCard({ poll }: PollCardProps) {
               />
             </div>
             <div className="mt-2 min-w-0">
-              <p className="line-clamp-2 text-sm font-semibold text-white">{option.title}</p>
-              <p className="mt-0.5 truncate text-xs text-slate-400">{option.artist}</p>
+              <div className='h-15'>
+                <p className="line-clamp-2 text-sm font-semibold text-white">{option.title}</p>
+                <p className="mt-0.5 truncate text-xs text-slate-400">{option.artist}</p>
+              </div>
               {poll.viewerVote && option.result ? (
                 <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
                   <div className="h-full rounded-full bg-point" style={{ width: `${option.result.percentage}%` }} />
@@ -60,34 +62,36 @@ export default function PollCard({ poll }: PollCardProps) {
             <span className="sr-only">후보 {index + 1}</span>
           </div>
         ))}
-        {/* <div className="flex w-11 items-center justify-center border-x border-white/10 bg-black/35">
+        <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
           <span className="rounded-full border border-point/40 bg-point/10 px-2 py-1 text-xs font-bold text-point">VS</span>
-        </div> */}
+        </div>
       </div>
 
       <div className="space-y-3 p-4">
-        <div className="flex flex-wrap items-center gap-2 text-xs">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+         <div>
           <span className="rounded border border-white/10 px-2 py-1 text-slate-300">{itemTypeLabel(poll.itemType)}</span>
-          <span className={`rounded px-2 py-1 ${poll.isClosed ? 'bg-red-500/15 text-red-200' : 'bg-point/10 text-point'}`}>
-            {statusLabel(poll)}
-          </span>
-          {poll.viewerVote ? <span className="rounded bg-white/10 px-2 py-1 text-slate-200">투표함</span> : null}
+            <span className={`rounded px-2 py-1 ${poll.isClosed ? 'bg-red-500/15 text-red-200' : 'bg-point/10 text-point'}`}>
+              {statusLabel(poll)}
+            </span>
+         </div>
+          {poll.viewerVote ? <span className="rounded bg-green1 px-2 py-1 text-slate">투표완료</span> : null}
         </div>
 
         <div>
           <h2 className="line-clamp-2 text-base font-semibold text-white">{poll.title}</h2>
-          {poll.description ? <p className="mt-1 line-clamp-2 text-sm text-slate-400">{poll.description}</p> : null}
+          {poll.description ? <p className="mt-1 line-clamp-2 text-sm text-slate-200">{poll.description}</p> : null}
         </div>
 
-        <div className="flex items-center justify-between text-xs text-slate-500">
+        <div className="flex items-center justify-between text-xs text-slate-400">
           <span>{formatDate(poll.createdAt)}</span>
           <span className="inline-flex items-center gap-3">
-            {poll.results ? (
+            {/* {poll.results ? (
               <span className="inline-flex items-center gap-1">
                 <Vote className="h-3.5 w-3.5" />
                 {poll.results.totalVotes}
               </span>
-            ) : null}
+            ) : null} */}
             <span className="inline-flex items-center gap-1">
               <MessageCircle className="h-3.5 w-3.5" />
               {poll.commentsCount}

@@ -5,8 +5,8 @@ import prisma from '@/lib/prisma';
 import { serializePollListItem } from '@/lib/music-polls';
 
 export const metadata: Metadata = {
-  title: '투표',
-  description: '두 곡 또는 두 앨범 중 마음이 가는 쪽에 투표해보세요.',
+  title: '취향선택',
+  description: '오늘의 취향은 어느쪽인가요?',
   alternates: {
     canonical: '/polls',
   },

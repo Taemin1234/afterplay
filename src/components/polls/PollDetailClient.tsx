@@ -236,12 +236,14 @@ export default function PollDetailClient({ initialPoll, isLoggedIn, viewerUserId
     <section className="mx-auto w-full max-w-6xl space-y-6">
       <article className="rounded-lg border border-white/10 bg-black/20 p-4 sm:p-6">
         <header className="space-y-4">
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="rounded border border-white/10 px-2 py-1 text-slate-300">{itemTypeLabel(poll.itemType)}</span>
-            <span className={`rounded px-2 py-1 ${poll.isClosed ? 'bg-red-500/15 text-red-200' : 'bg-point/10 text-point'}`}>
-              {statusLabel(poll)}
-            </span>
-            {poll.viewerVote ? <span className="rounded bg-white/10 px-2 py-1 text-slate-200">투표함</span> : null}
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div>
+              <span className="rounded border border-white/10 px-2 py-1 text-slate-300">{itemTypeLabel(poll.itemType)}</span>
+              <span className={`rounded px-2 py-1 ${poll.isClosed ? 'bg-red-500/15 text-red-200' : 'bg-point/10 text-point'}`}>
+                {statusLabel(poll)}
+              </span>
+            </div>
+            {poll.viewerVote ? <span className="rounded bg-green1 px-2 py-1 text-slate">투표완료</span> : null}
           </div>
           <div>
             <h1 className="text-2xl font-bold text-white sm:text-3xl">{poll.title}</h1>
@@ -249,7 +251,7 @@ export default function PollDetailClient({ initialPoll, isLoggedIn, viewerUserId
           </div>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-500">
             <span>{formatShortDate(poll.createdAt)}</span>
-            <span>마감 {formatDate(poll.endsAt)}</span>
+            <span>마감 : {formatDate(poll.endsAt)}</span>
             <span className="inline-flex items-center gap-1">
               <MessageCircle className="h-3.5 w-3.5" />
               댓글 {poll.commentsCount}
@@ -279,7 +281,7 @@ export default function PollDetailClient({ initialPoll, isLoggedIn, viewerUserId
 
         {voteError ? <p className="mt-4 text-sm text-red-300">{voteError}</p> : null}
         {canSeeResults && poll.results ? (
-          <p className="mt-4 text-sm text-slate-400">선택한 후보: {selectedOption?.title ?? '선택됨'}</p>
+          <p className="mt-4 text-base text-center text-slate">나의 선택 : {selectedOption?.title ?? '선택됨'}</p>
         ) : null}
 
         <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
