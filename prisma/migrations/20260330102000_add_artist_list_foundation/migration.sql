@@ -1,4 +1,4 @@
-﻿-- Add enum values
+-- Add enum values
 DO $$
 BEGIN
   ALTER TYPE "FeedKind" ADD VALUE 'ARTIST_LIST';

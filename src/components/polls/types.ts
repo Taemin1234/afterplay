@@ -15,6 +15,7 @@ export type PollOption = {
   imageUrl: string;
   releaseDate: string | null;
   description: string | null;
+  youtubeVideoId: string | null;
   trackId?: string | null;
   albumId?: string | null;
   result: PollOptionResult | null;

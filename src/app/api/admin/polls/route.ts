@@ -92,6 +92,7 @@ export async function POST(request: Request) {
               imageUrlSnapshot: option.musicItem.albumImageUrl,
               releaseDateSnapshot: option.musicItem.releaseDate ?? null,
               description: option.description ?? null,
+              youtubeVideoId: option.youtubeUrl ?? null,
               ...(itemType === 'TRACK' ? { trackId: musicId } : { albumId: musicId }),
             };
           }),

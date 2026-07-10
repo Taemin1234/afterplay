@@ -19,6 +19,7 @@ type MusicSearchItem = {
 type SelectedPollOption = {
   musicItem: MusicSearchItem;
   description: string;
+  youtubeUrl: string;
 };
 
 type PollOption = {
@@ -30,6 +31,7 @@ type PollOption = {
   imageUrl: string;
   releaseDate: string | null;
   description: string | null;
+  youtubeVideoId: string | null;
   result: {
     votesCount: number;
     percentage: number;
@@ -59,6 +61,7 @@ type EditablePollState = {
   description: string;
   endsAt: string;
   isUnlimited: boolean;
+  optionYouTubeUrls: Record<string, string>;
 };
 
 const emptyOptionSlots: [SelectedPollOption | null, SelectedPollOption | null] = [null, null];
@@ -230,7 +233,11 @@ export default function MusicPollAdmin() {
         SelectedPollOption | null,
         SelectedPollOption | null,
       ];
-      next[selectedSlot] = { musicItem: item, description: next[selectedSlot]?.description ?? '' };
+      next[selectedSlot] = {
+        musicItem: item,
+        description: next[selectedSlot]?.description ?? '',
+        youtubeUrl: next[selectedSlot]?.youtubeUrl ?? '',
+      };
       return next;
     });
     setSelectedSlot(selectedSlot === 0 ? 1 : 0);
@@ -263,6 +270,23 @@ export default function MusicPollAdmin() {
     });
   };
 
+  const updateSelectedOptionYouTubeUrl = (slot: 0 | 1, youtubeUrl: string) => {
+    setSelectedOptions((prev) => {
+      const next: [SelectedPollOption | null, SelectedPollOption | null] = [...prev] as [
+        SelectedPollOption | null,
+        SelectedPollOption | null,
+      ];
+      if (next[slot]) {
+        next[slot] = { ...next[slot], youtubeUrl };
+      }
+      return next;
+    });
+  };
+
+  const formatYouTubeUrl = (youtubeVideoId: string | null) => {
+    return youtubeVideoId ? `https://www.youtube.com/watch?v=${youtubeVideoId}` : '';
+  };
+
   const handleCreate = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
@@ -283,8 +307,8 @@ export default function MusicPollAdmin() {
           itemType,
           endsAt: isUnlimited ? null : fromDatetimeLocal(endsAt),
           options: [
-            { musicItem: first.musicItem, description: first.description },
-            { musicItem: second.musicItem, description: second.description },
+            { musicItem: first.musicItem, description: first.description, youtubeUrl: first.youtubeUrl },
+            { musicItem: second.musicItem, description: second.description, youtubeUrl: second.youtubeUrl },
           ],
         }),
       });
@@ -311,6 +335,7 @@ export default function MusicPollAdmin() {
       description: poll.description ?? '',
       endsAt: toDatetimeLocal(poll.endsAt),
       isUnlimited: !poll.endsAt,
+      optionYouTubeUrls: Object.fromEntries(poll.options.map((option) => [option.id, formatYouTubeUrl(option.youtubeVideoId)])),
     });
   };
 
@@ -333,6 +358,9 @@ export default function MusicPollAdmin() {
           title: editState.title,
           description: editState.description,
           endsAt: editState.isUnlimited ? null : fromDatetimeLocal(editState.endsAt),
+          optionYouTubeUrls: pollId
+            ? Object.entries(editState.optionYouTubeUrls).map(([optionId, youtubeUrl]) => ({ optionId, youtubeUrl }))
+            : [],
         }),
       });
 
@@ -539,6 +567,14 @@ export default function MusicPollAdmin() {
                         placeholder={`후보 ${slot + 1} 설명`}
                         className="h-20 w-full resize-none rounded-md border border-slate-700 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-point"
                       />
+                      <input
+                        value={option.youtubeUrl}
+                        onClick={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => e.stopPropagation()}
+                        onChange={(e) => updateSelectedOptionYouTubeUrl(slot, e.target.value)}
+                        placeholder="YouTube URL (선택)"
+                        className="w-full rounded-md border border-slate-700 bg-black/40 px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500 focus:border-point"
+                      />
                     </div>
                   ) : (
                     <div className="flex h-24 items-center justify-center text-sm text-slate-500">검색 결과에서 후보를 선택하세요.</div>
@@ -686,19 +722,39 @@ export default function MusicPollAdmin() {
 
                       <div className="mt-4 grid gap-2 sm:grid-cols-2">
                         {poll.options.map((option) => (
-                          <div key={option.id} className="flex min-w-0 items-center gap-3 rounded-md border border-white/10 bg-black/25 p-2">
-                            <Image
-                              src={option.imageUrl || '/dpc_icon.png'}
-                              alt={option.title}
-                              width={52}
-                              height={52}
-                              className="h-13 w-13 rounded object-cover"
-                            />
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium text-white">{option.title}</p>
-                              <p className="truncate text-xs text-slate-400">{option.artist}</p>
-                              <p className="mt-1 text-xs text-slate-500">{option.result?.percentage ?? 0}%</p>
+                          <div key={option.id} className="min-w-0 rounded-md border border-white/10 bg-black/25 p-2">
+                            <div className="flex min-w-0 items-center gap-3">
+                              <Image
+                                src={option.imageUrl || '/dpc_icon.png'}
+                                alt={option.title}
+                                width={52}
+                                height={52}
+                                className="h-13 w-13 rounded object-cover"
+                              />
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-medium text-white">{option.title}</p>
+                                <p className="truncate text-xs text-slate-400">{option.artist}</p>
+                                <p className="mt-1 text-xs text-slate-500">{option.result?.percentage ?? 0}%</p>
+                              </div>
                             </div>
+                            {isEditing && editState ? (
+                              <input
+                                value={editState.optionYouTubeUrls[option.id] ?? ''}
+                                onChange={(e) =>
+                                  setEditState({
+                                    ...editState,
+                                    optionYouTubeUrls: {
+                                      ...editState.optionYouTubeUrls,
+                                      [option.id]: e.target.value,
+                                    },
+                                  })
+                                }
+                                placeholder="YouTube URL (선택)"
+                                className="mt-2 w-full rounded-md border border-slate-700 bg-black px-3 py-2 text-xs text-white outline-none placeholder:text-slate-500 focus:border-point"
+                              />
+                            ) : option.youtubeVideoId ? (
+                              <p className="mt-2 truncate text-xs text-slate-500">YouTube 연결됨</p>
+                            ) : null}
                           </div>
                         ))}
                       </div>

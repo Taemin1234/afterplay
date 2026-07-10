@@ -696,6 +696,7 @@ model MusicPollOption {
   imageUrlSnapshot    String
   releaseDateSnapshot String?
   description         String? @db.Text
+  youtubeVideoId      String? @db.VarChar(32)
 
   poll  MusicPoll @relation(fields: [pollId], references: [id], onDelete: Cascade)
   track Track?    @relation(fields: [trackId], references: [id], onDelete: Restrict)

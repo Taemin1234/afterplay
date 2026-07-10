@@ -14,6 +14,7 @@ export type PollMusicItemPayload = {
 export type PollOptionPayload = {
   id?: string;
   description?: string | null;
+  youtubeUrl?: string | null;
   musicItem: PollMusicItemPayload;
 };
 
@@ -41,9 +42,17 @@ type PollResultRow = {
   percentage: number;
 };
 
+type PollMetadata = {
+  title: string;
+  description: string | null;
+  imageUrl: string | null;
+  optionTitles: string[];
+};
+
 const POLL_TITLE_MAX_LENGTH = 120;
 const POLL_DESCRIPTION_MAX_LENGTH = 500;
 const POLL_OPTION_DESCRIPTION_MAX_LENGTH = 500;
+const YOUTUBE_VIDEO_ID_PATTERN = /^[a-zA-Z0-9_-]{11}$/;
 
 export function isPollClosed(poll: { status: PollStatusValue; endsAt: Date | null; closedAt?: Date | null }) {
   return poll.status === 'CLOSED' || Boolean(poll.closedAt) || (poll.endsAt !== null && poll.endsAt <= new Date());
@@ -138,9 +147,15 @@ function normalizePollOption(option: PollOptionPayload): PollOptionPayload | { e
     return { error: `option description must be ${POLL_OPTION_DESCRIPTION_MAX_LENGTH} characters or less` };
   }
 
+  const youtubeVideoId = parseYouTubeVideoId(option.youtubeUrl);
+  if (option.youtubeUrl?.trim() && !youtubeVideoId) {
+    return { error: 'youtubeUrl must be a valid YouTube URL' };
+  }
+
   return {
     id: option.id,
     description,
+    youtubeUrl: youtubeVideoId,
     musicItem: {
       id,
       name,
@@ -149,6 +164,37 @@ function normalizePollOption(option: PollOptionPayload): PollOptionPayload | { e
       releaseDate,
     },
   };
+}
+
+export function parseYouTubeVideoId(value: string | null | undefined) {
+  const raw = value?.trim();
+  if (!raw) return null;
+  if (YOUTUBE_VIDEO_ID_PATTERN.test(raw)) return raw;
+
+  try {
+    const url = new URL(raw);
+    const hostname = url.hostname.replace(/^www\./, '').replace(/^m\./, '');
+    const pathParts = url.pathname.split('/').filter(Boolean);
+
+    if (hostname === 'youtu.be') {
+      const [id] = pathParts;
+      return id && YOUTUBE_VIDEO_ID_PATTERN.test(id) ? id : null;
+    }
+
+    if (hostname === 'youtube.com' || hostname === 'music.youtube.com' || hostname === 'youtube-nocookie.com') {
+      const watchId = url.searchParams.get('v');
+      if (watchId && YOUTUBE_VIDEO_ID_PATTERN.test(watchId)) return watchId;
+
+      if (['embed', 'shorts', 'live'].includes(pathParts[0])) {
+        const id = pathParts[1];
+        return id && YOUTUBE_VIDEO_ID_PATTERN.test(id) ? id : null;
+      }
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
 }
 
 export async function upsertPollMusicItems(itemType: PollItemTypeValue, options: [PollOptionPayload, PollOptionPayload]) {
@@ -237,6 +283,33 @@ export async function getPollResults(pollId: string): Promise<{ totalVotes: numb
   };
 }
 
+export async function fetchPollMetadata(id: string): Promise<PollMetadata | null> {
+  const poll = await prisma.musicPoll.findFirst({
+    where: { id, deletedAt: null },
+    select: {
+      title: true,
+      description: true,
+      options: {
+        orderBy: { order: 'asc' },
+        select: {
+          titleSnapshot: true,
+          imageUrlSnapshot: true,
+          youtubeVideoId: true,
+        },
+      },
+    },
+  });
+
+  if (!poll) return null;
+
+  return {
+    title: poll.title,
+    description: poll.description,
+    imageUrl: poll.options.find((option) => option.imageUrlSnapshot)?.imageUrlSnapshot ?? null,
+    optionTitles: poll.options.map((option) => option.titleSnapshot),
+  };
+}
+
 export async function serializePoll(pollId: string, viewerUserId?: string | null) {
   const poll = await prisma.musicPoll.findFirst({
     where: { id: pollId, deletedAt: null },
@@ -308,6 +381,7 @@ export async function serializePoll(pollId: string, viewerUserId?: string | null
         imageUrl: option.imageUrlSnapshot,
         releaseDate: option.releaseDateSnapshot,
         description: option.description,
+        youtubeVideoId: option.youtubeVideoId,
         trackId: option.trackId,
         albumId: option.albumId,
         result: canSeeResults
@@ -362,6 +436,7 @@ export async function serializePollListItem(pollId: string, viewerUserId?: strin
       imageUrl: option.imageUrl,
       releaseDate: option.releaseDate,
       description: option.description,
+      youtubeVideoId: option.youtubeVideoId,
       result: option.result,
     })),
     viewerVote: poll.viewerVote,

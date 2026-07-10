@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAdminUserOrNull } from '@/lib/admin-auth';
 import prisma from '@/lib/prisma';
-import { serializePoll, type PollPayloadInput } from '@/lib/music-polls';
+import { parseYouTubeVideoId, serializePoll, type PollPayloadInput } from '@/lib/music-polls';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -18,6 +18,10 @@ type RouteContext = {
 type AdminPollPatchPayload = PollPayloadInput & {
   status?: 'OPEN' | 'CLOSED';
   closeInDays?: number;
+  optionYouTubeUrls?: Array<{
+    optionId: string;
+    youtubeUrl?: string | null;
+  }>;
 };
 
 function parseOptionalDate(value: string | null | undefined, label: string): { value: Date | null } | { error: string } {
@@ -122,10 +126,47 @@ export async function PATCH(request: Request, context: RouteContext) {
       updateData.closedAt = status === 'CLOSED' ? new Date() : null;
     }
 
-    await prisma.musicPoll.update({
-      where: { id },
-      data: updateData,
+    const optionYouTubeUpdates = Array.isArray(body.optionYouTubeUrls) ? body.optionYouTubeUrls : [];
+    const normalizedOptionUpdates = optionYouTubeUpdates.map((option) => {
+      const youtubeVideoId = parseYouTubeVideoId(option.youtubeUrl);
+      if (option.youtubeUrl?.trim() && !youtubeVideoId) {
+        return { error: 'youtubeUrl must be a valid YouTube URL' } as const;
+      }
+      return { optionId: option.optionId, youtubeVideoId } as const;
     });
+    const invalidOptionUpdate = normalizedOptionUpdates.find((option) => 'error' in option);
+    if (invalidOptionUpdate && 'error' in invalidOptionUpdate) {
+      return NextResponse.json({ error: invalidOptionUpdate.error }, { status: 400 });
+    }
+    const validNormalizedOptionUpdates = normalizedOptionUpdates.filter(
+      (option): option is { optionId: string; youtubeVideoId: string | null } => 'optionId' in option
+    );
+
+    const pollOptionIds =
+      validNormalizedOptionUpdates.length > 0
+        ? await prisma.musicPollOption.findMany({
+            where: { pollId: id },
+            select: { id: true },
+          })
+        : [];
+    const validPollOptionIds = new Set(pollOptionIds.map((option) => option.id));
+    const hasUnknownOption = validNormalizedOptionUpdates.some((option) => !validPollOptionIds.has(option.optionId));
+    if (hasUnknownOption) {
+      return NextResponse.json({ error: 'optionId does not belong to this poll' }, { status: 400 });
+    }
+
+    await prisma.$transaction([
+      prisma.musicPoll.update({
+        where: { id },
+        data: updateData,
+      }),
+      ...validNormalizedOptionUpdates.map((option) =>
+        prisma.musicPollOption.update({
+          where: { id: option.optionId },
+          data: { youtubeVideoId: option.youtubeVideoId },
+        })
+      ),
+    ]);
 
     const poll = await serializePoll(id, admin.id);
     return NextResponse.json({ ok: true, poll });

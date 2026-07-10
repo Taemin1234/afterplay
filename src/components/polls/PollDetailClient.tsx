@@ -2,9 +2,9 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, MessageCircle, Send, X } from 'lucide-react';
+import { Check, ExternalLink, MessageCircle, Play, Send, X } from 'lucide-react';
 import Button from '@/components/ui/atoms/Button';
 import PollCard from '@/components/polls/PollCard';
 import type { PollComment, PollDetail, PollOption } from '@/components/polls/types';
@@ -55,19 +55,15 @@ function OptionPanel({
   isSelected,
   isDimmed,
   canSeeResults,
-  onSelect,
 }: {
   option: PollOption;
   isSelected: boolean;
   isDimmed: boolean;
   canSeeResults: boolean;
-  onSelect: () => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className={`relative min-w-0 rounded-lg border p-3 text-left transition-all duration-300 cursor-pointer ${
+    <div
+      className={`relative min-w-0 rounded-lg border p-3 text-left transition-all duration-300 ${
         isSelected ? 'scale-[1.025] border-point bg-point/10 shadow-[0_0_24px_rgba(57,255,20,0.12)]' : 'border-white/10 bg-bg2'
       } ${isDimmed ? 'scale-[0.975] opacity-55' : ''}`}
     >
@@ -88,7 +84,7 @@ function OptionPanel({
       {canSeeResults && option.result ? (
         <div className="mt-4">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-slate-400">비중</span>
+            <span className="text-slate-400">득표율</span>
             <span className="font-semibold text-white">{option.result.percentage}%</span>
           </div>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
@@ -96,7 +92,86 @@ function OptionPanel({
           </div>
         </div>
       ) : null}
-    </button>
+    </div>
+  );
+}
+
+function YouTubePreview({ option }: { option: PollOption }) {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [thumbnailFailed, setThumbnailFailed] = useState(false);
+
+  if (!option.youtubeVideoId) {
+    return (
+      <div className="rounded-lg border border-white/10 bg-bg2 p-4">
+        <p className="text-sm font-semibold text-white">{option.title}</p>
+        <p className="mt-3 flex aspect-video items-center justify-center rounded-md bg-black/30 text-sm text-slate-500">
+          연결된 YouTube 영상이 없습니다.
+        </p>
+      </div>
+    );
+  }
+
+  const thumbnailUrl = `https://i.ytimg.com/vi/${option.youtubeVideoId}/hqdefault.jpg`;
+  const watchUrl = `https://www.youtube.com/watch?v=${option.youtubeVideoId}`;
+  const embedUrl = `https://www.youtube-nocookie.com/embed/${option.youtubeVideoId}?autoplay=1&rel=0&modestbranding=1`;
+
+  return (
+    <div className="rounded-lg border border-white/10 bg-bg2 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-white">{option.title}</p>
+          <p className="truncate text-xs text-slate-400">{option.artist}</p>
+        </div>
+        <a
+          href={watchUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex shrink-0 items-center gap-1 rounded border border-white/15 px-2 py-1 text-xs text-slate-300 hover:bg-white/10"
+        >
+          <ExternalLink className="h-3 w-3" />
+          YouTube
+        </a>
+      </div>
+
+      <div className="mt-3 aspect-video overflow-hidden rounded-md bg-black/40">
+        {isPlaying ? (
+          <iframe
+            src={embedUrl}
+            title={`${option.title} YouTube player`}
+            className="h-full w-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+            loading="lazy"
+            referrerPolicy="strict-origin-when-cross-origin"
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsPlaying(true)}
+            className="group relative h-full w-full overflow-hidden bg-black text-left"
+          >
+            {thumbnailFailed ? (
+              <Image src={option.imageUrl || '/dpc_icon.png'} alt={option.title} width={640} height={360} className="h-full w-full object-cover opacity-75" />
+            ) : (
+              <img
+                src={thumbnailUrl}
+                alt={`${option.title} YouTube thumbnail`}
+                loading="lazy"
+                onError={() => setThumbnailFailed(true)}
+                className="h-full w-full object-cover opacity-75 transition-transform duration-300 group-hover:scale-105"
+              />
+            )}
+            <span className="absolute inset-0 bg-black/20" />
+            <span className="absolute left-1/2 top-1/2 inline-flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-red-600 text-white shadow-lg">
+              <Play className="ml-0.5 h-7 w-7 fill-current" />
+            </span>
+          </button>
+        )}
+      </div>
+      <p className="mt-2 text-xs text-slate-500">
+        영상이 삭제, 비공개, 국가 또는 연령 제한 상태라면 플레이어에서 재생되지 않을 수 있습니다.
+      </p>
+    </div>
   );
 }
 
@@ -117,6 +192,20 @@ export default function PollDetailClient({ initialPoll, isLoggedIn, viewerUserId
   const canSeeResults = Boolean(poll.viewerVote);
   const loginHref = useMemo(() => `/auth/login?next=${encodeURIComponent(`/polls/${poll.id}`)}`, [poll.id]);
   const selectedOption = poll.options.find((option) => option.id === selectedOptionId);
+
+  useEffect(() => {
+    setPoll(initialPoll);
+    setSelectedOptionId(initialPoll.viewerVote?.optionId ?? '');
+    setShowLoginPrompt(false);
+    setVoteError(null);
+
+    if (!isLoggedIn) {
+      setCommentInput('');
+      setEditingCommentId(null);
+      setEditingCommentInput('');
+      setPendingCommentId(null);
+    }
+  }, [initialPoll, isLoggedIn]);
 
   const requireLogin = () => {
     if (isLoggedIn) return true;
@@ -266,7 +355,6 @@ export default function PollDetailClient({ initialPoll, isLoggedIn, viewerUserId
             isSelected={selectedOptionId === poll.options[0].id}
             isDimmed={Boolean(selectedOptionId && selectedOptionId !== poll.options[0].id)}
             canSeeResults={canSeeResults}
-            onSelect={() => setSelectedOptionId(poll.options[0].id)}
           />
           <div className="flex items-center justify-center md:h-full">
             <span className="rounded-full border border-point/40 bg-point/10 px-4 py-2 text-sm font-bold text-point">VS</span>
@@ -276,8 +364,13 @@ export default function PollDetailClient({ initialPoll, isLoggedIn, viewerUserId
             isSelected={selectedOptionId === poll.options[1].id}
             isDimmed={Boolean(selectedOptionId && selectedOptionId !== poll.options[1].id)}
             canSeeResults={canSeeResults}
-            onSelect={() => setSelectedOptionId(poll.options[1].id)}
           />
+        </div>
+
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          {poll.options.map((option) => (
+            <YouTubePreview key={option.id} option={option} />
+          ))}
         </div>
 
         {voteError ? <p className="mt-4 text-sm text-red-300">{voteError}</p> : null}
@@ -285,7 +378,28 @@ export default function PollDetailClient({ initialPoll, isLoggedIn, viewerUserId
           <p className="mt-4 text-base text-center text-slate">나의 선택 : {selectedOption?.title ?? '선택됨'}</p>
         ) : null}
 
-        <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+        <div className="mt-5 grid gap-2 sm:grid-cols-2">
+          {poll.options.map((option) => {
+            const isSelected = selectedOptionId === option.id;
+
+            return (
+              <Button
+                key={option.id}
+                type="button"
+                variant={isSelected ? 'primary' : 'outline'}
+                color={isSelected ? 'point' : 'white'}
+                icon={isSelected ? <Check className="h-4 w-4" /> : undefined}
+                onClick={() => setSelectedOptionId(option.id)}
+                disabled={isVoting || poll.isClosed}
+                className="min-h-12 w-full"
+              >
+                {option.title}
+              </Button>
+            );
+          })}
+        </div>
+
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
           <Button
             type="button"
             disabled={!selectedOptionId || isVoting || poll.isClosed}
@@ -417,10 +531,10 @@ export default function PollDetailClient({ initialPoll, isLoggedIn, viewerUserId
               </button>
             </div>
             <div className="mt-5 flex justify-end gap-2">
-              <Button type="button" variant="outline" color="white" size="sm" onClick={() => setShowLoginPrompt(false)}>
+              <Button type="button" variant="outline" color="white" size="sm" className='flex-1' onClick={() => setShowLoginPrompt(false)}>
                 아니요
               </Button>
-              <Button type="button" size="sm" onClick={() => router.push(loginHref)}>
+              <Button type="button" size="sm" className='flex-1' onClick={() => router.push(loginHref)}>
                 예
               </Button>
             </div>
