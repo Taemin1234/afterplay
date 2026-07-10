@@ -27,6 +27,7 @@ export default function LoggedInUI({ nickname, isAdmin = false }: LoggedInUIProp
 
     if (isOnProtectedPage) {
       router.replace('/');
+      router.refresh();
       return;
     }
 
