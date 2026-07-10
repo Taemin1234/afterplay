@@ -1,14 +1,55 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import PollDetailClient from '@/components/polls/PollDetailClient';
 import { getAuthenticatedUser } from '@/lib/music-list-api';
 import prisma from '@/lib/prisma';
-import { serializePoll, serializePollListItem } from '@/lib/music-polls';
+import { fetchPollMetadata, serializePoll, serializePollListItem } from '@/lib/music-polls';
+import { SITE_NAME } from '@/lib/seo';
 
 type PollDetailPageProps = {
   params: Promise<{
     id: string;
   }>;
 };
+
+export async function generateMetadata({ params }: PollDetailPageProps): Promise<Metadata> {
+  const { id } = await params;
+  const poll = await fetchPollMetadata(id);
+
+  if (!poll) {
+    return {
+      title: '투표',
+      robots: { index: false, follow: false },
+    };
+  }
+
+  const [firstOption, secondOption] = poll.optionTitles;
+  const fallbackDescription =
+    firstOption && secondOption
+      ? `${firstOption} vs ${secondOption}. 당신의 취향은 어느 쪽인가요?`
+      : '음악 취향 투표에 참여해보세요.';
+  const description = poll.description || fallbackDescription;
+
+  return {
+    title: poll.title,
+    description,
+    alternates: {
+      canonical: `/polls/${id}`,
+    },
+    openGraph: {
+      title: `${poll.title} | ${SITE_NAME}`,
+      description,
+      url: `/polls/${id}`,
+      type: 'article',
+      images: poll.imageUrl ? [{ url: poll.imageUrl, alt: poll.title }] : undefined,
+    },
+    twitter: {
+      title: `${poll.title} | ${SITE_NAME}`,
+      description,
+      images: poll.imageUrl ? [poll.imageUrl] : undefined,
+    },
+  };
+}
 
 export default async function PollDetailPage({ params }: PollDetailPageProps) {
   const { id } = await params;

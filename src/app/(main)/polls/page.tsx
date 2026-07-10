@@ -10,6 +10,29 @@ export const metadata: Metadata = {
   alternates: {
     canonical: '/polls',
   },
+
+  openGraph: {
+    title: '취향선택',
+    description: '오늘의 취향은 어느 쪽인가요?',
+    url: '/polls',
+    siteName: 'DustpeakClub',
+    images: [
+      {
+        url: '/images/polls-og.png',
+        width: 1200,
+        height: 630,
+        alt: 'DustpeakClub 취향선택',
+      },
+    ],
+    type: 'website',
+  },
+
+  twitter: {
+    card: 'summary_large_image',
+    title: '취향선택',
+    description: '오늘의 취향은 어느 쪽인가요?',
+    images: ['/images/polls-og.png'],
+  },
 };
 
 export default async function PollsPage() {
