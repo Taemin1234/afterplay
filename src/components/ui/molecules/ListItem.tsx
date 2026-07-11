@@ -85,9 +85,9 @@ export default function ListItem({ item, priority = false }: ListItemProps) {
             <h3 className="line-clamp-2 text-base font-semibold text-white transition-colors group-hover:text-neon-point sm:text-lg">
               {item.title}
             </h3>
-            <p className="line-clamp-1 text-sm leading-relaxed text-gray-200">
+            {/* <p className="line-clamp-1 text-sm leading-relaxed text-gray-200">
               {item.story ?? ""}
-            </p>
+            </p> */}
           </div>
         </div>
 
