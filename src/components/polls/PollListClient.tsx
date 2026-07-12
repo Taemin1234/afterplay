@@ -63,8 +63,8 @@ export default function PollListClient({ initialPolls }: PollListClientProps) {
               key={option.value}
               type="button"
               onClick={() => setItemType(option.value as 'ALL' | PollItemType)}
-              className={`rounded px-3 py-1.5 text-sm transition-colors ${
-                itemType === option.value ? 'bg-point text-black' : 'text-slate-300 hover:bg-white/10'
+              className={`rounded px-3 py-1.5 text-sm transition-colors cursor-pointer ${
+                itemType === option.value ? 'bg-point' : 'text-slate-300 hover:bg-white/10'
               }`}
             >
               {option.label}
@@ -91,7 +91,7 @@ export default function PollListClient({ initialPolls }: PollListClientProps) {
       {error ? <p className="rounded-md border border-red-500/30 bg-red-950/20 px-3 py-2 text-sm text-red-200">{error}</p> : null}
       {isLoading ? <p className="py-8 text-center text-sm text-slate-400">목록을 불러오는 중...</p> : null}
       {!isLoading && polls.length === 0 ? (
-        <p className="rounded-lg border border-white/10 bg-bg2 py-12 text-center text-sm text-slate-500">표시할 투표가 없습니다.</p>
+        <p className="rounded-lg border border-white/10 bg-bg2 py-12 text-center text-sm text-slate-500">아직 내용이 없어요. 조금만 기다려주세요</p>
       ) : null}
       {!isLoading && polls.length > 0 ? (
         <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

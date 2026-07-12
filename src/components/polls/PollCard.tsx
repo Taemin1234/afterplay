@@ -57,7 +57,7 @@ export default function PollCard({ poll }: PollCardProps) {
                 <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
                   <div className="h-full rounded-full bg-point" style={{ width: `${option.result.percentage}%` }} />
                 </div>
-              ) : null}
+              ) : <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10"></div>}
             </div>
             <span className="sr-only">후보 {index + 1}</span>
           </div>
@@ -69,9 +69,9 @@ export default function PollCard({ poll }: PollCardProps) {
 
       <div className="space-y-3 p-4">
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-         <div>
-          <span className="rounded border border-white/10 px-2 py-1 text-slate-300">{itemTypeLabel(poll.itemType)}</span>
-            <span className={`rounded px-2 py-1 ${poll.isClosed ? 'bg-red-500/15 text-red-200' : 'bg-point/10 text-point'}`}>
+         <div className='flex gap-1'>
+            <span className="rounded border border-white/10 px-2 py-1 text-slate-300">{itemTypeLabel(poll.itemType)}</span>
+            <span className={`rounded px-2 py-1 ${poll.isClosed ? 'bg-gray-500 text-white' : 'bg-point/10 text-point'}`}>
               {statusLabel(poll)}
             </span>
          </div>
