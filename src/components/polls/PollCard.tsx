@@ -53,7 +53,7 @@ export default function PollCard({ poll }: PollCardProps) {
                 <p className="line-clamp-2 text-sm font-semibold text-white">{option.title}</p>
                 <p className="mt-0.5 truncate text-xs text-slate-400">{option.artist}</p>
               </div>
-              {poll.viewerVote && option.result ? (
+              {option.result ? (
                 <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
                   <div className="h-full rounded-full bg-point" style={{ width: `${option.result.percentage}%` }} />
                 </div>

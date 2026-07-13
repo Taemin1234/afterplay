@@ -202,7 +202,7 @@ export default function PollDetailClient({ initialPoll, isLoggedIn, viewerUserId
   const [editingCommentInput, setEditingCommentInput] = useState('');
   const [pendingCommentId, setPendingCommentId] = useState<string | null>(null);
 
-  const canSeeResults = Boolean(poll.viewerVote);
+  const canSeeResults = Boolean(poll.viewerVote) || poll.isClosed;
   const loginHref = useMemo(() => `/auth/login?next=${encodeURIComponent(`/polls/${poll.id}`)}`, [poll.id]);
   const selectedOption = poll.options.find((option) => option.id === selectedOptionId);
 
@@ -387,7 +387,7 @@ export default function PollDetailClient({ initialPoll, isLoggedIn, viewerUserId
         </div>
 
         {voteError ? <p className="mt-4 text-sm text-red-300">{voteError}</p> : null}
-        {canSeeResults && poll.results ? (
+        {canSeeResults && poll.results && poll.viewerVote ? (
           <p className="mt-4 text-base text-center text-slate">나의 선택 : {selectedOption?.title ?? '선택됨'}</p>
         ) : null}
 

@@ -354,7 +354,8 @@ export async function serializePoll(pollId: string, viewerUserId?: string | null
         select: { id: true, optionId: true, createdAt: true, updatedAt: true },
       })
     : null;
-  const canSeeResults = Boolean(viewerVote);
+  const pollIsClosed = isPollClosed(poll);
+  const canSeeResults = Boolean(viewerVote) || pollIsClosed;
   const results = await getPollResults(poll.id);
 
   return {
@@ -363,7 +364,7 @@ export async function serializePoll(pollId: string, viewerUserId?: string | null
     description: poll.description,
     itemType: poll.itemType,
     status: poll.status,
-    isClosed: isPollClosed(poll),
+    isClosed: pollIsClosed,
     startsAt: poll.startsAt?.toISOString() ?? null,
     endsAt: poll.endsAt?.toISOString() ?? null,
     closedAt: poll.closedAt?.toISOString() ?? null,
