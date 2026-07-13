@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, ExternalLink, MessageCircle, Play, Send, X } from 'lucide-react';
 import Button from '@/components/ui/atoms/Button';
-import PollCard from '@/components/polls/PollCard';
+import PollCarousel from '@/components/polls/PollCarousel';
 import type { PollComment, PollDetail, PollOption } from '@/components/polls/types';
 
 type PollDetailClientProps = {
@@ -505,31 +505,9 @@ export default function PollDetailClient({ initialPoll, isLoggedIn, viewerUserId
         </ul>
       </section>
 
-      {poll.relatedPolls.length > 0 ? (
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold text-white">이 후보들의 다른 대결은?</h2>
-          <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {poll.relatedPolls.map((item) => (
-              <li key={item.id}>
-                <PollCard poll={item} />
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+      <PollCarousel title="이 후보들의 다른 대결은?" items={poll.relatedPolls} navId="related-polls" />
 
-      {poll.otherPolls.length > 0 ? (
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold text-white">다른 선택도 해볼까요?</h2>
-          <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {poll.otherPolls.map((item) => (
-              <li key={item.id}>
-                <PollCard poll={item} />
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+      <PollCarousel title="다른 선택도 해볼까요?" items={poll.otherPolls} navId="other-polls" />
 
       {showLoginPrompt ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
