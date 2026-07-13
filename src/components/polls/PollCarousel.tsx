@@ -64,7 +64,7 @@ export default function PollCarousel({ title, items, navId }: PollCarouselProps)
             spaceBetween: 18,
           },
         }}
-        className="!overflow-hidden"
+        className="overflow-hidden!"
       >
         {items.map((item) => (
           <SwiperSlide key={item.id} className="h-auto">
