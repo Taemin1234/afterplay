@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getAuthenticatedUser } from '@/lib/music-list-api';
-import { serializePollListItem } from '@/lib/music-polls';
+import { serializePollListItem, sortPollListItemsOpenFirst } from '@/lib/music-polls';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -39,7 +39,7 @@ export async function GET(request: Request) {
     });
 
     const items = await Promise.all(polls.map((poll) => serializePollListItem(poll.id, user?.id ?? null)));
-    return NextResponse.json(items.filter(Boolean));
+    return NextResponse.json(sortPollListItemsOpenFirst(items.filter((item) => item !== null)));
   } catch (error) {
     console.error('[api/polls] GET failed', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });

@@ -2,18 +2,18 @@ import type { Metadata } from 'next';
 import PollListClient from '@/components/polls/PollListClient';
 import { getAuthenticatedUser } from '@/lib/music-list-api';
 import prisma from '@/lib/prisma';
-import { serializePollListItem } from '@/lib/music-polls';
+import { serializePollListItem, sortPollListItemsOpenFirst } from '@/lib/music-polls';
 
 export const metadata: Metadata = {
-  title: '취향선택',
-  description: '오늘의 취향은 어느쪽인가요?',
+  title: 'Peak n Pick',
+  description: '더 깊게 머무른 트랙을 골라주세요!',
   alternates: {
     canonical: '/polls',
   },
 
   openGraph: {
-    title: '취향선택',
-    description: '오늘의 취향은 어느 쪽인가요?',
+    title: 'Peak n Pick',
+    description: '더 깊게 머무른 트랙을 골라주세요!',
     url: '/polls',
     siteName: 'DustpeakClub',
     images: [
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
         url: '/images/polls-og.png',
         width: 1200,
         height: 630,
-        alt: 'DustpeakClub 취향선택',
+        alt: 'DustpeakClub Peak n Pick',
       },
     ],
     type: 'website',
@@ -29,8 +29,8 @@ export const metadata: Metadata = {
 
   twitter: {
     card: 'summary_large_image',
-    title: '취향선택',
-    description: '오늘의 취향은 어느 쪽인가요?',
+    title: 'Peak n Pick',
+    description: '더 깊게 머무른 트랙을 골라주세요!',
     images: ['/images/polls-og.png'],
   },
 };
@@ -44,6 +44,7 @@ export default async function PollsPage() {
     take: 50,
   });
   const items = await Promise.all(polls.map((poll) => serializePollListItem(poll.id, user?.id ?? null)));
+  const sortedItems = sortPollListItemsOpenFirst(items.filter((item) => item !== null));
 
-  return <PollListClient initialPolls={items.filter((item) => item !== null)} />;
+  return <PollListClient initialPolls={sortedItems} />;
 }

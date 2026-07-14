@@ -58,6 +58,13 @@ export function isPollClosed(poll: { status: PollStatusValue; endsAt: Date | nul
   return poll.status === 'CLOSED' || Boolean(poll.closedAt) || (poll.endsAt !== null && poll.endsAt <= new Date());
 }
 
+export function sortPollListItemsOpenFirst<T extends { isClosed: boolean; createdAt: string }>(items: T[]) {
+  return [...items].sort((a, b) => {
+    if (a.isClosed !== b.isClosed) return a.isClosed ? 1 : -1;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+}
+
 export function validateAndNormalizePollPayload(
   body: PollPayloadInput,
   options: { requireOptions: boolean }

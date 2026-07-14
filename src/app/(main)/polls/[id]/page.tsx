@@ -65,11 +65,18 @@ export default async function PollDetailPage({ params }: PollDetailPageProps) {
       poll.itemType === 'TRACK' ? { trackId: option.trackId } : { albumId: option.albumId }
     ),
   };
+  const now = new Date();
+  const activePollWhere = {
+    status: 'OPEN' as const,
+    closedAt: null,
+    OR: [{ endsAt: null }, { endsAt: { gt: now } }],
+  };
 
   const relatedPolls = await prisma.musicPoll.findMany({
     where: {
       id: { not: poll.id },
       deletedAt: null,
+      ...activePollWhere,
       itemType: poll.itemType,
       options: {
         some: optionTargetWhere,
@@ -85,6 +92,7 @@ export default async function PollDetailPage({ params }: PollDetailPageProps) {
     where: {
       id: { notIn: [poll.id, ...relatedIds] },
       deletedAt: null,
+      ...activePollWhere,
       NOT: {
         options: {
           some: optionTargetWhere,
