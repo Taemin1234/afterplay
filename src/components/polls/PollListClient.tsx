@@ -50,8 +50,8 @@ export default function PollListClient({ initialPolls }: PollListClientProps) {
     <section className="mx-auto w-full max-w-6xl space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white sm:text-3xl">취향 Pick</h1>
-          <p className="mt-2 text-sm text-slate-400">오늘의 취향은 어느쪽인가요?</p>
+          <h1 className="text-2xl font-bold text-white sm:text-3xl">Peak n&apos; Pick</h1>
+          <p className="mt-2 text-sm text-slate-400">오늘의 취향을 pick해주세요</p>
         </div>
         <div className="inline-flex w-fit rounded-md border border-white/10 bg-black/25 p-1">
           {[
