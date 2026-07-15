@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion, Reorder } from 'framer-motion';
-import { Disc, GripVertical, LockKeyhole, LockKeyholeOpen, Music, Trash2, X } from 'lucide-react';
+import { Disc, GripVertical, LockKeyhole, LockKeyholeOpen, Music, Star, Trash2, X } from 'lucide-react';
 import Image from 'next/image';
 import Button from '@/components/ui/atoms/Button';
 import IconButton from '@/components/ui/atoms/IconButton';
@@ -13,6 +13,7 @@ import ModalWrap from '@/components/ui/molecules/ModalWrap';
 import SearchBar from '@/components/ui/molecules/SearchBar';
 import TypeSelector from '@/components/ui/molecules/TypeSelector';
 import SearchMusic from '@/components/ui/organisms/SearchMusic';
+import type { FeaturedSectionOption } from '@/lib/music-lists';
 
 type SearchType = 'track' | 'album';
 type Visibility = 'PUBLIC' | 'PRIVATE';
@@ -42,6 +43,7 @@ interface MusicListFormProps {
   submitMethod?: SubmitMethod;
   submitEndpoint?: string;
   successRedirectPath?: string;
+  featuredSections?: FeaturedSectionOption[];
 }
 
 const typeOptions = [
@@ -60,6 +62,7 @@ export default function MusicListForm({
   submitMethod = 'POST',
   submitEndpoint,
   successRedirectPath = '/mypage',
+  featuredSections = [],
 }: MusicListFormProps) {
   const router = useRouter();
 
@@ -71,6 +74,7 @@ export default function MusicListForm({
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [tagInput, setTagInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [featuredSectionIds, setFeaturedSectionIds] = useState<string[]>([]);
 
   const [form, setForm] = useState({
     title: initialValues?.title ?? '',
@@ -142,6 +146,17 @@ export default function MusicListForm({
       ...prev,
       visibility: prev.visibility === 'PUBLIC' ? 'PRIVATE' : 'PUBLIC',
     }));
+    if (form.visibility === 'PUBLIC') {
+      setFeaturedSectionIds([]);
+    }
+  };
+
+  const handleToggleFeaturedSection = (sectionId: string) => {
+    setFeaturedSectionIds((current) =>
+      current.includes(sectionId)
+        ? current.filter((currentSectionId) => currentSectionId !== sectionId)
+        : [...current, sectionId]
+    );
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -162,6 +177,7 @@ export default function MusicListForm({
           ...form,
           type: searchType,
           musicItems: selectedMusic,
+          ...(featuredSections.length > 0 ? { featuredSectionIds } : {}),
         }),
       });
 
@@ -268,6 +284,32 @@ export default function MusicListForm({
             placeholder="리스트 설명을 입력해주세요."
             onChange={(e) => setForm((prev) => ({ ...prev, story: e.target.value }))}
           />
+
+          {submitMethod === 'POST' && featuredSections.length > 0 ? (
+            <div className="rounded-xl border border-amber-300/20 bg-amber-300/5 p-4">
+              <div className="flex items-start gap-3">
+                <Star size={18} className="mt-0.5 shrink-0 text-amber-300" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-amber-200">특별게시물 설정</p>
+                  <p className="mt-1 text-xs text-gray-400">공개 게시글만 특별 섹션에 등록할 수 있습니다.</p>
+                  <div className="mt-3 space-y-2">
+                    {featuredSections.map((section) => (
+                      <label key={section.id} className="flex cursor-pointer items-center gap-2 text-sm text-white">
+                        <input
+                          type="checkbox"
+                          checked={featuredSectionIds.includes(section.id)}
+                          onChange={() => handleToggleFeaturedSection(section.id)}
+                          disabled={form.visibility !== 'PUBLIC'}
+                          className="h-4 w-4 accent-amber-300 disabled:cursor-not-allowed disabled:opacity-50"
+                        />
+                        {section.name}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-400">태그 (최대 10개)</label>

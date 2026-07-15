@@ -18,6 +18,7 @@ export interface ListPayloadInput {
   type?: ListEntityType;
   musicItems?: MusicItemPayload[];
   tags?: string[];
+  featuredSectionIds?: string[];
 }
 
 export interface NormalizedListPayload {
@@ -26,6 +27,7 @@ export interface NormalizedListPayload {
   visibility: VisibilityValue;
   musicItems: MusicItemPayload[];
   tags: string[];
+  featuredSectionIds: string[];
 }
 
 // 현재 요청의 로그인 유저 확인
@@ -65,6 +67,11 @@ export async function upsertDbUser(user: {
 export function cleanTags(tags: string[] | undefined): string[] {
   if (!Array.isArray(tags)) return [];
   return [...new Set(tags.map((tag) => tag.replace(/\s+/g, '')).filter(Boolean))].slice(0, 10);
+}
+
+export function cleanFeaturedSectionIds(sectionIds: string[] | undefined): string[] {
+  if (!Array.isArray(sectionIds)) return [];
+  return [...new Set(sectionIds.filter((sectionId) => typeof sectionId === 'string').map((sectionId) => sectionId.trim()).filter(Boolean))];
 }
 
 // 중복 곡 제거
@@ -122,6 +129,7 @@ export function validateAndNormalizeListPayload(
       visibility: body.visibility,
       musicItems: uniqueMusicItems(body.musicItems),
       tags: cleanTags(body.tags),
+      featuredSectionIds: cleanFeaturedSectionIds(body.featuredSectionIds),
     },
   };
 }

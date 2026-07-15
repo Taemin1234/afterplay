@@ -26,7 +26,24 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: parsed.error ?? 'Bad request' }, { status: 400 });
     }
 
-    const { title, story, visibility, musicItems, tags } = parsed.data;
+    const { title, story, visibility, musicItems, tags, featuredSectionIds } = parsed.data;
+
+    if (featuredSectionIds.length > 0) {
+      const dbUser = await prisma.user.findUnique({ where: { id: user.id }, select: { role: true } });
+      if (dbUser?.role !== 'ADMIN') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+      if (visibility !== 'PUBLIC') {
+        return NextResponse.json({ error: '비공개 게시물은 특별게시물로 설정할 수 없습니다.' }, { status: 400 });
+      }
+      const activeSections = await prisma.featuredSection.count({
+        where: { id: { in: featuredSectionIds }, isActive: true },
+      });
+      if (activeSections !== featuredSectionIds.length) {
+        return NextResponse.json({ error: 'Featured section not found' }, { status: 400 });
+      }
+    }
+
     const tagRows = await upsertTags(tags);
 
     const result = await prisma.$transaction(
@@ -92,6 +109,18 @@ export async function POST(req: Request) {
             createdAt: playlist.createdAt,
           },
         });
+
+        if (featuredSectionIds.length > 0) {
+          await tx.featuredItem.createMany({
+            data: featuredSectionIds.map((sectionId) => ({
+              sectionId,
+              kind: 'PLAYLIST',
+              refId: playlist.id,
+              setByUserId: user.id,
+            })),
+            skipDuplicates: true,
+          });
+        }
 
         return playlist;
       },
