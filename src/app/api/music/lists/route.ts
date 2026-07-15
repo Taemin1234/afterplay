@@ -10,7 +10,9 @@ const fetchPublicListItemsCached = unstable_cache(
     type: 'all' | 'playlist' | 'albumlist',
     sort: 'latest' | 'likes',
     limit: number,
-    rawCursor: string | null
+    rawCursor: string | null,
+    featuredSectionKey: string | undefined,
+    excludeFeaturedSectionKey: string | undefined
   ) => {
     const cursor = sort === 'latest' ? parseCursor(rawCursor) : null;
     const likesOffset = sort === 'likes' ? parseLikesCursor(rawCursor) : 0;
@@ -22,9 +24,11 @@ const fetchPublicListItemsCached = unstable_cache(
       cursor,
       likesOffset,
       visibility: 'public',
+      featuredSectionKey,
+      excludeFeaturedSectionKey,
     });
   },
-  ['api-music-lists-public-v1'],
+  ['api-music-lists-public-v2'],
   { revalidate: 15 }
 );
 
@@ -36,7 +40,29 @@ export async function GET(request: Request) {
     const sort = parseListSort(searchParams.get('sort'));
     const limit = parseLimit(searchParams.get('limit'));
     const rawCursor = searchParams.get('cursor');
-    const result = await fetchPublicListItemsCached(type, sort, limit, rawCursor);
+    const section = searchParams.get('section');
+    const excludeSection = searchParams.get('excludeSection');
+    const featuredSectionKey = section === 'weekly-new-releases' || section === 'featured' ? section : undefined;
+    const excludeFeaturedSectionKey = excludeSection === 'weekly-new-releases' ? excludeSection : undefined;
+
+    if (section && !featuredSectionKey) {
+      return NextResponse.json({ error: 'Invalid section' }, { status: 400 });
+    }
+    if (excludeSection && !excludeFeaturedSectionKey) {
+      return NextResponse.json({ error: 'Invalid excluded section' }, { status: 400 });
+    }
+    if (featuredSectionKey && excludeFeaturedSectionKey) {
+      return NextResponse.json({ error: 'section and excludeSection cannot be combined' }, { status: 400 });
+    }
+
+    const result = await fetchPublicListItemsCached(
+      type,
+      sort,
+      limit,
+      rawCursor,
+      featuredSectionKey,
+      excludeFeaturedSectionKey
+    );
 
     return NextResponse.json(result);
   } catch (error) {

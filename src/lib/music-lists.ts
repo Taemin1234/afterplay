@@ -15,6 +15,8 @@ type QueryOptions = {
   feedUserId?: string;
   authorId?: string;
   visibility: VisibilityScope;
+  featuredSectionKey?: string;
+  excludeFeaturedSectionKey?: string;
 };
 
 type ResponseItem = {
@@ -142,6 +144,38 @@ function compareByLikesThenRecent(a: ResponseItem, b: ResponseItem): number {
   return b.id.localeCompare(a.id);
 }
 
+async function applyFeaturedSectionScope(
+  options: QueryOptions,
+  playlistWhere: Record<string, unknown>,
+  albumListWhere: Record<string, unknown>
+) {
+  const sectionKey = options.featuredSectionKey ?? options.excludeFeaturedSectionKey;
+  if (!sectionKey) return;
+
+  const now = new Date();
+  const featuredItems = await prisma.featuredItem.findMany({
+    where: {
+      section: { key: sectionKey, isActive: true },
+      isActive: true,
+      AND: [
+        { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
+        { OR: [{ endsAt: null }, { endsAt: { gt: now } }] },
+      ],
+    },
+    select: { kind: true, refId: true },
+  });
+  const playlistIds = featuredItems.filter((item) => item.kind === 'PLAYLIST').map((item) => item.refId);
+  const albumListIds = featuredItems.filter((item) => item.kind === 'ALBUM_LIST').map((item) => item.refId);
+
+  if (options.featuredSectionKey) {
+    playlistWhere.id = { in: playlistIds };
+    albumListWhere.id = { in: albumListIds };
+  } else {
+    playlistWhere.id = { notIn: playlistIds };
+    albumListWhere.id = { notIn: albumListIds };
+  }
+}
+
 async function fetchListItemsByLikes(options: QueryOptions): Promise<ResponsePayload> {
   const playlistWhere: Record<string, unknown> = { deletedAt: null };
   const albumListWhere: Record<string, unknown> = { deletedAt: null };
@@ -160,6 +194,7 @@ async function fetchListItemsByLikes(options: QueryOptions): Promise<ResponsePay
     playlistWhere.visibility = 'PRIVATE';
     albumListWhere.visibility = 'PRIVATE';
   }
+  await applyFeaturedSectionScope(options, playlistWhere, albumListWhere);
 
   const orderBy = [
     { likes: { _count: 'desc' as const } },
@@ -384,11 +419,12 @@ export async function fetchListItems(options: QueryOptions): Promise<ResponsePay
     visibilityPlaylist.visibility = 'PRIVATE';
     visibilityAlbumList.visibility = 'PRIVATE';
   }
+  await applyFeaturedSectionScope(options, visibilityPlaylist, visibilityAlbumList);
 
   const collectedRefs: CollectedRef[] = [];
   let scanCursor = options.cursor;
 
-  for (let i = 0; i < 6 && collectedRefs.length < options.limit + 1; i += 1) {
+  for (let i = 0; i < 50 && collectedRefs.length < options.limit + 1; i += 1) {
     const needed = options.limit + 1 - collectedRefs.length;
     const take = Math.min(100, Math.max(options.limit + 1, needed * 3));
 

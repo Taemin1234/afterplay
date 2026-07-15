@@ -1,7 +1,14 @@
 import type { MetadataRoute } from 'next';
 import { buildUrl } from '@/lib/seo';
 
-const STATIC_ROUTES = ['/', '/search'] as const;
+const STATIC_ROUTES = [
+  '/',
+  '/lists',
+  '/weekly-new-releases',
+  '/featured',
+  '/polls',
+  '/search',
+] as const;
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();

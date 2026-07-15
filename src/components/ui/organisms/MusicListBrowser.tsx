@@ -16,6 +16,8 @@ type MusicListBrowserProps = {
   limit?: number;
   visibility?: VisibilityScope;
   children?: ReactNode;
+  featuredSectionKey?: string;
+  excludeFeaturedSectionKey?: string;
 };
 
 const typeOptions = [
@@ -37,6 +39,8 @@ export default function MusicListBrowser({
   limit = 16,
   visibility = 'public',
   children,
+  featuredSectionKey,
+  excludeFeaturedSectionKey,
 }: MusicListBrowserProps) {
   const [type, setType] = useState<ListType>(initialType);
   const [sort, setSort] = useState<ListSortOption>('latest');
@@ -54,8 +58,8 @@ export default function MusicListBrowser({
   // 캐시 키 작성(탭 별로 다른 데이터 저장)
   const makeCacheKey = useCallback(
     (nextType: ListType, nextSort: ListSortOption) =>
-      `${userId ?? 'home'}:${visibility}:${limit}:${nextType}:${nextSort}`,
-    [userId, visibility, limit]
+      `${userId ?? 'home'}:${visibility}:${limit}:${featuredSectionKey ?? 'all'}:${excludeFeaturedSectionKey ?? 'none'}:${nextType}:${nextSort}`,
+    [userId, visibility, limit, featuredSectionKey, excludeFeaturedSectionKey]
   );
 
   const createKey = useCallback((item: MusicListItem) => `${item.kind}:${item.id}`, []);
@@ -127,6 +131,8 @@ export default function MusicListBrowser({
         if (userId) {
           params.set('visibility', visibility);
         }
+        if (featuredSectionKey) params.set('section', featuredSectionKey);
+        if (excludeFeaturedSectionKey) params.set('excludeSection', excludeFeaturedSectionKey);
 
         const res = await fetch(`${baseUrl}?${params.toString()}`, {
           cache: 'no-store',
@@ -155,7 +161,7 @@ export default function MusicListBrowser({
     load();
 
     return () => controller.abort();
-  }, [type, sort, userId, limit, visibility, initialItems, initialType, makeCacheKey, children]);
+  }, [type, sort, userId, limit, visibility, initialItems, initialType, featuredSectionKey, excludeFeaturedSectionKey, makeCacheKey, children]);
 
   // 다음 페이지 요청
   const fetchNextPage = useCallback(async () => {
@@ -176,6 +182,8 @@ export default function MusicListBrowser({
       if (userId) {
         params.set('visibility', visibility);
       }
+      if (featuredSectionKey) params.set('section', featuredSectionKey);
+      if (excludeFeaturedSectionKey) params.set('excludeSection', excludeFeaturedSectionKey);
 
       const res = await fetch(`${baseUrl}?${params.toString()}`, {
         cache: 'no-store',
@@ -202,7 +210,7 @@ export default function MusicListBrowser({
       isFetchingMoreRef.current = false;
       setIsFetchingMore(false);
     }
-  }, [nextCursor, isLoading, userId, type, sort, limit, visibility, mergeItems, makeCacheKey]);
+  }, [nextCursor, isLoading, userId, type, sort, limit, visibility, featuredSectionKey, excludeFeaturedSectionKey, mergeItems, makeCacheKey]);
 
   return (
     <>
