@@ -6,14 +6,14 @@ import { serializePollListItem, sortPollListItemsOpenFirst } from '@/lib/music-p
 
 export const metadata: Metadata = {
   title: 'Peak n Pick',
-  description: '더 깊게 머무른 트랙을 골라주세요!',
+  description: '여러분의 취향을 골라주세요!',
   alternates: {
     canonical: '/polls',
   },
 
   openGraph: {
     title: 'Peak n Pick',
-    description: '더 깊게 머무른 트랙을 골라주세요!',
+    description: '여러분의 취향을 골라주세요!',
     url: '/polls',
     siteName: 'DustpeakClub',
     images: [
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Peak n Pick',
-    description: '더 깊게 머무른 트랙을 골라주세요!',
+    description: '여러분의 취향을 골라주세요!',
     images: ['/images/polls-og.png'],
   },
 };
