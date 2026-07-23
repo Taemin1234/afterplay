@@ -90,12 +90,10 @@ export default async function Home() {
   return (
     <div className="space-y-10 pb-8 sm:space-y-14">
       <ParticleLogoIntro />
-
-      <h1 className='text-xl font-bold mt-3.5'>취향의 수집, 음악의 대화<br/> 여러분의 취향을 공유해주세요.</h1>
-
+      <h1 className='text-xl font-bold mt-3.5 md:text-3xl'>취향의 수집, 음악의 대화<br/> 여러분의 취향을 공유해주세요.</h1>
       <HomeSection title="PEAK N PICK" href="/polls">
         {polls.length > 0 ? (
-          <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6">
+          <ul className="grid grid-cols-2 items-stretch gap-4 lg:grid-cols-4 lg:gap-6">
             {polls.map((poll) => (
               <li key={poll.id}>
                 <PollCard poll={poll} />
@@ -119,11 +117,11 @@ export default async function Home() {
           : <EmptyPreview message="선정된 이주의 신곡이 없어요." />}
       </HomeSection>
 
-      <HomeSection title="스페셜 세트" href="/featured">
+      {/* <HomeSection title="스페셜 세트" href="/featured">
         {featuredResult.items.length > 0
           ? <MusicListGrid items={featuredResult.items} preview />
           : <EmptyPreview message="선정된 스페셜 세트가 없어요." />}
-      </HomeSection>
+      </HomeSection> */}
     </div>
   );
 }

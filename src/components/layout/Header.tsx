@@ -30,7 +30,7 @@ const contentNavigation: NavigationItem[] = [
   },
   {
     href: '/lists',
-    label: '리스트',
+    label: '음악 리스트',
     isActive: (pathname) => pathname.startsWith('/lists'),
   },
   {
@@ -38,11 +38,11 @@ const contentNavigation: NavigationItem[] = [
     label: '이주의 신곡',
     isActive: (pathname) => pathname.startsWith('/weekly-new-releases'),
   },
-  {
-    href: '/featured',
-    label: '특별게시글',
-    isActive: (pathname) => pathname.startsWith('/featured'),
-  },
+  // {
+  //   href: '/featured',
+  //   label: '특별게시글',
+  //   isActive: (pathname) => pathname.startsWith('/featured'),
+  // },
 ];
 
 export default function Header({ user, nickname, isAdmin = false }: HeaderProps) {
@@ -90,7 +90,7 @@ export default function Header({ user, nickname, isAdmin = false }: HeaderProps)
                   key={item.href}
                   href={item.href}
                   aria-current={active ? 'page' : undefined}
-                  className={`relative whitespace-nowrap rounded-md px-3 py-2 text-sm font-semibold transition-colors xl:px-4 ${
+                  className={`relative whitespace-nowrap rounded-md px-3 py-2 text-md font-semibold transition-colors xl:px-4 ${
                     active
                       ? 'text-neon-point'
                       : 'text-slate-300 hover:bg-white/5 hover:text-white'

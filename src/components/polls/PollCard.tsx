@@ -34,7 +34,7 @@ export default function PollCard({ poll }: PollCardProps) {
   return (
     <Link
       href={`/polls/${poll.id}`}
-      className="group block overflow-hidden rounded-lg border border-white/10 bg-bg2 transition-colors hover:border-point/50"
+      className="group block overflow-hidden h-full rounded-lg border border-white/10 bg-bg2 transition-colors hover:border-point/50"
     >
       <div className="relative grid grid-cols-[1fr_1fr] items-stretch bg-black/30">
         {[first, second].map((option, index) => (
@@ -62,8 +62,8 @@ export default function PollCard({ poll }: PollCardProps) {
             <span className="sr-only">후보 {index + 1}</span>
           </div>
         ))}
-        <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-          <span className="rounded-full border border-point/40 bg-point/10 px-2 py-1 text-xs font-bold text-point">VS</span>
+        <div className="pointer-events-none absolute bottom-1 left-1/2 z-10 -translate-x-1/2 sm:-translate-y-1/2 sm:top-1/2 sm:bottom-auto">
+          <span className="rounded-full px-2 py-1 text-xs font-bold text-point">VS</span>
         </div>
       </div>
 
@@ -80,11 +80,20 @@ export default function PollCard({ poll }: PollCardProps) {
 
         <div>
           <h2 className="line-clamp-2 text-base font-semibold text-white">{poll.title}</h2>
-          {poll.description ? <p className="mt-1 line-clamp-2 text-sm text-slate-200">{poll.description}</p> : null}
+          {/* {poll.description ? <p className="mt-1 line-clamp-2 text-sm text-slate-200">{poll.description}</p> : null} */}
         </div>
 
         <div className="flex items-center justify-between text-xs text-slate-400">
-          <span>{formatDate(poll.createdAt)}</span>
+          <span>\
+            {(() => {
+              const date = new Date(poll.createdAt);
+              const year = date.getFullYear();
+              const month = String(date.getMonth() + 1).padStart(2, "0");
+              const day = String(date.getDate()).padStart(2, "0");
+
+              return `${year}.${month}.${day}`;
+            })()}
+          </span>
           <span className="inline-flex items-center gap-3">
             {/* {poll.results ? (
               <span className="inline-flex items-center gap-1">
