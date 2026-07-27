@@ -84,7 +84,7 @@ export default function PollCard({ poll }: PollCardProps) {
         </div>
 
         <div className="flex items-center justify-between text-xs text-slate-400">
-          <span>\
+          <span>
             {(() => {
               const date = new Date(poll.createdAt);
               const year = date.getFullYear();
