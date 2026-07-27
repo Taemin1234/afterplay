@@ -1,3 +1,5 @@
+import type { SerializedComment } from '@/lib/comment-threads';
+
 export type PollItemType = 'TRACK' | 'ALBUM';
 export type PollStatus = 'OPEN' | 'CLOSED';
 
@@ -21,18 +23,7 @@ export type PollOption = {
   result: PollOptionResult | null;
 };
 
-export type PollComment = {
-  id: string;
-  content: string;
-  createdAt: string;
-  updatedAt: string;
-  user: {
-    id: string;
-    nickname: string | null;
-    avatarUrl: string | null;
-    role: 'USER' | 'ADMIN';
-  };
-};
+export type PollComment = SerializedComment;
 
 export type ViewerVote = {
   id: string;

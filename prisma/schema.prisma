@@ -45,16 +45,16 @@ enum PollStatus {
 // User (Supabase Auth user.id = UUID)
 // --------------------------------------------------------
 model User {
-  id        String   @id @db.Uuid
-  email     String   @unique
-  role  Role   @default(USER)
-  nickname  String?  @unique
-  nicknameSlug String? @unique
-  avatarUrl String?
+  id                   String  @id @db.Uuid
+  email                String  @unique
+  role                 Role    @default(USER)
+  nickname             String? @unique
+  nicknameSlug         String? @unique
+  avatarUrl            String?
   isDeletedPlaceholder Boolean @default(false)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
   // 내가 만든 리스트
@@ -153,7 +153,7 @@ model Track {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  playlists PlaylistTrack[]
+  playlists   PlaylistTrack[]
   pollOptions MusicPollOption[]
 }
 
@@ -168,7 +168,7 @@ model PlaylistTrack {
   playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
   track    Track    @relation(fields: [trackId], references: [id], onDelete: Restrict)
 
-  @@unique([playlistId, order])   // 같은 플레이리스트에서 순서 중복 금지
+  @@unique([playlistId, order]) // 같은 플레이리스트에서 순서 중복 금지
   @@unique([playlistId, trackId]) // 같은 곡 중복 비허용
   @@index([playlistId])
   @@index([trackId])
@@ -216,7 +216,7 @@ model Album {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  albumLists AlbumEntry[]
+  albumLists  AlbumEntry[]
   pollOptions MusicPollOption[]
 }
 
@@ -307,8 +307,8 @@ model Tag {
   id   Int    @id @default(autoincrement())
   name String @unique
 
-  playlists  PlaylistTag[]
-  albumLists AlbumListTag[]
+  playlists   PlaylistTag[]
+  albumLists  AlbumListTag[]
   artistLists ArtistListTag[]
 }
 
@@ -483,7 +483,6 @@ model ArtistListViewEvent {
   @@index([deviceId])
 }
 
-
 // --------------------------------------------------------
 // 관리자 추천 게시물
 // --------------------------------------------------------
@@ -503,18 +502,18 @@ model FeaturedSection {
 }
 
 model FeaturedItem {
-  id          String   @id @default(uuid()) @db.Uuid
-  sectionId   String   @db.Uuid
+  id          String    @id @default(uuid()) @db.Uuid
+  sectionId   String    @db.Uuid
   kind        FeedKind
-  refId       String   @db.Uuid
-  setByUserId String?  @db.Uuid
-  note        String?  @db.Text
-  priority    Int      @default(0)
-  isActive    Boolean  @default(true)
+  refId       String    @db.Uuid
+  setByUserId String?   @db.Uuid
+  note        String?   @db.Text
+  priority    Int       @default(0)
+  isActive    Boolean   @default(true)
   startsAt    DateTime?
   endsAt      DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   section   FeaturedSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   setByUser User?           @relation("FeaturedItemSetBy", fields: [setByUserId], references: [id], onDelete: SetNull)
@@ -542,17 +541,17 @@ model FeaturedArtistListSection {
 }
 
 model FeaturedArtistList {
-  id           String   @id @default(uuid()) @db.Uuid
-  artistListId String   @db.Uuid
-  sectionId    String   @db.Uuid
-  setByUserId  String?  @db.Uuid
-  note         String?  @db.Text
-  priority     Int      @default(0)
-  isActive     Boolean  @default(true)
+  id           String    @id @default(uuid()) @db.Uuid
+  artistListId String    @db.Uuid
+  sectionId    String    @db.Uuid
+  setByUserId  String?   @db.Uuid
+  note         String?   @db.Text
+  priority     Int       @default(0)
+  isActive     Boolean   @default(true)
   startsAt     DateTime?
   endsAt       DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   artistList ArtistList                @relation(fields: [artistListId], references: [id], onDelete: Cascade)
   section    FeaturedArtistListSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
@@ -571,11 +570,17 @@ model PlaylistComment {
   id      String @id @default(uuid()) @db.Uuid
   content String
 
-  userId     String @db.Uuid
-  playlistId String @db.Uuid
+  userId     String  @db.Uuid
+  playlistId String  @db.Uuid
+  parentId   String? @db.Uuid
+  rootId     String? @db.Uuid
 
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  playlist      Playlist          @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  parent        PlaylistComment?  @relation("PlaylistCommentParent", fields: [parentId], references: [id], onDelete: SetNull)
+  replies       PlaylistComment[] @relation("PlaylistCommentParent")
+  root          PlaylistComment?  @relation("PlaylistCommentRoot", fields: [rootId], references: [id], onDelete: SetNull)
+  threadReplies PlaylistComment[] @relation("PlaylistCommentRoot")
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -583,17 +588,25 @@ model PlaylistComment {
 
   @@index([playlistId, createdAt])
   @@index([userId])
+  @@index([parentId, createdAt])
+  @@index([rootId, createdAt])
 }
 
 model AlbumListComment {
   id      String @id @default(uuid()) @db.Uuid
   content String
 
-  userId      String @db.Uuid
-  albumListId String @db.Uuid
+  userId      String  @db.Uuid
+  albumListId String  @db.Uuid
+  parentId    String? @db.Uuid
+  rootId      String? @db.Uuid
 
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  albumList AlbumList @relation(fields: [albumListId], references: [id], onDelete: Cascade)
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  albumList     AlbumList          @relation(fields: [albumListId], references: [id], onDelete: Cascade)
+  parent        AlbumListComment?  @relation("AlbumListCommentParent", fields: [parentId], references: [id], onDelete: SetNull)
+  replies       AlbumListComment[] @relation("AlbumListCommentParent")
+  root          AlbumListComment?  @relation("AlbumListCommentRoot", fields: [rootId], references: [id], onDelete: SetNull)
+  threadReplies AlbumListComment[] @relation("AlbumListCommentRoot")
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -601,17 +614,25 @@ model AlbumListComment {
 
   @@index([albumListId, createdAt])
   @@index([userId])
+  @@index([parentId, createdAt])
+  @@index([rootId, createdAt])
 }
 
 model ArtistListComment {
   id      String @id @default(uuid()) @db.Uuid
   content String
 
-  userId       String @db.Uuid
-  artistListId String @db.Uuid
+  userId       String  @db.Uuid
+  artistListId String  @db.Uuid
+  parentId     String? @db.Uuid
+  rootId       String? @db.Uuid
 
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  artistList ArtistList @relation(fields: [artistListId], references: [id], onDelete: Cascade)
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  artistList    ArtistList          @relation(fields: [artistListId], references: [id], onDelete: Cascade)
+  parent        ArtistListComment?  @relation("ArtistListCommentParent", fields: [parentId], references: [id], onDelete: SetNull)
+  replies       ArtistListComment[] @relation("ArtistListCommentParent")
+  root          ArtistListComment?  @relation("ArtistListCommentRoot", fields: [rootId], references: [id], onDelete: SetNull)
+  threadReplies ArtistListComment[] @relation("ArtistListCommentRoot")
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -619,6 +640,8 @@ model ArtistListComment {
 
   @@index([artistListId, createdAt])
   @@index([userId])
+  @@index([parentId, createdAt])
+  @@index([rootId, createdAt])
 }
 
 // --------------------------------------------------------
@@ -698,9 +721,9 @@ model MusicPollOption {
   description         String? @db.Text
   youtubeVideoId      String? @db.VarChar(32)
 
-  poll  MusicPoll @relation(fields: [pollId], references: [id], onDelete: Cascade)
-  track Track?    @relation(fields: [trackId], references: [id], onDelete: Restrict)
-  album Album?    @relation(fields: [albumId], references: [id], onDelete: Restrict)
+  poll  MusicPoll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  track Track?          @relation(fields: [trackId], references: [id], onDelete: Restrict)
+  album Album?          @relation(fields: [albumId], references: [id], onDelete: Restrict)
   votes MusicPollVote[]
 
   createdAt DateTime @default(now())
@@ -736,11 +759,17 @@ model MusicPollComment {
   id      String @id @default(uuid()) @db.Uuid
   content String
 
-  pollId String @db.Uuid
-  userId String @db.Uuid
+  pollId   String  @db.Uuid
+  userId   String  @db.Uuid
+  parentId String? @db.Uuid
+  rootId   String? @db.Uuid
 
-  poll MusicPoll @relation(fields: [pollId], references: [id], onDelete: Cascade)
-  user User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  poll          MusicPoll          @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent        MusicPollComment?  @relation("MusicPollCommentParent", fields: [parentId], references: [id], onDelete: SetNull)
+  replies       MusicPollComment[] @relation("MusicPollCommentParent")
+  root          MusicPollComment?  @relation("MusicPollCommentRoot", fields: [rootId], references: [id], onDelete: SetNull)
+  threadReplies MusicPollComment[] @relation("MusicPollCommentRoot")
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -748,6 +777,6 @@ model MusicPollComment {
 
   @@index([pollId, createdAt])
   @@index([userId])
+  @@index([parentId, createdAt])
+  @@index([rootId, createdAt])
 }
-
-

@@ -211,7 +211,7 @@ async function fetchLikedItems(userId: string): Promise<MusicListItem[]> {
             _count: {
               select: {
                 likes: true,
-                comments: true,
+                comments: { where: { deletedAt: null } },
               },
             },
             tags: {
@@ -266,7 +266,7 @@ async function fetchLikedItems(userId: string): Promise<MusicListItem[]> {
             _count: {
               select: {
                 likes: true,
-                comments: true,
+                comments: { where: { deletedAt: null } },
               },
             },
             tags: {
@@ -384,7 +384,7 @@ async function fetchBookmarkedItems(userId: string): Promise<MusicListItem[]> {
             _count: {
               select: {
                 likes: true,
-                comments: true,
+                comments: { where: { deletedAt: null } },
               },
             },
             tags: {
@@ -439,7 +439,7 @@ async function fetchBookmarkedItems(userId: string): Promise<MusicListItem[]> {
             _count: {
               select: {
                 likes: true,
-                comments: true,
+                comments: { where: { deletedAt: null } },
               },
             },
             tags: {

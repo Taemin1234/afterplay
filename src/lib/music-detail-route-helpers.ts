@@ -5,6 +5,7 @@ import prisma from '@/lib/prisma';
 export type MusicDetailActionPayload = {
   action?: 'toggle-like' | 'toggle-bookmark' | 'toggle-featured' | 'comment' | 'edit-comment' | 'delete-comment';
   commentId?: string;
+  parentCommentId?: string;
   content?: string;
   sectionId?: string;
   enabled?: boolean;
@@ -20,11 +21,24 @@ type Actor = {
 type CommentTarget = {
   id: string;
   userId: string;
+  parentId: string | null;
+  rootId: string | null;
+  deletedAt: Date | null;
+  user: {
+    id: string;
+    nickname: string | null;
+  };
+  _count: {
+    replies: number;
+  };
 };
 
 type CommentWithAuthor = {
   id: string;
   content: string;
+  parentId: string | null;
+  rootId: string | null;
+  deletedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
   user: {
@@ -33,6 +47,16 @@ type CommentWithAuthor = {
     avatarUrl: string | null;
     role: 'USER' | 'ADMIN';
   };
+  parent: {
+    id: string;
+    user: {
+      id: string;
+      nickname: string | null;
+    };
+  } | null;
+  _count: {
+    replies: number;
+  };
 };
 
 // 댓글 작성/수정/삭제 흐름 (앨범, 플레이는 외부에서 결정)
@@ -40,10 +64,13 @@ type HandleCommentActionsArgs = {
   action: MusicDetailActionPayload['action'];
   body: MusicDetailActionPayload;
   actor: Actor;
-  createComment: (content: string) => Promise<CommentWithAuthor>;
+  createComment: (
+    content: string,
+    thread: { parentId: string | null; rootId: string | null }
+  ) => Promise<CommentWithAuthor>;
   findCommentTarget: (commentId: string) => Promise<CommentTarget | null>;
   updateComment: (commentId: string, content: string) => Promise<CommentWithAuthor>;
-  deleteComment: (commentId: string) => Promise<void>;
+  deleteComment: (commentId: string) => Promise<CommentWithAuthor>;
   countComments: () => Promise<number>;
   canDelete?: (params: { actor: Actor; targetUserId: string }) => boolean;
 };
@@ -56,10 +83,20 @@ function badRequest(error: string) {
 function toCommentResponse(comment: CommentWithAuthor) {
   return {
     id: comment.id,
-    content: comment.content,
+    content: comment.deletedAt ? '삭제된 댓글입니다' : comment.content,
+    parentId: comment.parentId,
+    rootId: comment.rootId,
+    isDeleted: Boolean(comment.deletedAt),
+    hasReplies: comment._count.replies > 0,
     createdAt: comment.createdAt.toISOString(),
     updatedAt: comment.updatedAt.toISOString(),
     user: comment.user,
+    replyTo: comment.parent
+      ? {
+          commentId: comment.parent.id,
+          user: comment.parent.user,
+        }
+      : null,
   };
 }
 
@@ -107,7 +144,18 @@ export async function handleCommentActions(args: HandleCommentActionsArgs): Prom
     if ('error' in parsed) return badRequest(parsed.error);
 
     // 댓글 생성 (api에서 진행)
-    const comment = await args.createComment(parsed.content);
+    let parent: CommentTarget | null = null;
+    if (args.body.parentCommentId?.trim()) {
+      parent = await args.findCommentTarget(args.body.parentCommentId.trim());
+      if (!parent || parent.deletedAt) {
+        return NextResponse.json({ error: 'Parent comment not found' }, { status: 404 });
+      }
+    }
+
+    const comment = await args.createComment(parsed.content, {
+      parentId: parent?.id ?? null,
+      rootId: parent ? parent.rootId ?? parent.id : null,
+    });
     const commentsCount = await args.countComments();
 
     // 결과 응답
@@ -132,9 +180,15 @@ export async function handleCommentActions(args: HandleCommentActionsArgs): Prom
     if (!target) {
       return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
     }
+    if (target.deletedAt) {
+      return NextResponse.json({ error: 'Deleted comments cannot be edited' }, { status: 409 });
+    }
     // 수정 권한 체크(본인만)
     if (target.userId !== args.actor.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+    if (target._count.replies > 0) {
+      return NextResponse.json({ error: 'Comments with replies cannot be edited' }, { status: 409 });
     }
 
     // 수정 진행
@@ -156,18 +210,23 @@ export async function handleCommentActions(args: HandleCommentActionsArgs): Prom
     if (!target) {
       return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
     }
+    if (target.deletedAt) {
+      return NextResponse.json({ error: 'Comment already deleted' }, { status: 409 });
+    }
 
     if (!canDelete({ actor: args.actor, targetUserId: target.userId })) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    await args.deleteComment(parsedId.commentId);
+    const comment = await args.deleteComment(parsedId.commentId);
     const commentsCount = await args.countComments();
 
     return NextResponse.json({
       ok: true,
       action: 'delete-comment',
       commentId: parsedId.commentId,
+      hasReplies: target._count.replies > 0,
+      comment: toCommentResponse(comment),
       commentsCount,
     });
   }

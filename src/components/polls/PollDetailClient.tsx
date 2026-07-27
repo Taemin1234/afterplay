@@ -1,21 +1,20 @@
 'use client';
 
 import Image from 'next/image';
-import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, ExternalLink, MessageCircle, Play, Send, X } from 'lucide-react';
+import { Check, ExternalLink, MessageCircle, Play, X } from 'lucide-react';
 import Button from '@/components/ui/atoms/Button';
+import CommentSection from '@/components/ui/molecules/CommentSection';
 import PollCarousel from '@/components/polls/PollCarousel';
-import type { PollComment, PollDetail, PollOption } from '@/components/polls/types';
+import type { PollDetail, PollOption } from '@/components/polls/types';
 
 type PollDetailClientProps = {
   initialPoll: PollDetail;
   isLoggedIn: boolean;
+  isAdmin?: boolean;
   viewerUserId?: string | null;
 };
-
-const COMMENT_MAX_LENGTH = 500;
 
 function formatDate(value: string | null) {
   if (!value) return '무기한';
@@ -44,10 +43,6 @@ function statusLabel(poll: PollDetail) {
   if (poll.isClosed) return '종료';
   if (!poll.endsAt) return '진행중';
   return `마감 ${formatDate(poll.endsAt)}`;
-}
-
-function isEditedComment(comment: PollComment) {
-  return new Date(comment.updatedAt).getTime() > new Date(comment.createdAt).getTime();
 }
 
 function YouTubePreview({ option }: { option: PollOption }) {
@@ -188,19 +183,13 @@ function OptionPanel({
   );
 }
 
-export default function PollDetailClient({ initialPoll, isLoggedIn, viewerUserId = null }: PollDetailClientProps) {
+export default function PollDetailClient({ initialPoll, isLoggedIn, isAdmin = false, viewerUserId = null }: PollDetailClientProps) {
   const router = useRouter();
   const [poll, setPoll] = useState(initialPoll);
   const [selectedOptionId, setSelectedOptionId] = useState(initialPoll.viewerVote?.optionId ?? '');
   const [isVoting, setIsVoting] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [voteError, setVoteError] = useState<string | null>(null);
-
-  const [commentInput, setCommentInput] = useState('');
-  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
-  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
-  const [editingCommentInput, setEditingCommentInput] = useState('');
-  const [pendingCommentId, setPendingCommentId] = useState<string | null>(null);
 
   const canSeeResults = Boolean(poll.viewerVote) || poll.isClosed;
   const loginHref = useMemo(() => `/auth/login?next=${encodeURIComponent(`/polls/${poll.id}`)}`, [poll.id]);
@@ -212,12 +201,6 @@ export default function PollDetailClient({ initialPoll, isLoggedIn, viewerUserId
     setShowLoginPrompt(false);
     setVoteError(null);
 
-    if (!isLoggedIn) {
-      setCommentInput('');
-      setEditingCommentId(null);
-      setEditingCommentInput('');
-      setPendingCommentId(null);
-    }
   }, [initialPoll, isLoggedIn]);
 
   const requireLogin = () => {
@@ -250,88 +233,6 @@ export default function PollDetailClient({ initialPoll, isLoggedIn, viewerUserId
       setVoteError(e instanceof Error ? e.message : '투표에 실패했습니다.');
     } finally {
       setIsVoting(false);
-    }
-  };
-
-  const submitComment = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!requireLogin() || isSubmittingComment) return;
-
-    const content = commentInput.trim();
-    if (!content) return;
-
-    setIsSubmittingComment(true);
-    try {
-      const response = await fetch(`/api/polls/${poll.id}/comments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'comment', content }),
-      });
-      if (!response.ok) throw new Error('failed');
-      const data = (await response.json()) as { comment: PollComment; commentsCount: number };
-      setPoll((current) => ({
-        ...current,
-        comments: [data.comment, ...current.comments],
-        commentsCount: data.commentsCount,
-      }));
-      setCommentInput('');
-    } catch {
-      alert('댓글 등록 중 오류가 발생했습니다.');
-    } finally {
-      setIsSubmittingComment(false);
-    }
-  };
-
-  const updateComment = async (commentId: string) => {
-    if (!requireLogin() || pendingCommentId) return;
-
-    const content = editingCommentInput.trim();
-    if (!content) return;
-
-    setPendingCommentId(commentId);
-    try {
-      const response = await fetch(`/api/polls/${poll.id}/comments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'edit-comment', commentId, content }),
-      });
-      if (!response.ok) throw new Error('failed');
-      const data = (await response.json()) as { comment: PollComment };
-      setPoll((current) => ({
-        ...current,
-        comments: current.comments.map((comment) => (comment.id === commentId ? data.comment : comment)),
-      }));
-      setEditingCommentId(null);
-      setEditingCommentInput('');
-    } catch {
-      alert('댓글 수정 중 오류가 발생했습니다.');
-    } finally {
-      setPendingCommentId(null);
-    }
-  };
-
-  const deleteComment = async (commentId: string) => {
-    if (!requireLogin() || pendingCommentId) return;
-    if (!window.confirm('댓글을 삭제하시겠습니까?')) return;
-
-    setPendingCommentId(commentId);
-    try {
-      const response = await fetch(`/api/polls/${poll.id}/comments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'delete-comment', commentId }),
-      });
-      if (!response.ok) throw new Error('failed');
-      const data = (await response.json()) as { commentsCount: number };
-      setPoll((current) => ({
-        ...current,
-        comments: current.comments.filter((comment) => comment.id !== commentId),
-        commentsCount: data.commentsCount,
-      }));
-    } catch {
-      alert('댓글 삭제 중 오류가 발생했습니다.');
-    } finally {
-      setPendingCommentId(null);
     }
   };
 
@@ -424,86 +325,20 @@ export default function PollDetailClient({ initialPoll, isLoggedIn, viewerUserId
         </div>
       </article>
 
-      <section className="rounded-lg border border-white/10 bg-bg2 p-4 sm:p-6">
-        <h2 className="text-lg font-semibold text-white">댓글</h2>
-        {!isLoggedIn ? <p className="mt-2 text-sm text-slate-400">댓글 작성은 로그인이 필요합니다.</p> : null}
-
-        <form onSubmit={submitComment} className="mt-4 space-y-2">
-          <textarea
-            value={commentInput}
-            onChange={(e) => setCommentInput(e.target.value)}
-            maxLength={COMMENT_MAX_LENGTH}
-            disabled={!isLoggedIn || isSubmittingComment}
-            placeholder={isLoggedIn ? '댓글을 입력해주세요.' : '로그인 후 댓글을 작성할 수 있습니다.'}
-            className="h-24 w-full resize-none rounded-md border border-slate-700 bg-[#070b16] px-3 py-2 text-sm text-white outline-none focus:border-point disabled:cursor-not-allowed disabled:opacity-60"
-          />
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-500">
-              {commentInput.length}/{COMMENT_MAX_LENGTH}
-            </span>
-            <Button type="submit" size="sm" icon={<Send className="h-4 w-4" />} disabled={!isLoggedIn || !commentInput.trim() || isSubmittingComment}>
-              댓글 등록
-            </Button>
-          </div>
-        </form>
-
-        <ul className="mt-5 space-y-3">
-          {poll.comments.map((comment) => (
-            <li key={comment.id} className="rounded-lg border border-slate-800/80 bg-black/20 p-3">
-              <div className="flex items-center justify-between gap-3 text-xs text-slate-400">
-                <span className="min-w-0 truncate">{comment.user.nickname ?? '탈퇴한 사용자'}</span>
-                <span className="shrink-0">
-                  {formatShortDate(comment.createdAt)}
-                  {isEditedComment(comment) ? ' · 수정됨' : ''}
-                </span>
-              </div>
-              {editingCommentId === comment.id ? (
-                <div className="mt-2 space-y-2">
-                  <textarea
-                    value={editingCommentInput}
-                    onChange={(e) => setEditingCommentInput(e.target.value)}
-                    maxLength={COMMENT_MAX_LENGTH}
-                    disabled={pendingCommentId === comment.id}
-                    className="h-24 w-full resize-none rounded-md border border-slate-700 bg-[#070b16] px-3 py-2 text-sm text-white outline-none focus:border-point"
-                  />
-                  <div className="flex justify-end gap-2">
-                    <Button type="button" variant="outline" color="white" size="sm" onClick={() => setEditingCommentId(null)}>
-                      취소
-                    </Button>
-                    <Button type="button" size="sm" onClick={() => updateComment(comment.id)} disabled={!editingCommentInput.trim() || pendingCommentId === comment.id}>
-                      저장
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <p className="mt-2 whitespace-pre-wrap text-sm text-slate-100">{comment.content}</p>
-                  {comment.user.id === viewerUserId ? (
-                    <div className="mt-3 flex justify-end gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        color="white"
-                        size="sm"
-                        onClick={() => {
-                          setEditingCommentId(comment.id);
-                          setEditingCommentInput(comment.content);
-                        }}
-                      >
-                        수정
-                      </Button>
-                      <Button type="button" variant="danger" size="sm" onClick={() => deleteComment(comment.id)} disabled={pendingCommentId === comment.id}>
-                        삭제
-                      </Button>
-                    </div>
-                  ) : null}
-                </>
-              )}
-            </li>
-          ))}
-          {poll.comments.length === 0 ? <li className="py-6 text-center text-sm text-slate-500">아직 댓글이 없습니다.</li> : null}
-        </ul>
-      </section>
+      <CommentSection
+        apiEndpoint={`/api/polls/${poll.id}/comments`}
+        itemId={poll.id}
+        isLoggedIn={isLoggedIn}
+        isAdmin={isAdmin}
+        viewerUserId={viewerUserId}
+        loginHref={loginHref}
+        initialComments={poll.comments}
+        requireLogin={requireLogin}
+        onCommentsCountChange={(commentsCount) =>
+          setPoll((current) => ({ ...current, commentsCount }))
+        }
+        className="rounded-lg border border-white/10 bg-bg2 p-4 sm:p-6"
+      />
 
       <PollCarousel title="이 후보들의 다른 대결은?" items={poll.relatedPolls} navId="related-polls" />
 

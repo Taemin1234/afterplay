@@ -139,7 +139,7 @@ const baseSelect = {
   authorId: true,
   author: { select: { nickname: true } },
   createdAt: true,
-  _count: { select: { likes: true, comments: true } },
+  _count: { select: { likes: true, comments: { where: { deletedAt: null } } } },
   tags: { select: { tag: { select: { name: true } } } },
 } as const;
 

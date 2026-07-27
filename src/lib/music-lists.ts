@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+import { serializeCommentThread, type SerializedComment } from '@/lib/comment-threads';
 import type { FeedKind, ListSortOption, ListType, VisibilityScope } from "@/types";
 
 type FeedCursor = {
@@ -216,7 +217,7 @@ async function fetchListItemsByLikes(options: QueryOptions): Promise<ResponsePay
         authorId: true,
         createdAt: true,
         author: { select: { nickname: true } },
-        _count: { select: { likes: true, comments: true } },
+        _count: { select: { likes: true, comments: { where: { deletedAt: null } } } },
         tags: { select: { tag: { select: { name: true } } } },
         tracks: {
           orderBy: { order: 'asc' },
@@ -263,7 +264,7 @@ async function fetchListItemsByLikes(options: QueryOptions): Promise<ResponsePay
         authorId: true,
         createdAt: true,
         author: { select: { nickname: true } },
-        _count: { select: { likes: true, comments: true } },
+        _count: { select: { likes: true, comments: { where: { deletedAt: null } } } },
         tags: { select: { tag: { select: { name: true } } } },
         albums: {
           orderBy: { order: 'asc' },
@@ -310,7 +311,7 @@ async function fetchListItemsByLikes(options: QueryOptions): Promise<ResponsePay
         authorId: true,
         createdAt: true,
         author: { select: { nickname: true } },
-        _count: { select: { likes: true, comments: true } },
+        _count: { select: { likes: true, comments: { where: { deletedAt: null } } } },
         tags: { select: { tag: { select: { name: true } } } },
         tracks: {
           orderBy: { order: 'asc' },
@@ -331,7 +332,7 @@ async function fetchListItemsByLikes(options: QueryOptions): Promise<ResponsePay
         authorId: true,
         createdAt: true,
         author: { select: { nickname: true } },
-        _count: { select: { likes: true, comments: true } },
+        _count: { select: { likes: true, comments: { where: { deletedAt: null } } } },
         tags: { select: { tag: { select: { name: true } } } },
         albums: {
           orderBy: { order: 'asc' },
@@ -525,7 +526,7 @@ export async function fetchListItems(options: QueryOptions): Promise<ResponsePay
           authorId: true,
           createdAt: true,
           author: { select: { nickname: true } },
-          _count: { select: { likes: true, comments: true } },
+          _count: { select: { likes: true, comments: { where: { deletedAt: null } } } },
           tags: { select: { tag: { select: { name: true } } } },
           tracks: {
             orderBy: { order: 'asc' },
@@ -550,7 +551,7 @@ export async function fetchListItems(options: QueryOptions): Promise<ResponsePay
           authorId: true,
           createdAt: true,
           author: { select: { nickname: true } },
-          _count: { select: { likes: true, comments: true } },
+          _count: { select: { likes: true, comments: { where: { deletedAt: null } } } },
           tags: { select: { tag: { select: { name: true } } } },
           albums: {
             orderBy: { order: 'asc' },
@@ -657,18 +658,7 @@ export type PlaylistDetail = {
   viewerHasLiked: boolean;
   viewerHasBookmarked: boolean;
   featuredSectionIds: string[];
-  comments: Array<{
-    id: string;
-    content: string;
-    createdAt: string;
-    updatedAt: string;
-    user: {
-      id: string;
-      nickname: string | null;
-      avatarUrl: string | null;
-      role: 'USER' | 'ADMIN';
-    };
-  }>;
+  comments: SerializedComment[];
   musicItems: Array<{
     id: string;
     order: number;
@@ -700,18 +690,7 @@ export type AlbumListDetail = {
   viewerHasLiked: boolean;
   viewerHasBookmarked: boolean;
   featuredSectionIds: string[];
-  comments: Array<{
-    id: string;
-    content: string;
-    createdAt: string;
-    updatedAt: string;
-    user: {
-      id: string;
-      nickname: string | null;
-      avatarUrl: string | null;
-      role: 'USER' | 'ADMIN';
-    };
-  }>;
+  comments: SerializedComment[];
   musicItems: Array<{
     id: string;
     order: number;
@@ -876,11 +855,13 @@ export async function fetchPlaylistDetail(
         }
         : false,
       comments: {
-        where: { deletedAt: null },
         orderBy: { createdAt: 'desc' },
         select: {
           id: true,
           content: true,
+          parentId: true,
+          rootId: true,
+          deletedAt: true,
           createdAt: true,
           updatedAt: true,
           user: {
@@ -891,6 +872,13 @@ export async function fetchPlaylistDetail(
               role: true,
             },
           },
+          parent: {
+            select: {
+              id: true,
+              user: { select: { id: true, nickname: true } },
+            },
+          },
+          _count: { select: { replies: true } },
         },
       },
       tags: {
@@ -951,18 +939,7 @@ export async function fetchPlaylistDetail(
     viewerHasLiked: viewerUserId ? (playlist.likes?.length ?? 0) > 0 : false,
     viewerHasBookmarked: viewerUserId ? (playlist.bookmarks?.length ?? 0) > 0 : false,
     featuredSectionIds: featuredSettings.map((setting) => setting.sectionId),
-    comments: playlist.comments.map((comment) => ({
-      id: comment.id,
-      content: comment.content,
-      createdAt: comment.createdAt.toISOString(),
-      updatedAt: comment.updatedAt.toISOString(),
-      user: {
-        id: comment.user.id,
-        nickname: comment.user.nickname,
-        avatarUrl: comment.user.avatarUrl,
-        role: comment.user.role,
-      },
-    })),
+    comments: serializeCommentThread(playlist.comments),
     musicItems: playlist.tracks.map((entry) => ({
       id: entry.track.spotifyId,
       order: entry.order,
@@ -1031,11 +1008,13 @@ export async function fetchAlbumListDetail(
         }
         : false,
       comments: {
-        where: { deletedAt: null },
         orderBy: { createdAt: 'desc' },
         select: {
           id: true,
           content: true,
+          parentId: true,
+          rootId: true,
+          deletedAt: true,
           createdAt: true,
           updatedAt: true,
           user: {
@@ -1046,6 +1025,13 @@ export async function fetchAlbumListDetail(
               role: true,
             },
           },
+          parent: {
+            select: {
+              id: true,
+              user: { select: { id: true, nickname: true } },
+            },
+          },
+          _count: { select: { replies: true } },
         },
       },
       tags: {
@@ -1106,18 +1092,7 @@ export async function fetchAlbumListDetail(
     viewerHasLiked: viewerUserId ? (albumList.likes?.length ?? 0) > 0 : false,
     viewerHasBookmarked: viewerUserId ? (albumList.bookmarks?.length ?? 0) > 0 : false,
     featuredSectionIds: featuredSettings.map((setting) => setting.sectionId),
-    comments: albumList.comments.map((comment) => ({
-      id: comment.id,
-      content: comment.content,
-      createdAt: comment.createdAt.toISOString(),
-      updatedAt: comment.updatedAt.toISOString(),
-      user: {
-        id: comment.user.id,
-        nickname: comment.user.nickname,
-        avatarUrl: comment.user.avatarUrl,
-        role: comment.user.role,
-      },
-    })),
+    comments: serializeCommentThread(albumList.comments),
     musicItems: albumList.albums.map((entry) => ({
       id: entry.album.spotifyId,
       order: entry.order,

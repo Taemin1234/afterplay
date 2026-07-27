@@ -244,16 +244,21 @@ export async function POST(request: Request, context: RouteContext) {
         id: user.id,
         role: dbUser?.role ?? 'USER',
       },
-      createComment: async (content) =>
+      createComment: async (content, thread) =>
         prisma.albumListComment.create({
           data: {
             content,
             userId: user.id,
             albumListId: id,
+            parentId: thread.parentId,
+            rootId: thread.rootId,
           },
           select: {
             id: true,
             content: true,
+            parentId: true,
+            rootId: true,
+            deletedAt: true,
             createdAt: true,
             updatedAt: true,
             user: {
@@ -264,6 +269,13 @@ export async function POST(request: Request, context: RouteContext) {
                 role: true,
               },
             },
+            parent: {
+              select: {
+                id: true,
+                user: { select: { id: true, nickname: true } },
+              },
+            },
+            _count: { select: { replies: true } },
           },
         }),
       findCommentTarget: async (commentId) =>
@@ -271,9 +283,16 @@ export async function POST(request: Request, context: RouteContext) {
           where: {
             id: commentId,
             albumListId: id,
-            deletedAt: null,
           },
-          select: { id: true, userId: true },
+          select: {
+            id: true,
+            userId: true,
+            parentId: true,
+            rootId: true,
+            deletedAt: true,
+            user: { select: { id: true, nickname: true } },
+            _count: { select: { replies: true } },
+          },
         }),
       updateComment: async (commentId, content) =>
         prisma.albumListComment.update({
@@ -282,6 +301,9 @@ export async function POST(request: Request, context: RouteContext) {
           select: {
             id: true,
             content: true,
+            parentId: true,
+            rootId: true,
+            deletedAt: true,
             createdAt: true,
             updatedAt: true,
             user: {
@@ -292,13 +314,44 @@ export async function POST(request: Request, context: RouteContext) {
                 role: true,
               },
             },
+            parent: {
+              select: {
+                id: true,
+                user: { select: { id: true, nickname: true } },
+              },
+            },
+            _count: { select: { replies: true } },
           },
         }),
-      deleteComment: async (commentId) => {
-        await prisma.albumListComment.delete({
+      deleteComment: async (commentId) =>
+        prisma.albumListComment.update({
           where: { id: commentId },
-        });
-      },
+          data: { deletedAt: new Date() },
+          select: {
+            id: true,
+            content: true,
+            parentId: true,
+            rootId: true,
+            deletedAt: true,
+            createdAt: true,
+            updatedAt: true,
+            user: {
+              select: {
+                id: true,
+                nickname: true,
+                avatarUrl: true,
+                role: true,
+              },
+            },
+            parent: {
+              select: {
+                id: true,
+                user: { select: { id: true, nickname: true } },
+              },
+            },
+            _count: { select: { replies: true } },
+          },
+        }),
       countComments: async () =>
         prisma.albumListComment.count({
           where: {

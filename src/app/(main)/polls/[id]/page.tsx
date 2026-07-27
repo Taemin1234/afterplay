@@ -54,6 +54,12 @@ export async function generateMetadata({ params }: PollDetailPageProps): Promise
 export default async function PollDetailPage({ params }: PollDetailPageProps) {
   const { id } = await params;
   const user = await getAuthenticatedUser();
+  const dbUser = user
+    ? await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { role: true },
+      })
+    : null;
   const poll = await serializePoll(id, user?.id ?? null);
 
   if (!poll) {
@@ -117,6 +123,7 @@ export default async function PollDetailPage({ params }: PollDetailPageProps) {
         otherPolls: others.filter((item) => item !== null),
       }}
       isLoggedIn={Boolean(user)}
+      isAdmin={dbUser?.role === 'ADMIN'}
       viewerUserId={user?.id ?? null}
     />
   );

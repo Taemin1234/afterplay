@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getAuthenticatedUser, upsertDbUser } from '@/lib/music-list-api';
 import { handleCommentActions, type MusicDetailActionPayload } from '@/lib/music-detail-route-helpers';
+import { serializeCommentThread } from '@/lib/comment-threads';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -24,11 +25,14 @@ export async function GET(_request: Request, context: RouteContext) {
     }
 
     const comments = await prisma.musicPollComment.findMany({
-      where: { pollId: id, deletedAt: null },
+      where: { pollId: id },
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
         content: true,
+        parentId: true,
+        rootId: true,
+        deletedAt: true,
         createdAt: true,
         updatedAt: true,
         user: {
@@ -39,18 +43,17 @@ export async function GET(_request: Request, context: RouteContext) {
             role: true,
           },
         },
+        parent: {
+          select: {
+            id: true,
+            user: { select: { id: true, nickname: true } },
+          },
+        },
+        _count: { select: { replies: true } },
       },
     });
 
-    return NextResponse.json(
-      comments.map((comment) => ({
-        id: comment.id,
-        content: comment.content,
-        createdAt: comment.createdAt.toISOString(),
-        updatedAt: comment.updatedAt.toISOString(),
-        user: comment.user,
-      }))
-    );
+    return NextResponse.json(serializeCommentThread(comments));
   } catch (error) {
     console.error('[api/polls/[id]/comments] GET failed', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
@@ -91,16 +94,21 @@ export async function POST(request: Request, context: RouteContext) {
         id: user.id,
         role: dbUser?.role ?? 'USER',
       },
-      createComment: async (content) =>
+      createComment: async (content, thread) =>
         prisma.musicPollComment.create({
           data: {
             content,
             userId: user.id,
             pollId: id,
+            parentId: thread.parentId,
+            rootId: thread.rootId,
           },
           select: {
             id: true,
             content: true,
+            parentId: true,
+            rootId: true,
+            deletedAt: true,
             createdAt: true,
             updatedAt: true,
             user: {
@@ -111,6 +119,13 @@ export async function POST(request: Request, context: RouteContext) {
                 role: true,
               },
             },
+            parent: {
+              select: {
+                id: true,
+                user: { select: { id: true, nickname: true } },
+              },
+            },
+            _count: { select: { replies: true } },
           },
         }),
       findCommentTarget: async (commentId) =>
@@ -118,9 +133,16 @@ export async function POST(request: Request, context: RouteContext) {
           where: {
             id: commentId,
             pollId: id,
-            deletedAt: null,
           },
-          select: { id: true, userId: true },
+          select: {
+            id: true,
+            userId: true,
+            parentId: true,
+            rootId: true,
+            deletedAt: true,
+            user: { select: { id: true, nickname: true } },
+            _count: { select: { replies: true } },
+          },
         }),
       updateComment: async (commentId, content) =>
         prisma.musicPollComment.update({
@@ -129,6 +151,9 @@ export async function POST(request: Request, context: RouteContext) {
           select: {
             id: true,
             content: true,
+            parentId: true,
+            rootId: true,
+            deletedAt: true,
             createdAt: true,
             updatedAt: true,
             user: {
@@ -139,13 +164,44 @@ export async function POST(request: Request, context: RouteContext) {
                 role: true,
               },
             },
+            parent: {
+              select: {
+                id: true,
+                user: { select: { id: true, nickname: true } },
+              },
+            },
+            _count: { select: { replies: true } },
           },
         }),
-      deleteComment: async (commentId) => {
-        await prisma.musicPollComment.delete({
+      deleteComment: async (commentId) =>
+        prisma.musicPollComment.update({
           where: { id: commentId },
-        });
-      },
+          data: { deletedAt: new Date() },
+          select: {
+            id: true,
+            content: true,
+            parentId: true,
+            rootId: true,
+            deletedAt: true,
+            createdAt: true,
+            updatedAt: true,
+            user: {
+              select: {
+                id: true,
+                nickname: true,
+                avatarUrl: true,
+                role: true,
+              },
+            },
+            parent: {
+              select: {
+                id: true,
+                user: { select: { id: true, nickname: true } },
+              },
+            },
+            _count: { select: { replies: true } },
+          },
+        }),
       countComments: async () =>
         prisma.musicPollComment.count({
           where: {

@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+import { serializeCommentThread } from '@/lib/comment-threads';
 
 export type PollItemTypeValue = 'TRACK' | 'ALBUM';
 export type PollStatusValue = 'OPEN' | 'CLOSED';
@@ -328,11 +329,13 @@ export async function serializePoll(pollId: string, viewerUserId?: string | null
         orderBy: { order: 'asc' },
       },
       comments: {
-        where: { deletedAt: null },
         orderBy: { createdAt: 'desc' },
         select: {
           id: true,
           content: true,
+          parentId: true,
+          rootId: true,
+          deletedAt: true,
           createdAt: true,
           updatedAt: true,
           user: {
@@ -343,6 +346,13 @@ export async function serializePoll(pollId: string, viewerUserId?: string | null
               role: true,
             },
           },
+          parent: {
+            select: {
+              id: true,
+              user: { select: { id: true, nickname: true } },
+            },
+          },
+          _count: { select: { replies: true } },
         },
       },
       _count: {
@@ -409,13 +419,7 @@ export async function serializePoll(pollId: string, viewerUserId?: string | null
         }
       : null,
     results: canSeeResults ? { totalVotes: results.totalVotes } : null,
-    comments: poll.comments.map((comment) => ({
-      id: comment.id,
-      content: comment.content,
-      createdAt: comment.createdAt.toISOString(),
-      updatedAt: comment.updatedAt.toISOString(),
-      user: comment.user,
-    })),
+    comments: serializeCommentThread(poll.comments),
     commentsCount: poll._count.comments,
   };
 }
