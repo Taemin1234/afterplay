@@ -111,7 +111,7 @@
 #### Vercel
 - **사용 목적**: Next.js 애플리케이션 배포 및 호스팅
 - **적용 위치**:
-  - `dustpeakclub.vercel.app` 기준 메타데이터 구성
+  - `www.dustpeakclub.com` 기준 메타데이터 구성
   - App Router, 서버 컴포넌트, Route Handler 배포
 
 #### Supabase

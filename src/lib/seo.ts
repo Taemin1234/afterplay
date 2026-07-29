@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 // 환경변수가 없을 때 사용
-const DEFAULT_SITE_URL = 'https://dustpeakclub.vercel.app';
+const DEFAULT_SITE_URL = 'https://www.dustpeakclub.com';
 
 export const SITE_NAME = 'dustpeakclub';
 export const SITE_TITLE = 'dustpeakclub | Collect your dust, Build our peak.';
