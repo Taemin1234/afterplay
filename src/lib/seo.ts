@@ -53,11 +53,20 @@ export function buildDefaultMetadata(): Metadata {
       title: SITE_TITLE,
       description: SITE_DESCRIPTION,
       locale: 'ko_KR',
+      images: [
+        {
+          url: '/main-og.png',
+          width: 1200,
+          height: 636,
+          alt: SITE_NAME,
+        },
+      ],
     },
     twitter: {
       card: 'summary_large_image',
       title: SITE_TITLE,
       description: SITE_DESCRIPTION,
+      images: ['/main-og.png'],
     },
     category: 'music', // 사이트 성향/카테고리
     robots: {
