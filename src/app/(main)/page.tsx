@@ -88,43 +88,45 @@ export default async function Home() {
   )).filter((poll) => poll !== null);
 
   return (
-    <div className="space-y-10 pb-8 sm:space-y-14">
-      <ParticleLogoIntro />
-      <div className="flex items-center min-h-[120px] bg-[linear-gradient(rgba(0,0,0,0.5),rgba(0,0,0,0.5)),url('/dot_deco.png')] bg-[length:100%_100%,auto_clamp(150px,41.7dvw,400px)]
-    bg-[position:0_0,right_calc(50%+20px)] bg-no-repeat">
-        <h1 className='text-xl font-bold mt-3.5 sm:text-2xl md:text-3xl'>취향의 수집, 음악의 대화<br/> 여러분의 취향을 공유해주세요.</h1>
+    <>
+       <ParticleLogoIntro />
+      <div className="space-y-10 pb-8 sm:space-y-14">
+        <div className="flex items-center min-h-[120px] bg-[linear-gradient(rgba(0,0,0,0.5),rgba(0,0,0,0.5)),url('/dot_deco.png')] bg-[length:100%_100%,auto_clamp(150px,41.7dvw,400px)]
+      bg-[position:0_0,right_calc(50%+20px)] bg-no-repeat">
+          <h1 className='text-xl font-bold mt-3.5 sm:text-2xl md:text-3xl'>취향의 수집, 음악의 대화<br/> 여러분의 취향을 공유해주세요.</h1>
+        </div>
+        <HomeSection title="PEAK N PICK" href="/polls">
+          {polls.length > 0 ? (
+            <ul className="grid grid-cols-2 items-stretch gap-4 lg:grid-cols-4 lg:gap-6">
+              {polls.map((poll) => (
+                <li key={poll.id}>
+                  <PollCard poll={poll} />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <EmptyPreview message="등록된 Peak n Pick이 없어요." />
+          )}
+        </HomeSection>
+
+        <HomeSection title="Our Dust" href="/lists">
+          {listResult.items.length > 0
+            ? <MusicListGrid items={listResult.items} preview />
+            : <EmptyPreview message="등록된 리스트가 없어요." />}
+        </HomeSection>
+
+        <HomeSection title="이주의 신곡" href="/weekly-new-releases">
+          {weeklyResult.items.length > 0
+            ? <MusicListGrid items={weeklyResult.items} preview />
+            : <EmptyPreview message="선정된 이주의 신곡이 없어요." />}
+        </HomeSection>
+
+        {/* <HomeSection title="스페셜 세트" href="/featured">
+          {featuredResult.items.length > 0
+            ? <MusicListGrid items={featuredResult.items} preview />
+            : <EmptyPreview message="선정된 스페셜 세트가 없어요." />}
+        </HomeSection> */}
       </div>
-      <HomeSection title="PEAK N PICK" href="/polls">
-        {polls.length > 0 ? (
-          <ul className="grid grid-cols-2 items-stretch gap-4 lg:grid-cols-4 lg:gap-6">
-            {polls.map((poll) => (
-              <li key={poll.id}>
-                <PollCard poll={poll} />
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <EmptyPreview message="등록된 Peak n Pick이 없어요." />
-        )}
-      </HomeSection>
-
-      <HomeSection title="Our Dust" href="/lists">
-        {listResult.items.length > 0
-          ? <MusicListGrid items={listResult.items} preview />
-          : <EmptyPreview message="등록된 리스트가 없어요." />}
-      </HomeSection>
-
-      <HomeSection title="이주의 신곡" href="/weekly-new-releases">
-        {weeklyResult.items.length > 0
-          ? <MusicListGrid items={weeklyResult.items} preview />
-          : <EmptyPreview message="선정된 이주의 신곡이 없어요." />}
-      </HomeSection>
-
-      {/* <HomeSection title="스페셜 세트" href="/featured">
-        {featuredResult.items.length > 0
-          ? <MusicListGrid items={featuredResult.items} preview />
-          : <EmptyPreview message="선정된 스페셜 세트가 없어요." />}
-      </HomeSection> */}
-    </div>
+    </>
   );
 }
