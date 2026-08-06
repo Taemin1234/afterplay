@@ -31,13 +31,13 @@ export default function MobileBottomNav({ user }: MobileBottomNavProps) {
     },
     {
       href: '/lists',
-      label: '리스트',
+      label: '뮤직 컬렉션',
       icon: ListMusic,
       isActive: (path) => path.startsWith('/lists'),
     },
     {
       href: '/polls',
-      label: 'PICK',
+      label: 'PEAK N PICK',
       icon: Vote,
       isActive: (path) => path.startsWith('/polls'),
     },
@@ -79,9 +79,7 @@ export default function MobileBottomNav({ user }: MobileBottomNavProps) {
               key={item.href}
               href={item.href}
               aria-current={active ? 'page' : undefined}
-              className={`flex min-w-0 flex-col items-center justify-center gap-1 transition-colors ${
-                active ? 'text-point' : 'text-slate-400 hover:text-slate-100'
-              }`}
+              className={`flex min-w-0 flex-col items-center justify-center gap-1 transition-colors ${active ? 'text-point' : 'text-slate-400 hover:text-slate-100'}`}
             >
               <Icon className="h-5 w-5" />
               <span className="max-w-full truncate px-1 text-[11px] font-medium">{item.label}</span>

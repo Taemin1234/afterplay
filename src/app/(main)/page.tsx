@@ -91,7 +91,7 @@ export default async function Home() {
     <>
        <ParticleLogoIntro />
       <div className="space-y-10 pb-8 sm:space-y-14">
-        <div className="flex items-center min-h-[120px] bg-[linear-gradient(rgba(0,0,0,0.5),rgba(0,0,0,0.5)),url('/dot_deco.png')] bg-[length:100%_100%,auto_clamp(150px,41.7dvw,400px)]
+        <div className="flex items-center p-8 min-h-[150px] bg-[linear-gradient(rgba(0,0,0,0.5),rgba(0,0,0,0.5)),url('/dot_deco.png')] bg-[length:100%_100%,auto_clamp(150px,41.7dvw,400px)]
       bg-[position:0_0,right_calc(50%+20px)] bg-no-repeat">
           <h1 className='text-xl font-bold mt-3.5 sm:text-2xl md:text-3xl'>취향의 수집, 음악의 대화<br/> 여러분의 취향을 공유해주세요.</h1>
         </div>
@@ -109,10 +109,10 @@ export default async function Home() {
           )}
         </HomeSection>
 
-        <HomeSection title="Our Dust" href="/lists">
+        <HomeSection title="뮤직 컬렉션" href="/lists">
           {listResult.items.length > 0
             ? <MusicListGrid items={listResult.items} preview />
-            : <EmptyPreview message="등록된 리스트가 없어요." />}
+            : <EmptyPreview message="등록된 컬렉션이 없어요." />}
         </HomeSection>
 
         <HomeSection title="이주의 신곡" href="/weekly-new-releases">

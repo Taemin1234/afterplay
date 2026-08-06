@@ -30,7 +30,7 @@ const contentNavigation: NavigationItem[] = [
   },
   {
     href: '/lists',
-    label: '음악 리스트',
+    label: '뮤직 컬렉션',
     isActive: (pathname) => pathname.startsWith('/lists'),
   },
   {
