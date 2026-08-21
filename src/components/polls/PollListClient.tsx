@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Search, X } from 'lucide-react';
+import { ChevronDown, Search, X } from 'lucide-react';
+import Button from '@/components/ui/atoms/Button';
 import PollCard from '@/components/polls/PollCard';
 import type { PollItemType, PollListItem } from '@/components/polls/types';
 
@@ -9,8 +10,11 @@ type PollListClientProps = {
   initialPolls: PollListItem[];
 };
 
+const PAGE_SIZE = 16;
+
 export default function PollListClient({ initialPolls }: PollListClientProps) {
   const [polls, setPolls] = useState<PollListItem[]>(initialPolls);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [queryInput, setQueryInput] = useState('');
   const [query, setQuery] = useState('');
   const [itemType, setItemType] = useState<'ALL' | PollItemType>('ALL');
@@ -30,6 +34,7 @@ export default function PollListClient({ initialPolls }: PollListClientProps) {
       if (!response.ok) throw new Error('투표 목록을 불러오지 못했습니다.');
       const data = (await response.json()) as PollListItem[];
       setPolls(data);
+      setVisibleCount(PAGE_SIZE);
     } catch (e) {
       setError(e instanceof Error ? e.message : '투표 목록을 불러오지 못했습니다.');
     } finally {
@@ -94,13 +99,28 @@ export default function PollListClient({ initialPolls }: PollListClientProps) {
         <p className="rounded-lg border border-white/10 bg-bg2 py-12 text-center text-sm text-slate-500">아직 내용이 없어요. 조금만 기다려주세요</p>
       ) : null}
       {!isLoading && polls.length > 0 ? (
-        <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {polls.map((poll) => (
-            <li key={poll.id}>
-              <PollCard poll={poll} />
-            </li>
-          ))}
-        </ul>
+        <>
+          <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {polls.slice(0, visibleCount).map((poll) => (
+              <li key={poll.id}>
+                <PollCard poll={poll} />
+              </li>
+            ))}
+          </ul>
+          {visibleCount < polls.length ? (
+            <div className="flex justify-center pt-2">
+              <Button
+                variant="outline"
+                rounded="md"
+                onClick={() => setVisibleCount((count) => Math.min(count + PAGE_SIZE, polls.length))}
+                icon={<ChevronDown size={18} />}
+                className="bg-app-bg/70 px-5"
+              >
+                더보기
+              </Button>
+            </div>
+          ) : null}
+        </>
       ) : null}
     </section>
   );
