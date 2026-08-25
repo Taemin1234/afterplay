@@ -14,7 +14,7 @@ export default function Footer() {
         <div>
           <Image
             src="/logo_2line.png"
-            alt="로고"
+            alt="더스트피크클럽(DustpeakClub) 로고"
             width={160}
             height={57}
             className="h-auto w-[clamp(100px,16vw,160px)]"

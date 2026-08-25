@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
-const EFFECTIVE_DATE = '2026년 6월 4일';
-const CONTACT_EMAIL = 'contact@dustpeakclub.com';
+const EFFECTIVE_DATE = '2026년 8월 29일';
+const CONTACT_EMAIL = 'dustpeakclub@gmail.com';
 
 export const metadata: Metadata = {
   title: '개인정보처리방침',

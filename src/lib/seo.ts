@@ -4,8 +4,9 @@ import type { Metadata } from 'next';
 const DEFAULT_SITE_URL = 'https://www.dustpeakclub.com';
 
 export const SITE_NAME = 'dustpeakclub';
-export const SITE_TITLE = 'dustpeakclub | Collect your dust, Build our peak.';
-export const SITE_DESCRIPTION ="흩날리는 먼지(Dust) 같은 개개인의 플레이리스트가 한곳에 모여, 거대한 아카이브의 봉우리(Peak)를 완성합니다. 'Dust Peak'는 티끌 모아 태산이 되듯, 우리 모두의 조각난 감상들을 엮어 가장 높은 음악적 경험을 공유하고자 합니다.";
+export const SITE_NAME_KO = '더스트피크클럽';
+export const SITE_TITLE = `${SITE_NAME_KO}(DustpeakClub) | Collect your dust, Build our peak.`;
+export const SITE_DESCRIPTION = `${SITE_NAME_KO}(DustpeakClub)은 플레이리스트와 앨범리스트를 만들고 음악 취향을 공유하는 음악 커뮤니티입니다. 흩날리는 먼지(Dust) 같은 개개인의 플레이리스트가 한곳에 모여 거대한 아카이브의 봉우리(Peak)를 완성합니다.`;
 
 // http:// 또는 https://로 시작하면 그대로 두고 아니면 붙인다.
 // url 끝에 붙은 /제거
@@ -37,7 +38,7 @@ export function buildDefaultMetadata(): Metadata {
 
   return {
     metadataBase,
-    applicationName: SITE_NAME,
+    applicationName: SITE_NAME_KO,
     title: {
       default: SITE_TITLE,
       template: `%s | ${SITE_NAME}`,
@@ -49,7 +50,7 @@ export function buildDefaultMetadata(): Metadata {
     openGraph: {
       type: 'website',
       url: '/',
-      siteName: SITE_NAME,
+      siteName: SITE_NAME_KO,
       title: SITE_TITLE,
       description: SITE_DESCRIPTION,
       locale: 'ko_KR',
@@ -58,7 +59,7 @@ export function buildDefaultMetadata(): Metadata {
           url: '/main-og.png',
           width: 1200,
           height: 636,
-          alt: SITE_NAME,
+          alt: `${SITE_NAME_KO}(DustpeakClub)`,
         },
       ],
     },

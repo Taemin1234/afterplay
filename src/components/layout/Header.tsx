@@ -74,7 +74,7 @@ export default function Header({ user, nickname, isAdmin = false }: HeaderProps)
           <Link href="/" className="group flex shrink-0 items-center gap-2">
             <Image
               src="/main_logo.png"
-              alt="DustpeakClub 홈"
+              alt="더스트피크클럽(DustpeakClub) 홈"
               width={225}
               height={53}
               className="h-auto w-[clamp(140px,22vw,210px)]"
