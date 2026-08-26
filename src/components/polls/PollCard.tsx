@@ -45,6 +45,8 @@ export default function PollCard({ poll }: PollCardProps) {
                 alt={option.title}
                 width={320}
                 height={320}
+                sizes="(min-width: 1024px) 128px, calc(25vw - 32px)"
+                quality={65}
                 className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
             </div>

@@ -77,6 +77,7 @@ export default function Header({ user, nickname, isAdmin = false }: HeaderProps)
               alt="더스트피크클럽(DustpeakClub) 홈"
               width={225}
               height={53}
+              sizes="(min-width: 1024px) 210px, 140px"
               className="h-auto w-[clamp(140px,22vw,210px)]"
               priority
             />

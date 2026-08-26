@@ -18,7 +18,6 @@ export default function Footer() {
             width={160}
             height={57}
             className="h-auto w-[clamp(100px,16vw,160px)]"
-            priority
           />
           <p className="mt-1 text-sm text-white">Collect your dust, Build our peak.</p>
         </div>

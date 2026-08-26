@@ -7,38 +7,30 @@ import { buildDefaultMetadata } from "@/lib/seo";
 const pretendard = localFont({
   src: "../fonts/PretendardVariable.woff2",
   display: "swap",
+  preload: false,
   variable: "--font-pretendard",
 });
 
 const paperlogy = localFont({
   src: [
     {
-      path: "../fonts/Paperlogy-3Light.ttf",
+      path: "../fonts/Paperlogy-3Light.woff2",
       weight: "300",
       style: "normal",
     },
     {
-      path: "../fonts/Paperlogy-4Regular.ttf",
-      weight: "400",
-      style: "normal",
-    },
-    {
-      path: "../fonts/Paperlogy-5Medium.ttf",
+      path: "../fonts/Paperlogy-5Medium.woff2",
       weight: "500",
       style: "normal",
     },
     {
-      path: "../fonts/Paperlogy-7Bold.ttf",
+      path: "../fonts/Paperlogy-7Bold.woff2",
       weight: "700",
-      style: "normal",
-    },
-    {
-      path: "../fonts/Paperlogy-8ExtraBold.ttf",
-      weight: "800",
       style: "normal",
     },
   ],
   display: "swap",
+  preload: false,
   variable: "--font-paperlogy",
 });
 

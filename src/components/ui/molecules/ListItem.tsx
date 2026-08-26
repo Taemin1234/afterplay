@@ -6,10 +6,9 @@ import type { MusicListItem } from "@/types";
 
 interface ListItemProps {
   item: MusicListItem;
-  priority?: boolean;
 }
 
-export default function ListItem({ item, priority = false }: ListItemProps) {
+export default function ListItem({ item }: ListItemProps) {
   const href = item.kind === "PLAYLIST" ? `/playlist/${item.id}` : `/albumlist/${item.id}`;
   const coverImage = item.previewImages?.[0] ?? null;
 
@@ -43,6 +42,8 @@ export default function ListItem({ item, priority = false }: ListItemProps) {
                   src={item.previewImages[2]}
                   width={130}
                   height={130}
+                  sizes="(min-width: 640px) 130px, 96px"
+                  quality={65}
                   alt="stack-3"
                   className="h-24 w-24 rounded-lg object-cover shadow-2xl sm:h-[130px] sm:w-[130px]"
                 />
@@ -54,6 +55,8 @@ export default function ListItem({ item, priority = false }: ListItemProps) {
                   src={item.previewImages[1]}
                   width={140}
                   height={140}
+                  sizes="(min-width: 640px) 140px, 104px"
+                  quality={65}
                   alt="stack-2"
                   className="h-[104px] w-[104px] rounded-lg object-cover shadow-xl sm:h-[140px] sm:w-[140px]"
                 />
@@ -65,9 +68,9 @@ export default function ListItem({ item, priority = false }: ListItemProps) {
                   src={coverImage}
                   width={150}
                   height={150}
+                  sizes="(min-width: 640px) 150px, 112px"
+                  quality={65}
                   alt={item.title}
-                  priority={priority}
-                  fetchPriority={priority ? "high" : undefined}
                   className="h-28 w-28 rounded-xl border-2 border-white/5 object-cover sm:h-[150px] sm:w-[150px]"
                 />
               ) : (
