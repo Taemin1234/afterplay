@@ -7,7 +7,11 @@ import type { PollListItem } from '@/components/polls/types';
 
 type PollCardProps = {
   poll: PollListItem;
+  imageSizes?: string;
+  preloadImages?: boolean;
 };
+
+const DEFAULT_IMAGE_SIZES = '(min-width: 1024px) 128px, calc(25vw - 32px)';
 
 function formatDate(value: string | null) {
   if (!value) return '무기한';
@@ -28,7 +32,11 @@ function statusLabel(poll: PollListItem) {
   return `마감 ${formatDate(poll.endsAt)}`;
 }
 
-export default function PollCard({ poll }: PollCardProps) {
+export default function PollCard({
+  poll,
+  imageSizes = DEFAULT_IMAGE_SIZES,
+  preloadImages = false,
+}: PollCardProps) {
   const [first, second] = poll.options;
 
   return (
@@ -45,8 +53,9 @@ export default function PollCard({ poll }: PollCardProps) {
                 alt={option.title}
                 width={320}
                 height={320}
-                sizes="(min-width: 1024px) 128px, calc(25vw - 32px)"
+                sizes={imageSizes}
                 quality={65}
+                preload={preloadImages}
                 className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
             </div>

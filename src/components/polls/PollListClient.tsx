@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronDown, Search, X } from 'lucide-react';
 import Button from '@/components/ui/atoms/Button';
 import PollCard from '@/components/polls/PollCard';
@@ -11,8 +11,11 @@ type PollListClientProps = {
 };
 
 const PAGE_SIZE = 16;
+const POLLS_IMAGE_SIZES =
+  '(min-width: 1280px) 163px, (min-width: 768px) calc(25vw - 34px), calc(50vw - 36px)';
 
 export default function PollListClient({ initialPolls }: PollListClientProps) {
+  const didMount = useRef(false);
   const [polls, setPolls] = useState<PollListItem[]>(initialPolls);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [queryInput, setQueryInput] = useState('');
@@ -48,7 +51,12 @@ export default function PollListClient({ initialPolls }: PollListClientProps) {
   }, [queryInput]);
 
   useEffect(() => {
-    loadPolls();
+    if (!didMount.current) {
+      didMount.current = true;
+      return;
+    }
+
+    void loadPolls();
   }, [loadPolls]);
 
   return (
@@ -67,9 +75,12 @@ export default function PollListClient({ initialPolls }: PollListClientProps) {
             <button
               key={option.value}
               type="button"
+              aria-pressed={itemType === option.value}
               onClick={() => setItemType(option.value as 'ALL' | PollItemType)}
               className={`rounded px-3 py-1.5 text-sm transition-colors cursor-pointer ${
-                itemType === option.value ? 'bg-point' : 'text-slate-300 hover:bg-white/10'
+                itemType === option.value
+                  ? 'bg-point font-semibold text-black'
+                  : 'text-slate-300 hover:bg-white/10'
               }`}
             >
               {option.label}
@@ -101,9 +112,13 @@ export default function PollListClient({ initialPolls }: PollListClientProps) {
       {!isLoading && polls.length > 0 ? (
         <>
           <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {polls.slice(0, visibleCount).map((poll) => (
+            {polls.slice(0, visibleCount).map((poll, index) => (
               <li key={poll.id}>
-                <PollCard poll={poll} />
+                <PollCard
+                  poll={poll}
+                  imageSizes={POLLS_IMAGE_SIZES}
+                  preloadImages={index === 0}
+                />
               </li>
             ))}
           </ul>
