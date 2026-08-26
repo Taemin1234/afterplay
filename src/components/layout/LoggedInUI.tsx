@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
 import IconButton from '@/components/ui/atoms/IconButton';
-import { createClient } from '@/utils/supabase/client';
 
 type LoggedInUIProps = {
   nickname?: string | null;
@@ -15,9 +14,11 @@ type LoggedInUIProps = {
 export default function LoggedInUI({ nickname, isAdmin = false }: LoggedInUIProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const supabase = createClient();
 
   const handleSignOut = async () => {
+    const { createClient } = await import('@/utils/supabase/client');
+    const supabase = createClient();
+
     // 1) Supabase 로그아웃: 브라우저 세션/쿠키 해제
     await supabase.auth.signOut();
 
