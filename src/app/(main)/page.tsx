@@ -118,7 +118,7 @@ export default async function Home() {
           />
           <div className="pointer-events-none absolute inset-0 bg-black/50" aria-hidden="true" />
           <h1 className='relative z-10 mt-3.5 text-xl font-bold sm:text-2xl md:text-3xl'>
-            {SITE_NAME_KO}, 취향의 수집과 음악의 대화<br />
+            취향의 수집과 음악의 대화<br />
             여러분의 취향을 공유해주세요.
           </h1>
         </div>
@@ -144,7 +144,7 @@ export default async function Home() {
 
         <HomeSection title="이주의 신곡" href="/weekly-new-releases">
           {weeklyResult.items.length > 0
-            ? <MusicListGrid items={weeklyResult.items} preview />
+            ? <MusicListGrid items={weeklyResult.items} preview detailPathPrefix="/weekly-new-releases" />
             : <EmptyPreview message="선정된 이주의 신곡이 없어요." />}
         </HomeSection>
 

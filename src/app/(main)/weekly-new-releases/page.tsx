@@ -13,6 +13,7 @@ export default function WeeklyNewReleasesPage() {
       title="이주의 신곡"
       description="이번 주의 신곡을 만나보세요."
       featuredSectionKey="weekly-new-releases"
+      detailPathPrefix="/weekly-new-releases"
     />
   );
 }

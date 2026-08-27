@@ -6,10 +6,12 @@ import type { MusicListItem } from "@/types";
 
 interface ListItemProps {
   item: MusicListItem;
+  detailPathPrefix?: string;
 }
 
-export default function ListItem({ item }: ListItemProps) {
-  const href = item.kind === "PLAYLIST" ? `/playlist/${item.id}` : `/albumlist/${item.id}`;
+export default function ListItem({ item, detailPathPrefix = "" }: ListItemProps) {
+  const detailPath = item.kind === "PLAYLIST" ? `/playlist/${item.id}` : `/albumlist/${item.id}`;
+  const href = `${detailPathPrefix}${detailPath}`;
   const coverImage = item.previewImages?.[0] ?? null;
 
   const MAX = 4;

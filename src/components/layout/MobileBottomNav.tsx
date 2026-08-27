@@ -33,7 +33,10 @@ export default function MobileBottomNav({ user }: MobileBottomNavProps) {
       href: '/lists',
       label: '뮤직 컬렉션',
       icon: ListMusic,
-      isActive: (path) => path.startsWith('/lists'),
+      isActive: (path) =>
+        path.startsWith('/lists') ||
+        path.startsWith('/playlist/') ||
+        path.startsWith('/albumlist/'),
     },
     {
       href: '/polls',

@@ -41,8 +41,8 @@ export default function TypeSelector<T extends string>({
 
   const getOptionClassName = (active: boolean) => {
     const optionStateClassName = active
-      ? "bg-neon-point/80 text-white"
-      : "text-gray-300 hover:bg-white/5";
+      ? "bg-neon-point text-black"
+      : "text-gray-100 hover:bg-white/5";
 
     if (variant === "subtle") {
       const subtleSizeClass =

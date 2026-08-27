@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronDown, Search, X } from 'lucide-react';
 import Button from '@/components/ui/atoms/Button';
+import TypeSelector from '@/components/ui/molecules/TypeSelector';
 import PollCard from '@/components/polls/PollCard';
 import type { PollItemType, PollListItem } from '@/components/polls/types';
 
@@ -13,6 +14,11 @@ type PollListClientProps = {
 const PAGE_SIZE = 16;
 const POLLS_IMAGE_SIZES =
   '(min-width: 1280px) 163px, (min-width: 768px) calc(25vw - 34px), calc(50vw - 36px)';
+const itemTypeOptions = [
+  { value: 'ALL', label: '전체' },
+  { value: 'TRACK', label: '노래' },
+  { value: 'ALBUM', label: '앨범' },
+] as const;
 
 export default function PollListClient({ initialPolls }: PollListClientProps) {
   const didMount = useRef(false);
@@ -66,27 +72,14 @@ export default function PollListClient({ initialPolls }: PollListClientProps) {
           <h1 className="text-2xl font-bold text-white sm:text-3xl">Peak n&apos; Pick</h1>
           <p className="mt-2 text-sm text-slate-400">오늘의 취향을 pick해주세요</p>
         </div>
-        <div className="inline-flex w-fit rounded-md border border-white/10 bg-black/25 p-1">
-          {[
-            { value: 'ALL', label: '전체' },
-            { value: 'TRACK', label: '노래' },
-            { value: 'ALBUM', label: '앨범' },
-          ].map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              aria-pressed={itemType === option.value}
-              onClick={() => setItemType(option.value as 'ALL' | PollItemType)}
-              className={`rounded px-3 py-1.5 text-sm transition-colors cursor-pointer ${
-                itemType === option.value
-                  ? 'bg-point font-semibold text-black'
-                  : 'text-slate-300 hover:bg-white/10'
-              }`}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
+        <TypeSelector
+          name="poll-item-type"
+          value={itemType}
+          options={itemTypeOptions}
+          onChange={setItemType}
+          ariaLabel="투표 항목 유형 선택"
+          variant="subtle"
+        />
       </div>
 
       <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-bg2 px-3">

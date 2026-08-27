@@ -7,6 +7,7 @@ type ListCollectionPageProps = {
   description: string;
   featuredSectionKey?: string;
   excludeFeaturedSectionKey?: string;
+  detailPathPrefix?: string;
 };
 
 export default async function ListCollectionPage({
@@ -14,6 +15,7 @@ export default async function ListCollectionPage({
   description,
   featuredSectionKey,
   excludeFeaturedSectionKey,
+  detailPathPrefix,
 }: ListCollectionPageProps) {
   const { items, nextCursor } = await fetchListItems({
     type: 'all',
@@ -38,8 +40,9 @@ export default async function ListCollectionPage({
         limit={16}
         featuredSectionKey={featuredSectionKey}
         excludeFeaturedSectionKey={excludeFeaturedSectionKey}
+        detailPathPrefix={detailPathPrefix}
       >
-        <MusicListGrid items={items} />
+        <MusicListGrid items={items} detailPathPrefix={detailPathPrefix} />
       </MusicListBrowser>
     </section>
   );

@@ -18,6 +18,7 @@ type MusicListBrowserProps = {
   children?: ReactNode;
   featuredSectionKey?: string;
   excludeFeaturedSectionKey?: string;
+  detailPathPrefix?: string;
 };
 
 const typeOptions = [
@@ -41,6 +42,7 @@ export default function MusicListBrowser({
   children,
   featuredSectionKey,
   excludeFeaturedSectionKey,
+  detailPathPrefix,
 }: MusicListBrowserProps) {
   const [type, setType] = useState<ListType>(initialType);
   const [sort, setSort] = useState<ListSortOption>('latest');
@@ -260,7 +262,7 @@ export default function MusicListBrowser({
         ) : isUsingServerInitialGrid ? (
           children
         ) : (
-          <MusicListGrid items={items} />
+          <MusicListGrid items={items} detailPathPrefix={detailPathPrefix} />
         )}
         {!isLoading && items.length > 0 && nextCursor ? (
           <div className="flex justify-center pt-2">
