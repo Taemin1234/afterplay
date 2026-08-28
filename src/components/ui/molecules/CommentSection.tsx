@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Button from '@/components/ui/atoms/Button';
 import type { SerializedComment } from '@/lib/comment-threads';
+import type { CommentPageResponse, ReplyPageResponse } from '@/lib/comment-pagination';
 
 const COMMENT_MAX_LENGTH = 500;
 
@@ -12,6 +13,7 @@ export type ListComment = SerializedComment;
 interface CommentSectionProps {
   apiSegment?: 'playlist' | 'albumlist';
   apiEndpoint?: string;
+  commentsEndpoint?: string;
   itemId: string;
   isLoggedIn: boolean;
   isAdmin?: boolean;
@@ -36,9 +38,16 @@ function isEditedComment(comment: ListComment) {
   return !comment.isDeleted && new Date(comment.updatedAt).getTime() > new Date(comment.createdAt).getTime();
 }
 
+function mergeComments(current: ListComment[], incoming: ListComment[]) {
+  const byId = new Map(current.map((comment) => [comment.id, comment]));
+  for (const comment of incoming) byId.set(comment.id, comment);
+  return Array.from(byId.values());
+}
+
 export default function CommentSection({
   apiSegment,
   apiEndpoint,
+  commentsEndpoint,
   itemId,
   isLoggedIn,
   isAdmin = false,
@@ -58,13 +67,20 @@ export default function CommentSection({
   const [replyingTo, setReplyingTo] = useState<ListComment | null>(null);
   const [replyInput, setReplyInput] = useState('');
   const [pendingCommentActionId, setPendingCommentActionId] = useState<string | null>(null);
+  const [rootNextCursor, setRootNextCursor] = useState<string | null>(null);
+  const [replyNextCursors, setReplyNextCursors] = useState<Record<string, string | null>>({});
+  const [isLoadingComments, setIsLoadingComments] = useState(true);
+  const [isLoadingMoreComments, setIsLoadingMoreComments] = useState(false);
+  const [loadingReplyRootId, setLoadingReplyRootId] = useState<string | null>(null);
+  const [commentsLoadError, setCommentsLoadError] = useState<string | null>(null);
   const endpoint = apiEndpoint ?? `/api/music/${apiSegment}/${itemId}`;
+  const commentListEndpoint = commentsEndpoint ?? (apiEndpoint ? apiEndpoint : `${endpoint}/comments`);
 
   const threads = useMemo(
     () =>
       comments
         .filter((comment) => comment.rootId === null)
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
         .map((root) => ({
           root,
           replies: comments
@@ -82,7 +98,70 @@ export default function CommentSection({
     setReplyingTo(null);
     setReplyInput('');
     setPendingCommentActionId(null);
-  }, [initialComments]);
+    setRootNextCursor(null);
+    setReplyNextCursors({});
+    setCommentsLoadError(null);
+
+    const controller = new AbortController();
+    const loadInitialComments = async () => {
+      setIsLoadingComments(true);
+      try {
+        const res = await fetch(commentListEndpoint, { cache: 'no-store', signal: controller.signal });
+        if (!res.ok) throw new Error('failed');
+        const data = (await res.json()) as CommentPageResponse;
+        setComments(data.comments);
+        setRootNextCursor(data.nextCursor);
+        setReplyNextCursors(data.replyNextCursors);
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') return;
+        console.error(error);
+        setCommentsLoadError('댓글을 불러오지 못했습니다.');
+      } finally {
+        setIsLoadingComments(false);
+      }
+    };
+
+    void loadInitialComments();
+    return () => controller.abort();
+  }, [commentListEndpoint, initialComments]);
+
+  const handleLoadMoreComments = async () => {
+    if (!rootNextCursor || isLoadingMoreComments) return;
+    setIsLoadingMoreComments(true);
+    try {
+      const params = new URLSearchParams({ cursor: rootNextCursor });
+      const res = await fetch(`${commentListEndpoint}?${params.toString()}`, { cache: 'no-store' });
+      if (!res.ok) throw new Error('failed');
+      const data = (await res.json()) as CommentPageResponse;
+      setComments((current) => mergeComments(current, data.comments));
+      setRootNextCursor(data.nextCursor);
+      setReplyNextCursors((current) => ({ ...current, ...data.replyNextCursors }));
+    } catch (error) {
+      console.error(error);
+      alert('댓글을 추가로 불러오지 못했습니다.');
+    } finally {
+      setIsLoadingMoreComments(false);
+    }
+  };
+
+  const handleLoadMoreReplies = async (rootId: string) => {
+    const cursor = replyNextCursors[rootId];
+    if (!cursor || loadingReplyRootId) return;
+    setLoadingReplyRootId(rootId);
+    try {
+      const params = new URLSearchParams({ rootId, cursor });
+      const res = await fetch(`${commentListEndpoint}?${params.toString()}`, { cache: 'no-store' });
+      if (!res.ok) throw new Error('failed');
+      const data = (await res.json()) as ReplyPageResponse;
+      setComments((current) => mergeComments(current, data.comments));
+      setReplyNextCursors((current) => ({ ...current, [rootId]: data.nextCursor }));
+    } catch (error) {
+      console.error(error);
+      alert('답글을 추가로 불러오지 못했습니다.');
+    } finally {
+      setLoadingReplyRootId(null);
+    }
+  };
 
   const postComment = async (content: string, parentCommentId?: string) => {
     const res = await fetch(endpoint, {
@@ -104,7 +183,7 @@ export default function CommentSection({
     try {
       const data = await postComment(content);
       setCommentInput('');
-      setComments((current) => [data.comment, ...current]);
+      setComments((current) => [...current, data.comment]);
       onCommentsCountChange(data.commentsCount);
     } catch (error) {
       console.error(error);
@@ -382,10 +461,37 @@ export default function CommentSection({
           <section key={root.id}>
             {renderComment(root, false)}
             {replies.length > 0 ? <div className="ml-4 space-y-0 sm:ml-8">{replies.map((reply) => renderComment(reply, true))}</div> : null}
+            {replyNextCursors[root.id] ? (
+              <div className="ml-4 mt-2 sm:ml-8">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void handleLoadMoreReplies(root.id)}
+                  disabled={loadingReplyRootId === root.id}
+                >
+                  {loadingReplyRootId === root.id ? '답글 불러오는 중...' : '답글 10개 더보기'}
+                </Button>
+              </div>
+            ) : null}
             {replyingTo && (replyingTo.rootId ?? replyingTo.id) === root.id ? renderReplyForm() : null}
           </section>
         ))}
-        {threads.length === 0 ? <p className="py-6 text-center text-sm text-gray-500">아직 댓글이 없습니다.</p> : null}
+        {isLoadingComments ? <p className="py-6 text-center text-sm text-gray-500">댓글을 불러오는 중입니다.</p> : null}
+        {!isLoadingComments && commentsLoadError ? <p className="py-6 text-center text-sm text-red-300">{commentsLoadError}</p> : null}
+        {!isLoadingComments && !commentsLoadError && threads.length === 0 ? <p className="py-6 text-center text-sm text-gray-500">아직 댓글이 없습니다.</p> : null}
+        {rootNextCursor ? (
+          <div className="flex justify-center pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void handleLoadMoreComments()}
+              disabled={isLoadingMoreComments}
+            >
+              {isLoadingMoreComments ? '댓글 불러오는 중...' : '댓글 10개 더보기'}
+            </Button>
+          </div>
+        ) : null}
       </div>
     </section>
   );

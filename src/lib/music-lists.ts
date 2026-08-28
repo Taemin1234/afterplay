@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma';
-import { serializeCommentThread, type SerializedComment } from '@/lib/comment-threads';
+import type { SerializedComment } from '@/lib/comment-threads';
 import type { FeedKind, ListSortOption, ListType, VisibilityScope } from "@/types";
 
 type FeedCursor = {
@@ -854,33 +854,6 @@ export async function fetchPlaylistDetail(
           take: 1,
         }
         : false,
-      comments: {
-        orderBy: { createdAt: 'desc' },
-        select: {
-          id: true,
-          content: true,
-          parentId: true,
-          rootId: true,
-          deletedAt: true,
-          createdAt: true,
-          updatedAt: true,
-          user: {
-            select: {
-              id: true,
-              nickname: true,
-              avatarUrl: true,
-              role: true,
-            },
-          },
-          parent: {
-            select: {
-              id: true,
-              user: { select: { id: true, nickname: true } },
-            },
-          },
-          _count: { select: { replies: true } },
-        },
-      },
       tags: {
         select: {
           tag: {
@@ -939,7 +912,7 @@ export async function fetchPlaylistDetail(
     viewerHasLiked: viewerUserId ? (playlist.likes?.length ?? 0) > 0 : false,
     viewerHasBookmarked: viewerUserId ? (playlist.bookmarks?.length ?? 0) > 0 : false,
     featuredSectionIds: featuredSettings.map((setting) => setting.sectionId),
-    comments: serializeCommentThread(playlist.comments),
+    comments: [],
     musicItems: playlist.tracks.map((entry) => ({
       id: entry.track.spotifyId,
       order: entry.order,
@@ -1007,33 +980,6 @@ export async function fetchAlbumListDetail(
           take: 1,
         }
         : false,
-      comments: {
-        orderBy: { createdAt: 'desc' },
-        select: {
-          id: true,
-          content: true,
-          parentId: true,
-          rootId: true,
-          deletedAt: true,
-          createdAt: true,
-          updatedAt: true,
-          user: {
-            select: {
-              id: true,
-              nickname: true,
-              avatarUrl: true,
-              role: true,
-            },
-          },
-          parent: {
-            select: {
-              id: true,
-              user: { select: { id: true, nickname: true } },
-            },
-          },
-          _count: { select: { replies: true } },
-        },
-      },
       tags: {
         select: {
           tag: {
@@ -1092,7 +1038,7 @@ export async function fetchAlbumListDetail(
     viewerHasLiked: viewerUserId ? (albumList.likes?.length ?? 0) > 0 : false,
     viewerHasBookmarked: viewerUserId ? (albumList.bookmarks?.length ?? 0) > 0 : false,
     featuredSectionIds: featuredSettings.map((setting) => setting.sectionId),
-    comments: serializeCommentThread(albumList.comments),
+    comments: [],
     musicItems: albumList.albums.map((entry) => ({
       id: entry.album.spotifyId,
       order: entry.order,

@@ -24,7 +24,7 @@ export type SerializedComment = {
   } | null;
 };
 
-type CommentRow = {
+export type CommentRow = {
   id: string;
   content: string;
   parentId: string | null;
@@ -55,6 +55,8 @@ export function serializeCommentThread(rows: CommentRow[]): SerializedComment[] 
 
   for (const row of rows) {
     if (row.deletedAt) continue;
+
+    if (row.rootId) visibleIds.add(row.rootId);
 
     let parentId = row.parentId;
     const visited = new Set<string>();

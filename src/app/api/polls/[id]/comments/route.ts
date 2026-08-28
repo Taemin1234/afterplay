@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getAuthenticatedUser, upsertDbUser } from '@/lib/music-list-api';
 import { handleCommentActions, type MusicDetailActionPayload } from '@/lib/music-detail-route-helpers';
-import { serializeCommentThread } from '@/lib/comment-threads';
+import { fetchCommentPage, fetchReplyPage } from '@/lib/comment-pagination';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -13,7 +13,7 @@ type RouteContext = {
   }>;
 };
 
-export async function GET(_request: Request, context: RouteContext) {
+export async function GET(request: Request, context: RouteContext) {
   try {
     const { id } = await context.params;
     const poll = await prisma.musicPoll.findFirst({
@@ -24,36 +24,14 @@ export async function GET(_request: Request, context: RouteContext) {
       return NextResponse.json({ error: 'Poll not found' }, { status: 404 });
     }
 
-    const comments = await prisma.musicPollComment.findMany({
-      where: { pollId: id },
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        content: true,
-        parentId: true,
-        rootId: true,
-        deletedAt: true,
-        createdAt: true,
-        updatedAt: true,
-        user: {
-          select: {
-            id: true,
-            nickname: true,
-            avatarUrl: true,
-            role: true,
-          },
-        },
-        parent: {
-          select: {
-            id: true,
-            user: { select: { id: true, nickname: true } },
-          },
-        },
-        _count: { select: { replies: true } },
-      },
-    });
+    const { searchParams } = new URL(request.url);
+    const rootId = searchParams.get('rootId');
+    const cursor = searchParams.get('cursor');
+    const result = rootId
+      ? await fetchReplyPage('poll', id, rootId, cursor)
+      : await fetchCommentPage('poll', id, cursor);
 
-    return NextResponse.json(serializeCommentThread(comments));
+    return NextResponse.json(result);
   } catch (error) {
     console.error('[api/polls/[id]/comments] GET failed', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
