@@ -1,13 +1,13 @@
 ﻿'use client';
 
 import { useEffect, useState } from 'react';
-import { Menu, Search, X } from 'lucide-react';
+import { LogOut, Menu, Search, X } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import type { User } from '@supabase/supabase-js';
 import Link from 'next/link';
 import Image from 'next/image';
 
-import LoggedInUI from './LoggedInUI';
+import LoggedInUI, { useSignOut } from './LoggedInUI';
 import LoggedOutUI from './LoggedOutUI';
 
 type HeaderProps = {
@@ -51,6 +51,7 @@ const contentNavigation: NavigationItem[] = [
 export default function Header({ user, nickname, isAdmin = false }: HeaderProps) {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { isSigningOut, signOut } = useSignOut();
   const isSearchPage = pathname.startsWith('/search');
 
   useEffect(() => {
@@ -213,6 +214,18 @@ export default function Header({ user, nickname, isAdmin = false }: HeaderProps)
                     <span>마이페이지</span>
                     <span className="max-w-40 truncate text-xs text-slate-500">{nickname ?? '익명'}</span>
                   </Link>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setIsMenuOpen(false);
+                      await signOut();
+                    }}
+                    disabled={isSigningOut}
+                    className="flex min-h-12 w-full items-center gap-3 rounded-lg px-3 text-left text-slate-200 transition-colors hover:bg-white/10 hover:text-white active:translate-y-px disabled:cursor-wait disabled:opacity-60"
+                  >
+                    <LogOut className="h-5 w-5" aria-hidden="true" />
+                    {isSigningOut ? '로그아웃 중...' : '로그아웃'}
+                  </button>
                 </>
               ) : (
                 <Link

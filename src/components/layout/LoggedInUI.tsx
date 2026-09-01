@@ -3,6 +3,7 @@
 import { LogOut, User } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 import IconButton from '@/components/ui/atoms/IconButton';
 
@@ -11,30 +12,45 @@ type LoggedInUIProps = {
   isAdmin?: boolean;
 };
 
-export default function LoggedInUI({ nickname, isAdmin = false }: LoggedInUIProps) {
+export function useSignOut() {
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
-  const handleSignOut = async () => {
-    const { createClient } = await import('@/utils/supabase/client');
-    const supabase = createClient();
+  const signOut = async () => {
+    if (isSigningOut) return;
 
-    // 1) Supabase 로그아웃: 브라우저 세션/쿠키 해제
-    await supabase.auth.signOut();
+    setIsSigningOut(true);
 
-    // 2) 보호 페이지에서는 로그인 페이지 대신 홈으로 이동
-    const protectedPrefixes = ['/mypage', '/createList'];
-    const isOnProtectedPage = protectedPrefixes.some((prefix) => pathname.startsWith(prefix));
+    try {
+      const { createClient } = await import('@/utils/supabase/client');
+      const supabase = createClient();
 
-    if (isOnProtectedPage) {
-      router.replace('/');
+      // 1) Supabase 로그아웃: 브라우저 세션/쿠키 해제
+      await supabase.auth.signOut();
+
+      // 2) 보호 페이지에서는 로그인 페이지 대신 홈으로 이동
+      const protectedPrefixes = ['/mypage', '/createList'];
+      const isOnProtectedPage = protectedPrefixes.some((prefix) => pathname.startsWith(prefix));
+
+      if (isOnProtectedPage) {
+        router.replace('/');
+        router.refresh();
+        return;
+      }
+
+      // 3) 그 외 페이지는 현재 화면만 갱신해서 UI 상태 반영
       router.refresh();
-      return;
+    } finally {
+      setIsSigningOut(false);
     }
-
-    // 3) 그 외 페이지는 현재 화면만 갱신해서 UI 상태 반영
-    router.refresh();
   };
+
+  return { isSigningOut, signOut };
+}
+
+export default function LoggedInUI({ nickname, isAdmin = false }: LoggedInUIProps) {
+  const { isSigningOut, signOut } = useSignOut();
 
   return (
     <>
@@ -49,7 +65,12 @@ export default function LoggedInUI({ nickname, isAdmin = false }: LoggedInUIProp
         </div>
         <IconButton variant='bg' as='span' icon={<User className='w-4 h-4' />} />
       </Link>
-      <IconButton icon={<LogOut size={20} />} onClick={handleSignOut} />
+      <IconButton
+        icon={<LogOut size={20} />}
+        onClick={signOut}
+        disabled={isSigningOut}
+        aria-label={isSigningOut ? '로그아웃 중' : '로그아웃'}
+      />
     </>
   );
 }
