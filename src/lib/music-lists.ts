@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+import { parseStoredContentBlocks, type StoredMusicListContentBlock } from '@/types/music-list-content';
 import type { SerializedComment } from '@/lib/comment-threads';
 import type { FeedKind, ListSortOption, ListType, VisibilityScope } from "@/types";
 
@@ -641,6 +642,7 @@ export type PlaylistDetail = {
   id: string;
   title: string;
   story: string;
+  contentBlocks: StoredMusicListContentBlock[];
   visibility: 'PUBLIC' | 'PRIVATE';
   viewCount: number;
   author: {
@@ -673,6 +675,7 @@ export type AlbumListDetail = {
   id: string;
   title: string;
   story: string;
+  contentBlocks: StoredMusicListContentBlock[];
   visibility: 'PUBLIC' | 'PRIVATE';
   viewCount: number;
   author: {
@@ -818,6 +821,7 @@ export async function fetchPlaylistDetail(
       id: true,
       title: true,
       story: true,
+      contentBlocks: true,
       visibility: true,
       viewCount: true,
       authorId: true,
@@ -895,6 +899,7 @@ export async function fetchPlaylistDetail(
     id: playlist.id,
     title: playlist.title,
     story: playlist.story,
+    contentBlocks: parseStoredContentBlocks(playlist.contentBlocks),
     visibility: playlist.visibility,
     viewCount: playlist.viewCount,
     author: {
@@ -944,6 +949,7 @@ export async function fetchAlbumListDetail(
       id: true,
       title: true,
       story: true,
+      contentBlocks: true,
       visibility: true,
       viewCount: true,
       authorId: true,
@@ -1021,6 +1027,7 @@ export async function fetchAlbumListDetail(
     id: albumList.id,
     title: albumList.title,
     story: albumList.story,
+    contentBlocks: parseStoredContentBlocks(albumList.contentBlocks),
     visibility: albumList.visibility,
     viewCount: albumList.viewCount,
     author: {

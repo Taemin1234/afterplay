@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion, Reorder } from 'framer-motion';
-import { Disc, GripVertical, LockKeyhole, LockKeyholeOpen, Music, Star, Trash2, X } from 'lucide-react';
+import { AlignLeft, Disc, GripVertical, LockKeyhole, LockKeyholeOpen, Music, Plus, Star, Trash2, X } from 'lucide-react';
 import Image from 'next/image';
 import Button from '@/components/ui/atoms/Button';
 import IconButton from '@/components/ui/atoms/IconButton';
@@ -14,24 +14,19 @@ import SearchBar from '@/components/ui/molecules/SearchBar';
 import TypeSelector from '@/components/ui/molecules/TypeSelector';
 import SearchMusic from '@/components/ui/organisms/SearchMusic';
 import type { FeaturedSectionOption } from '@/lib/music-lists';
+import type { MusicContentItem, MusicListContentBlock } from '@/types/music-list-content';
 
 type SearchType = 'track' | 'album';
 type Visibility = 'PUBLIC' | 'PRIVATE';
 type SubmitMethod = 'POST' | 'PATCH';
 
-export interface MusicListFormItem {
-  id: string;
-  name: string;
-  artist: string;
-  albumImageUrl: string;
-}
+export type MusicListFormItem = MusicContentItem;
 
 export interface MusicListFormValues {
   title: string;
-  story: string;
   visibility: Visibility;
   tags: string[];
-  musicItems: MusicListFormItem[];
+  contentBlocks: MusicListContentBlock[];
 }
 
 interface MusicListFormProps {
@@ -52,6 +47,11 @@ const typeOptions = [
 ] as const;
 
 const normalizeTag = (tag: string) => tag.replace(/\s+/g, '');
+const createTextBlock = (id = crypto.randomUUID()): MusicListContentBlock => ({
+  id,
+  type: 'text',
+  content: '',
+});
 
 export default function MusicListForm({
   pageTitle = '새 리스트 만들기',
@@ -69,7 +69,9 @@ export default function MusicListForm({
   const [searchType, setSearchType] = useState<SearchType>(initialType);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<MusicListFormItem[]>([]);
-  const [selectedMusic, setSelectedMusic] = useState<MusicListFormItem[]>(initialValues?.musicItems ?? []);
+  const [contentBlocks, setContentBlocks] = useState<MusicListContentBlock[]>(
+    initialValues?.contentBlocks?.length ? initialValues.contentBlocks : [createTextBlock('initial-text-block')]
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [tagInput, setTagInput] = useState('');
@@ -78,7 +80,6 @@ export default function MusicListForm({
 
   const [form, setForm] = useState({
     title: initialValues?.title ?? '',
-    story: initialValues?.story ?? '',
     visibility: initialValues?.visibility ?? ('PUBLIC' as Visibility),
     tags: initialValues?.tags ?? [],
   });
@@ -93,7 +94,7 @@ export default function MusicListForm({
     setSearchType(type);
     setSearchQuery('');
     setSearchResults([]);
-    setSelectedMusic([]);
+    setContentBlocks([createTextBlock()]);
   };
 
   const handleToggleModal = () => {
@@ -101,15 +102,29 @@ export default function MusicListForm({
   };
 
   const handleDeleteMusic = (id: string) => {
-    setSelectedMusic((prev) => prev.filter((item) => item.id !== id));
+    setContentBlocks((prev) => prev.filter((block) => block.id !== id));
   };
 
   const handleSelectMusic = (item: MusicListFormItem) => {
-    setSelectedMusic((prev) => {
-      if (prev.some((music) => music.id === item.id)) return prev;
-      return [...prev, item];
+    setContentBlocks((prev) => {
+      if (prev.some((block) => block.type === 'music' && block.item.id === item.id)) return prev;
+      return [...prev, { id: crypto.randomUUID(), type: 'music', item }];
     });
     setIsModalOpen(false);
+  };
+
+  const handleAddTextBlock = () => {
+    setContentBlocks((prev) => [...prev, createTextBlock()]);
+  };
+
+  const handleChangeTextBlock = (id: string, content: string) => {
+    setContentBlocks((prev) => prev.map((block) => (
+      block.id === id && block.type === 'text' ? { ...block, content } : block
+    )));
+  };
+
+  const handleDeleteBlock = (id: string) => {
+    setContentBlocks((prev) => prev.filter((block) => block.id !== id));
   };
 
   const handleAddTag = () => {
@@ -162,7 +177,9 @@ export default function MusicListForm({
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.title.trim() || !form.story.trim() || selectedMusic.length === 0) {
+    const hasText = contentBlocks.some((block) => block.type === 'text' && block.content.trim());
+    const hasMusic = contentBlocks.some((block) => block.type === 'music');
+    if (!form.title.trim() || !hasText || !hasMusic) {
       alert('제목, 내용, 음악을 모두 입력해주세요.');
       return;
     }
@@ -176,7 +193,7 @@ export default function MusicListForm({
         body: JSON.stringify({
           ...form,
           type: searchType,
-          musicItems: selectedMusic,
+          contentBlocks,
           ...(featuredSections.length > 0 ? { featuredSectionIds } : {}),
         }),
       });
@@ -279,11 +296,94 @@ export default function MusicListForm({
             value={form.title}
             onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
           />
-          <Textarea
-            value={form.story}
-            placeholder="리스트 설명을 입력해주세요."
-            onChange={(e) => setForm((prev) => ({ ...prev, story: e.target.value }))}
-          />
+          <div className="space-y-3 rounded-xl border border-white/10 bg-black/10 p-3 sm:p-4">
+            <div>
+              <p className="text-base font-medium text-gray-300">본문 구성</p>
+              <p className="mt-1 text-sm text-gray-500">글과 음악을 추가한 뒤 드래그해 원하는 읽기 순서로 배치하세요.</p>
+            </div>
+
+            <Reorder.Group
+              axis="y"
+              values={contentBlocks}
+              onReorder={setContentBlocks}
+              className="flex flex-col gap-3"
+            >
+              {contentBlocks.map((block) => (
+                <Reorder.Item
+                  key={block.id}
+                  value={block}
+                  className={block.type === 'text'
+                    ? 'rounded-lg border border-white/10 bg-black/20 p-3'
+                    : 'flex cursor-grab items-center justify-between rounded-lg border border-[#1DB954]/30 bg-[#1DB954]/10 p-3 active:cursor-grabbing'}
+                >
+                  {block.type === 'text' ? (
+                    <div>
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <span className="flex cursor-grab items-center gap-2 text-xs font-medium text-gray-400 active:cursor-grabbing">
+                          <GripVertical size={16} />
+                          <AlignLeft size={15} />
+                          글
+                        </span>
+                        <IconButton
+                          icon={<Trash2 size={17} />}
+                          onClick={() => handleDeleteBlock(block.id)}
+                          aria-label="글 블록 삭제"
+                        />
+                      </div>
+                      <Textarea
+                        value={block.content}
+                        placeholder="이 내용을 입력해주세요."
+                        onChange={(event) => handleChangeTextBlock(block.id, event.target.value)}
+                        className="min-h-28 sm:min-h-36"
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex min-w-0 items-center gap-3">
+                        <GripVertical size={16} className="shrink-0 text-gray-400" />
+                        <Image
+                          src={block.item.albumImageUrl}
+                          width={48}
+                          height={48}
+                          className="rounded shadow-lg"
+                          alt={block.item.name}
+                        />
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-bold text-white">{block.item.name}</div>
+                          <div className="truncate text-xs text-gray-400">{block.item.artist}</div>
+                        </div>
+                      </div>
+                      <IconButton
+                        icon={<Trash2 size={18} />}
+                        onClick={() => handleDeleteMusic(block.id)}
+                        aria-label={`${block.item.name} 삭제`}
+                      />
+                    </>
+                  )}
+                </Reorder.Item>
+              ))}
+            </Reorder.Group>
+
+            {contentBlocks.length === 0 ? (
+              <p className="rounded-lg border border-dashed border-white/10 py-8 text-center text-sm text-gray-500">
+                글이나 음악을 추가해주세요.
+              </p>
+            ) : null}
+
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Button variant="outline" color="white" icon={<Plus size={16} />} onClick={handleAddTextBlock}>
+                글 내용 추가
+              </Button>
+              <Button
+                variant="outline"
+                color="white"
+                icon={searchType === 'track' ? <Music size={16} /> : <Disc size={16} />}
+                onClick={handleToggleModal}
+              >
+                {searchType === 'track' ? '곡 추가' : '앨범 추가'}
+              </Button>
+            </div>
+          </div>
 
           {submitMethod === 'POST' && featuredSections.length > 0 ? (
             <div className="rounded-xl border border-amber-300/20 bg-amber-300/5 p-4">
@@ -351,54 +451,6 @@ export default function MusicListForm({
           </div>
 
           <div className="space-y-3">
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-400">
-              {searchType === 'track' ? <Music size={16} /> : <Disc size={16} />}
-              {searchType === 'track' ? '곡 추가' : '앨범 추가'}
-            </label>
-
-            <div className="relative">
-              <SearchBar rounded="md" variant="form" mode="ui" onClick={handleToggleModal} />
-
-              {selectedMusic.length > 0 && (
-                <motion.div
-                  initial={{ scale: 0.95, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="mt-2"
-                >
-                  <Reorder.Group
-                    axis="y"
-                    values={selectedMusic}
-                    onReorder={setSelectedMusic}
-                    className="flex flex-col gap-2"
-                  >
-                    {selectedMusic.map((musicItem) => (
-                      <Reorder.Item
-                        key={musicItem.id}
-                        value={musicItem}
-                        className="flex cursor-grab items-center justify-between rounded-md border border-[#1DB954]/30 bg-[#1DB954]/10 p-3 active:cursor-grabbing"
-                      >
-                        <div className="flex min-w-0 items-center gap-3">
-                          <GripVertical size={16} className="shrink-0 text-gray-400" />
-                          <Image
-                            src={musicItem.albumImageUrl}
-                            width={48}
-                            height={48}
-                            className="rounded shadow-lg"
-                            alt={musicItem.name}
-                          />
-                          <div className="min-w-0">
-                            <div className="truncate text-sm font-bold text-white">{musicItem.name}</div>
-                            <div className="truncate text-xs text-gray-400">{musicItem.artist}</div>
-                          </div>
-                        </div>
-                        <IconButton icon={<Trash2 size={18} />} onClick={() => handleDeleteMusic(musicItem.id)} />
-                      </Reorder.Item>
-                    ))}
-                  </Reorder.Group>
-                </motion.div>
-              )}
-            </div>
-
             <div className="flex justify-end gap-3 pt-4">
               <Button variant="outline" onClick={() => router.back()}>
                 취소

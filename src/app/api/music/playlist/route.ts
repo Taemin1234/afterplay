@@ -26,7 +26,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: parsed.error ?? 'Bad request' }, { status: 400 });
     }
 
-    const { title, story, visibility, musicItems, tags, featuredSectionIds } = parsed.data;
+    const { title, story, contentBlocks, visibility, musicItems, tags, featuredSectionIds } = parsed.data;
 
     if (featuredSectionIds.length > 0) {
       const dbUser = await prisma.user.findUnique({ where: { id: user.id }, select: { role: true } });
@@ -52,6 +52,7 @@ export async function POST(req: Request) {
           data: {
             title,
             story,
+            contentBlocks,
             visibility,
             authorId: user.id,
           },

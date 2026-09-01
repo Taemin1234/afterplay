@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import MusicListForm from '@/components/ui/organisms/MusicListForm';
 import { createSupabaseServerClient } from '@/utils/supabase/server';
 import { fetchAlbumListDetail } from '@/lib/music-lists';
+import type { MusicListContentBlock } from '@/types/music-list-content';
 
 export default async function EditAlbumListPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -30,15 +31,22 @@ export default async function EditAlbumListPage({ params }: { params: Promise<{ 
       successRedirectPath={`/albumlist/${id}`}
       initialValues={{
         title: item.title,
-        story: item.story,
         visibility: item.visibility,
         tags: item.tags,
-        musicItems: item.musicItems.map((music) => ({
-          id: music.id,
-          name: music.title,
-          artist: music.artist,
-          albumImageUrl: music.albumImageUrl,
-        })),
+        contentBlocks: item.contentBlocks.flatMap<MusicListContentBlock>((block) => {
+          if (block.type === 'text') return [block];
+          const music = item.musicItems.find((candidate) => candidate.id === block.musicId);
+          return music ? [{
+            id: block.id,
+            type: 'music' as const,
+            item: {
+              id: music.id,
+              name: music.title,
+              artist: music.artist,
+              albumImageUrl: music.albumImageUrl,
+            },
+          }] : [];
+        }),
       }}
     />
   );

@@ -1,5 +1,7 @@
 import prisma from '@/lib/prisma';
+import type { Prisma } from '../../generated/prisma/client';
 import { createSupabaseServerClient } from '@/utils/supabase/server';
+import type {MusicListContentBlock, StoredMusicListContentBlock} from '@/types/music-list-content';
 
 export type VisibilityValue = 'PUBLIC' | 'PRIVATE';
 export type ListEntityType = 'track' | 'album' | 'artist';
@@ -13,10 +15,9 @@ export interface MusicItemPayload {
 
 export interface ListPayloadInput {
   title?: string;
-  story?: string;
   visibility?: VisibilityValue;
   type?: ListEntityType;
-  musicItems?: MusicItemPayload[];
+  contentBlocks?: MusicListContentBlock[];
   tags?: string[];
   featuredSectionIds?: string[];
 }
@@ -25,6 +26,7 @@ export interface NormalizedListPayload {
   title: string;
   story: string;
   visibility: VisibilityValue;
+  contentBlocks: Prisma.InputJsonValue;
   musicItems: MusicItemPayload[];
   tags: string[];
   featuredSectionIds: string[];
@@ -101,14 +103,61 @@ export function validateAndNormalizeListPayload(
   options: { expectedType: ListEntityType; requireType: boolean }
 ): { data?: NormalizedListPayload; error?: string } {
   const title = body.title?.trim();
-  const story = body.story?.trim();
+  if (!title) {
+    return { error: 'title is required' };
+  }
+  if (!Array.isArray(body.contentBlocks)) {
+    return { error: 'contentBlocks is required' };
+  }
 
-  if (!title || !story) {
-    return { error: 'title/story is required' };
-  }
-  if (!Array.isArray(body.musicItems) || body.musicItems.length === 0) {
-    return { error: 'musicItems is required' };
-  }
+  const usedIds = new Set<string>();
+  const usedMusicIds = new Set<string>();
+  const normalizedBlocks: StoredMusicListContentBlock[] = [];
+  const musicItems: MusicItemPayload[] = [];
+
+  body.contentBlocks.forEach((block, index) => {
+    if (!block || typeof block !== 'object') return;
+    const requestedId = typeof block.id === 'string' ? block.id.trim().slice(0, 100) : '';
+    let id = requestedId || `content-block-${index}`;
+    if (usedIds.has(id)) id = `${id}-${index}`;
+    usedIds.add(id);
+
+    if (block.type === 'text') {
+      const content = typeof block.content === 'string' ? block.content.trim() : '';
+      if (content) normalizedBlocks.push({ id, type: 'text', content });
+      return;
+    }
+
+    if (block.type === 'music' && block.item) {
+      const item = block.item;
+      if (
+        typeof item.id === 'string' && item.id.trim()
+        && typeof item.name === 'string' && item.name.trim()
+        && typeof item.artist === 'string' && item.artist.trim()
+        && typeof item.albumImageUrl === 'string'
+      ) {
+        const normalizedItem = {
+          id: item.id.trim(),
+          name: item.name.trim(),
+          artist: item.artist.trim(),
+          albumImageUrl: item.albumImageUrl.trim(),
+        };
+        if (usedMusicIds.has(normalizedItem.id)) return;
+        usedMusicIds.add(normalizedItem.id);
+        normalizedBlocks.push({ id, type: 'music', musicId: normalizedItem.id });
+        musicItems.push(normalizedItem);
+      }
+    }
+  });
+
+  const story = normalizedBlocks
+    .filter((block): block is Extract<StoredMusicListContentBlock, { type: 'text' }> => block.type === 'text')
+    .map((block) => block.content)
+    .join('\n\n');
+  const uniqueItems = uniqueMusicItems(musicItems);
+
+  if (!story) return { error: 'at least one text block is required' };
+  if (uniqueItems.length === 0) return { error: 'at least one music block is required' };
 
   if (options.requireType) {
     if (body.type !== options.expectedType) {
@@ -127,7 +176,8 @@ export function validateAndNormalizeListPayload(
       title,
       story,
       visibility: body.visibility,
-      musicItems: uniqueMusicItems(body.musicItems),
+      contentBlocks: normalizedBlocks as unknown as Prisma.InputJsonValue,
+      musicItems: uniqueItems,
       tags: cleanTags(body.tags),
       featuredSectionIds: cleanFeaturedSectionIds(body.featuredSectionIds),
     },

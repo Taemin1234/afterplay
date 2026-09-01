@@ -64,6 +64,10 @@ export default function ListDetailClient({
     () => `/auth/login?next=${encodeURIComponent(`/${apiSegment}/${item.id}`)}`,
     [apiSegment, item.id]
   );
+  const musicById = useMemo(
+    () => new Map(item.musicItems.map((music) => [music.id, music])),
+    [item.musicItems]
+  );
 
   const requireLogin = () => {
     if (isLoggedIn) return true;
@@ -338,15 +342,6 @@ export default function ListDetailClient({
               </div>
             ) : null}
 
-            <p className="mt-5 whitespace-pre-line text-sm text-gray-300 sm:mt-6 sm:text-base">{item.story}</p>
-          </div>
-
-          <div className="mt-6 flex flex-wrap items-center gap-2 sm:mt-8">
-            {item.tags.map((tag) => (
-              <Tag key={tag} variant="neon">
-                #{tag}
-              </Tag>
-            ))}
           </div>
 
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -420,27 +415,50 @@ export default function ListDetailClient({
           </div>
         </header>
 
-        <ol className="mt-4 space-y-2 sm:mt-5">
-          {item.musicItems.map((music) => (
-            <li
-              key={`${music.id}-${music.order}`}
-              className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/15 p-2 sm:gap-3 sm:p-2.5"
-            >
-              <span className="w-5 shrink-0 text-center text-xs text-gray-400 sm:w-6">{music.order + 1}</span>
-              <Image
-                src={music.albumImageUrl}
-                width={48}
-                height={48}
-                alt={music.title}
-                className="h-12 w-12 shrink-0 rounded-md object-cover sm:h-14 sm:w-14"
-              />
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-white">{music.title}</p>
-                <p className="text-xs text-gray-400">{music.artist}</p>
+        <div className="mt-5 space-y-5 sm:mt-7 sm:space-y-6">
+          {item.contentBlocks.map((block) => {
+            if (block.type === 'text') {
+              return (
+                <p key={block.id} className="whitespace-pre-wrap text-sm leading-7 text-gray-300 mb-2.5 sm:text-base sm:leading-8">
+                  {block.content}
+                </p>
+              );
+            }
+
+            const music = musicById.get(block.musicId);
+            if (!music) return null;
+
+            return (
+              <div
+                key={block.id}
+                className="flex items-center gap-3 rounded-xl border border-[#1DB954]/25 bg-[#1DB954]/8 p-2 sm:p-3"
+              >
+                {/* <span className="w-5 shrink-0 text-center text-xs text-gray-400 sm:w-6">{music.order + 1}</span> */}
+                <Image
+                  src={music.albumImageUrl}
+                  width={64}
+                  height={64}
+                  alt={music.title}
+                  className="h-14 w-14 shrink-0 rounded-lg object-cover shadow-lg sm:h-16 sm:w-16"
+                />
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-white sm:text-base">{music.title}</p>
+                  <p className="mt-1 truncate text-xs text-gray-400 sm:text-sm">{music.artist}</p>
+                </div>
               </div>
-            </li>
-          ))}
-        </ol>
+            );
+          })}
+        </div>
+
+        {item.tags.length > 0 ? (
+          <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-white/10 pt-5 sm:mt-8">
+            {item.tags.map((tag) => (
+              <Tag key={tag} variant="neon">
+                #{tag}
+              </Tag>
+            ))}
+          </div>
+        ) : null}
       </article>
 
       <CommentSection

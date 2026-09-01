@@ -5,9 +5,10 @@ interface IconButtonProps {
     as?: 'button' | 'span';
     disabled?: boolean;
     className?: string;
+    'aria-label'?: string;
 }
 
-export default function IconButton({ variant = 'primary', icon, disabled = false, onClick, as = 'button', className = ""}: IconButtonProps) {
+export default function IconButton({ variant = 'primary', icon, disabled = false, onClick, as = 'button', className = "", 'aria-label': ariaLabel }: IconButtonProps) {
 
     const variantStyles = {
         primary: 'inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-400 hover:text-white sm:h-10 sm:w-10',
@@ -18,14 +19,14 @@ export default function IconButton({ variant = 'primary', icon, disabled = false
 
     if (as === 'span') {
         return (
-            <span onClick={onClick} className={classNames}>
+            <span onClick={onClick} className={classNames} aria-label={ariaLabel}>
                 {icon}
             </span>
         );
     }
 
     return (
-        <button type="button" disabled={disabled} onClick={onClick} className={classNames}>
+        <button type="button" disabled={disabled} onClick={onClick} className={classNames} aria-label={ariaLabel}>
             {icon}
         </button>
     )

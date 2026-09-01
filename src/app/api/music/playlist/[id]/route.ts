@@ -458,13 +458,13 @@ export async function PATCH(request: Request, context: RouteContext) {
       return NextResponse.json({ error: parsed.error ?? 'Bad request' }, { status: 400 });
     }
 
-    const { title, story, visibility, musicItems, tags } = parsed.data;
+    const { title, story, contentBlocks, visibility, musicItems, tags } = parsed.data;
     const tagRows = await upsertTags(tags);
 
     await prisma.$transaction(async (tx) => {
       await tx.playlist.update({
         where: { id },
-        data: { title, story, visibility },
+        data: { title, story, contentBlocks, visibility },
       });
 
       if (visibility === 'PRIVATE') {
