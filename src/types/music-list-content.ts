@@ -32,23 +32,3 @@ export interface StoredMusicContentBlock {
 }
 
 export type StoredMusicListContentBlock = StoredTextContentBlock | StoredMusicContentBlock;
-
-export function parseStoredContentBlocks(value: unknown): StoredMusicListContentBlock[] {
-  if (!Array.isArray(value)) return [];
-
-  return value.flatMap<StoredMusicListContentBlock>((block, index) => {
-    if (!block || typeof block !== 'object') return [];
-    const candidate = block as Record<string, unknown>;
-    const id = typeof candidate.id === 'string' && candidate.id.trim()
-      ? candidate.id
-      : `content-block-${index}`;
-
-    if (candidate.type === 'text' && typeof candidate.content === 'string') {
-      return [{ id, type: 'text' as const, content: candidate.content }];
-    }
-    if (candidate.type === 'music' && typeof candidate.musicId === 'string' && candidate.musicId.trim()) {
-      return [{ id, type: 'music' as const, musicId: candidate.musicId }];
-    }
-    return [];
-  });
-}

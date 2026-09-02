@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma';
-import { parseStoredContentBlocks, type StoredMusicListContentBlock } from '@/types/music-list-content';
+import { parseStoredContentBlocks } from '@/lib/music-list-content';
+import type { StoredMusicListContentBlock } from '@/types/music-list-content';
 import type { SerializedComment } from '@/lib/comment-threads';
 import type { FeedKind, ListSortOption, ListType, VisibilityScope } from "@/types";
 

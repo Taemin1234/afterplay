@@ -1,7 +1,8 @@
 import prisma from '@/lib/prisma';
 import type { Prisma } from '../../generated/prisma/client';
 import { createSupabaseServerClient } from '@/utils/supabase/server';
-import type {MusicListContentBlock, StoredMusicListContentBlock} from '@/types/music-list-content';
+import { normalizeTextBlockContent } from '@/lib/music-list-content';
+import type { MusicListContentBlock, StoredMusicListContentBlock } from '@/types/music-list-content';
 
 export type VisibilityValue = 'PUBLIC' | 'PRIVATE';
 export type ListEntityType = 'track' | 'album' | 'artist';
@@ -123,8 +124,8 @@ export function validateAndNormalizeListPayload(
     usedIds.add(id);
 
     if (block.type === 'text') {
-      const content = typeof block.content === 'string' ? block.content.trim() : '';
-      if (content) normalizedBlocks.push({ id, type: 'text', content });
+      const content = typeof block.content === 'string' ? normalizeTextBlockContent(block.content) : '';
+      if (content.trim()) normalizedBlocks.push({ id, type: 'text', content });
       return;
     }
 
@@ -152,7 +153,7 @@ export function validateAndNormalizeListPayload(
 
   const story = normalizedBlocks
     .filter((block): block is Extract<StoredMusicListContentBlock, { type: 'text' }> => block.type === 'text')
-    .map((block) => block.content)
+    .map((block) => block.content.trim())
     .join('\n\n');
   const uniqueItems = uniqueMusicItems(musicItems);
 

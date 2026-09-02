@@ -14,6 +14,7 @@ import SearchBar from '@/components/ui/molecules/SearchBar';
 import TypeSelector from '@/components/ui/molecules/TypeSelector';
 import SearchMusic from '@/components/ui/organisms/SearchMusic';
 import type { FeaturedSectionOption } from '@/lib/music-lists';
+import { normalizeTextBlockContent } from '@/lib/music-list-content';
 import type { MusicContentItem, MusicListContentBlock } from '@/types/music-list-content';
 
 type SearchType = 'track' | 'album';
@@ -119,7 +120,9 @@ export default function MusicListForm({
 
   const handleChangeTextBlock = (id: string, content: string) => {
     setContentBlocks((prev) => prev.map((block) => (
-      block.id === id && block.type === 'text' ? { ...block, content } : block
+      block.id === id && block.type === 'text'
+        ? { ...block, content: normalizeTextBlockContent(content) }
+        : block
     )));
   };
 
