@@ -415,11 +415,11 @@ export default function ListDetailClient({
           </div>
         </header>
 
-        <div className="mt-5 space-y-5 sm:mt-7 sm:space-y-6">
+        <div className="mt-5 space-y-2 sm:mt-7 sm:space-y-2.5">
           {item.contentBlocks.map((block) => {
             if (block.type === 'text') {
               return (
-                <p key={block.id} className="whitespace-pre-wrap text-sm leading-7 text-gray-300 mb-2.5 sm:text-base sm:leading-8">
+                <p key={block.id} className="whitespace-pre-wrap text-sm leading-7 text-gray-300 sm:text-base sm:leading-8">
                   {block.content}
                 </p>
               );
@@ -431,7 +431,7 @@ export default function ListDetailClient({
             return (
               <div
                 key={block.id}
-                className="flex items-center gap-3 rounded-xl border border-[#1DB954]/25 bg-[#1DB954]/8 p-2 sm:p-3"
+                className="flex items-center gap-3 rounded-xl border border-white/10 border-l-2 border-l-[#1DB954]/60 bg-white/[0.03] p-2 sm:p-3 [&:has(+_p)]:!mb-4"
               >
                 {/* <span className="w-5 shrink-0 text-center text-xs text-gray-400 sm:w-6">{music.order + 1}</span> */}
                 <Image
