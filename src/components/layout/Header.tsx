@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import { useEffect, useState } from 'react';
-import { LogOut, Menu, Search, X } from 'lucide-react';
+import { ListPlus, LogOut, Menu, Search, X } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import type { User } from '@supabase/supabase-js';
 import Link from 'next/link';
@@ -53,6 +53,7 @@ export default function Header({ user, nickname, isAdmin = false }: HeaderProps)
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { isSigningOut, signOut } = useSignOut();
   const isSearchPage = pathname.startsWith('/search');
+  const createListHref = user ? '/createList' : '/auth/login?next=/createList';
 
   useEffect(() => {
     if (!isMenuOpen) return;
@@ -112,6 +113,13 @@ export default function Header({ user, nickname, isAdmin = false }: HeaderProps)
 
           <div className="ml-auto hidden shrink-0 items-center gap-2 lg:flex">
             <Link
+              href={createListHref}
+              className="inline-flex h-auto items-center justify-center gap-2 whitespace-nowrap rounded-md bg-point py-2 px-3.5 text-xs font-bold text-black transition-colors hover:bg-point/90 active:translate-y-px"
+            >
+              <ListPlus className="h-4 w-4" aria-hidden="true" />
+              플레이리스트 만들기
+            </Link>
+            <Link
               href="/search"
               aria-label="검색 페이지로 이동"
               aria-current={isSearchPage ? 'page' : undefined}
@@ -166,6 +174,14 @@ export default function Header({ user, nickname, isAdmin = false }: HeaderProps)
             </div>
 
             <div className="mt-5 space-y-1">
+              <Link
+                href={createListHref}
+                onClick={() => setIsMenuOpen(false)}
+                className="mb-4 flex min-h-12 items-center justify-center gap-2 rounded-lg bg-point px-3 font-bold text-black transition-colors hover:bg-point/90 active:translate-y-px"
+              >
+                <ListPlus className="h-5 w-5" aria-hidden="true" />
+                플레이리스트 만들기
+              </Link>
               {contentNavigation.map((item) => {
                 const active = item.isActive(pathname);
                 return (
@@ -199,13 +215,6 @@ export default function Header({ user, nickname, isAdmin = false }: HeaderProps)
               </Link>
               {user ? (
                 <>
-                  <Link
-                    href="/createList"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex min-h-12 items-center rounded-lg px-3 text-slate-200 hover:bg-white/10 hover:text-white"
-                  >
-                    새 리스트 작성
-                  </Link>
                   <Link
                     href="/mypage"
                     onClick={() => setIsMenuOpen(false)}
