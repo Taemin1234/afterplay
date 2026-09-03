@@ -2,7 +2,20 @@
 
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { CalendarClock, Check, Edit3, Eye, EyeOff, Plus, RotateCcw, Search, Trash2, X } from 'lucide-react';
+import {
+  CalendarClock,
+  Check,
+  Edit3,
+  Eye,
+  EyeOff,
+  LockKeyhole,
+  LockKeyholeOpen,
+  Plus,
+  RotateCcw,
+  Search,
+  Trash2,
+  X,
+} from 'lucide-react';
 import Button from '@/components/ui/atoms/Button';
 
 type PollItemType = 'TRACK' | 'ALBUM';
@@ -120,6 +133,7 @@ export default function MusicPollAdmin() {
   const [listVisibility, setListVisibility] = useState<'ALL' | PollVisibility>('ALL');
 
   const [itemType, setItemType] = useState<PollItemType>('TRACK');
+  const [visibility, setVisibility] = useState<PollVisibility>('PUBLIC');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [endsAt, setEndsAt] = useState('');
@@ -221,6 +235,7 @@ export default function MusicPollAdmin() {
   }, [itemType, musicSearchInput]);
 
   const resetCreateForm = () => {
+    setVisibility('PUBLIC');
     setTitle('');
     setDescription('');
     setEndsAt('');
@@ -309,6 +324,7 @@ export default function MusicPollAdmin() {
           title,
           description,
           itemType,
+          visibility,
           endsAt: isUnlimited ? null : fromDatetimeLocal(endsAt),
           options: [
             { musicItem: first.musicItem, description: first.description, youtubeUrl: first.youtubeUrl },
@@ -447,19 +463,47 @@ export default function MusicPollAdmin() {
       <form onSubmit={handleCreate} className="space-y-5 rounded-lg border border-white/10 bg-white/5 p-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-lg font-semibold text-white">새 투표 생성</h2>
-          <div className="inline-flex rounded-md border border-white/10 bg-black/25 p-1">
-            {(['TRACK', 'ALBUM'] as const).map((type) => (
-              <button
-                key={type}
-                type="button"
-                onClick={() => setItemType(type)}
-                className={`rounded px-3 py-1.5 text-sm transition-colors ${
-                  itemType === type ? 'bg-point text-black' : 'text-slate-300 hover:bg-white/10'
-                }`}
-              >
-                {itemTypeLabel(type)}
-              </button>
-            ))}
+          <div className="flex items-center gap-3">
+            <div className="inline-flex rounded-md border border-white/10 bg-black/25 p-1">
+              {(['TRACK', 'ALBUM'] as const).map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setItemType(type)}
+                  className={`rounded px-3 py-1.5 text-sm transition-colors ${
+                    itemType === type ? 'bg-point text-black' : 'text-slate-300 hover:bg-white/10'
+                  }`}
+                >
+                  {itemTypeLabel(type)}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="shrink-0 text-sm font-medium text-white">비밀글</span>
+              <label className="relative inline-flex cursor-pointer items-center">
+                <input
+                  type="checkbox"
+                  className="sr-only"
+                  checked={visibility === 'PRIVATE'}
+                  onChange={() => setVisibility((current) => (current === 'PUBLIC' ? 'PRIVATE' : 'PUBLIC'))}
+                  aria-label="비밀글 설정"
+                />
+                <span
+                  className={`relative flex h-8 w-14 items-center rounded-full p-1 transition-colors duration-300 ${
+                    visibility === 'PUBLIC' ? 'bg-gray-800' : 'bg-point/30'
+                  }`}
+                >
+                  <span
+                    className={`flex h-6 w-6 items-center justify-center rounded-full shadow-md transition-transform duration-300 ${
+                      visibility === 'PUBLIC' ? 'translate-x-0 bg-gray-600' : 'translate-x-6 bg-point/30'
+                    }`}
+                  >
+                    {visibility === 'PUBLIC' ? <LockKeyholeOpen size={16} /> : <LockKeyhole size={16} />}
+                  </span>
+                </span>
+              </label>
+            </div>
           </div>
         </div>
 

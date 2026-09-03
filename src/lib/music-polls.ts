@@ -28,6 +28,7 @@ export type PollPayloadInput = {
   title?: string;
   description?: string | null;
   itemType?: PollItemTypeValue;
+  visibility?: PollVisibilityValue;
   options?: PollOptionPayload[];
   startsAt?: string | null;
   endsAt?: string | null;
@@ -37,6 +38,7 @@ type NormalizedPollPayload = {
   title: string;
   description: string | null;
   itemType: PollItemTypeValue;
+  visibility: PollVisibilityValue;
   options: [PollOptionPayload, PollOptionPayload];
   startsAt: Date | null;
   endsAt: Date | null;
@@ -87,6 +89,11 @@ export function validateAndNormalizePollPayload(
     return { error: 'itemType must be TRACK or ALBUM' };
   }
 
+  const visibility = body.visibility ?? 'PUBLIC';
+  if (visibility !== 'PUBLIC' && visibility !== 'PRIVATE') {
+    return { error: 'visibility must be PUBLIC or PRIVATE' };
+  }
+
   const startsAt = parseOptionalDate(body.startsAt, 'startsAt');
   if ('error' in startsAt) return { error: startsAt.error };
 
@@ -116,6 +123,7 @@ export function validateAndNormalizePollPayload(
         title,
         description,
         itemType: body.itemType,
+        visibility,
         options: optionData,
         startsAt: startsAt.value,
         endsAt: endsAt.value,
@@ -128,6 +136,7 @@ export function validateAndNormalizePollPayload(
       title,
       description,
       itemType: body.itemType,
+      visibility,
       options: [] as unknown as [PollOptionPayload, PollOptionPayload],
       startsAt: startsAt.value,
       endsAt: endsAt.value,

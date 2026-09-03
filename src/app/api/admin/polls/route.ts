@@ -72,7 +72,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: parsed.error ?? 'Bad request' }, { status: 400 });
     }
 
-    const { title, description, itemType, options, startsAt, endsAt } = parsed.data;
+    const { title, description, itemType, visibility, options, startsAt, endsAt } = parsed.data;
     const musicIdBySpotifyId = await upsertPollMusicItems(itemType, options);
 
     const poll = await prisma.musicPoll.create({
@@ -80,6 +80,7 @@ export async function POST(request: Request) {
         title,
         description,
         itemType,
+        visibility,
         startsAt,
         endsAt,
         createdById: admin.id,
