@@ -288,9 +288,9 @@ export default function PollDetailClient({ initialPoll, isLoggedIn, isAdmin = fa
         </div>
 
         {voteError ? <p className="mt-4 text-sm text-red-300">{voteError}</p> : null}
-        {canSeeResults && poll.results && poll.viewerVote ? (
+        {/* {canSeeResults && poll.results && poll.viewerVote ? (
           <p className="mt-4 text-base text-center text-slate">나의 선택 : {selectedOption?.title ?? '선택됨'}</p>
-        ) : null}
+        ) : null} */}
 
         {/* <div className="mt-5 grid gap-2 sm:grid-cols-2">
           {poll.options.map((option) => {
