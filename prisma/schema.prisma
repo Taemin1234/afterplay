@@ -685,6 +685,7 @@ model MusicPoll {
   description String?      @db.Text
   itemType    PollItemType
   status      PollStatus   @default(OPEN)
+  visibility  Visibility   @default(PUBLIC)
 
   startsAt DateTime?
   endsAt   DateTime?
@@ -702,6 +703,7 @@ model MusicPoll {
   deletedAt DateTime?
 
   @@index([status, startsAt, endsAt])
+  @@index([visibility, deletedAt, createdAt(sort: Desc)])
   @@index([createdAt])
   @@index([deletedAt])
   @@index([createdById])

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getAuthenticatedUser } from '@/lib/music-list-api';
+import { publicPollWhere } from '@/lib/music-poll-access';
 import { serializePollListItem } from '@/lib/music-polls';
 
 export const runtime = 'nodejs';
@@ -19,9 +20,7 @@ export async function GET(request: Request) {
     const votes = await prisma.musicPollVote.findMany({
       where: {
         userId: user.id,
-        poll: {
-          deletedAt: null,
-        },
+        poll: publicPollWhere(),
       },
       select: {
         optionId: true,

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import PollDetailClient from '@/components/polls/PollDetailClient';
 import { getAuthenticatedUser } from '@/lib/music-list-api';
+import { publicPollWhere } from '@/lib/music-poll-access';
 import prisma from '@/lib/prisma';
 import { fetchPollMetadata, serializePoll, serializePollListItem } from '@/lib/music-polls';
 import { SITE_NAME } from '@/lib/seo';
@@ -79,15 +80,14 @@ export default async function PollDetailPage({ params }: PollDetailPageProps) {
   };
 
   const relatedPolls = await prisma.musicPoll.findMany({
-    where: {
+    where: publicPollWhere({
       id: { not: poll.id },
-      deletedAt: null,
       ...activePollWhere,
       itemType: poll.itemType,
       options: {
         some: optionTargetWhere,
       },
-    },
+    }),
     select: { id: true },
     orderBy: { createdAt: 'desc' },
     take: 6,
@@ -95,16 +95,15 @@ export default async function PollDetailPage({ params }: PollDetailPageProps) {
 
   const relatedIds = relatedPolls.map((item) => item.id);
   const otherPolls = await prisma.musicPoll.findMany({
-    where: {
+    where: publicPollWhere({
       id: { notIn: [poll.id, ...relatedIds] },
-      deletedAt: null,
       ...activePollWhere,
       NOT: {
         options: {
           some: optionTargetWhere,
         },
       },
-    },
+    }),
     select: { id: true },
     orderBy: { createdAt: 'desc' },
     take: 3,

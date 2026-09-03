@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { getAdminUserOrNull } from '@/lib/admin-auth';
 import prisma from '@/lib/prisma';
-import { parseYouTubeVideoId, serializePoll, type PollPayloadInput } from '@/lib/music-polls';
+import {
+  parseYouTubeVideoId,
+  serializePoll,
+  type PollPayloadInput,
+  type PollVisibilityValue,
+} from '@/lib/music-polls';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -17,6 +23,7 @@ type RouteContext = {
 
 type AdminPollPatchPayload = PollPayloadInput & {
   status?: 'OPEN' | 'CLOSED';
+  visibility?: PollVisibilityValue;
   closeInDays?: number;
   optionYouTubeUrls?: Array<{
     optionId: string;
@@ -39,7 +46,7 @@ export async function GET(_request: Request, context: RouteContext) {
     }
 
     const { id } = await context.params;
-    const poll = await serializePoll(id, admin.id);
+    const poll = await serializePoll(id, admin.id, { includePrivate: true });
     if (!poll) {
       return NextResponse.json({ error: 'Poll not found' }, { status: 404 });
     }
@@ -74,6 +81,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       startsAt?: Date | null;
       endsAt?: Date | null;
       status?: 'OPEN' | 'CLOSED';
+      visibility?: PollVisibilityValue;
       closedAt?: Date | null;
     } = {};
 
@@ -114,6 +122,10 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const status = body.status === 'OPEN' || body.status === 'CLOSED' ? body.status : undefined;
+    if (body.visibility !== undefined && body.visibility !== 'PUBLIC' && body.visibility !== 'PRIVATE') {
+      return NextResponse.json({ error: 'visibility must be PUBLIC or PRIVATE' }, { status: 400 });
+    }
+    if (body.visibility) updateData.visibility = body.visibility;
     const closeInDays = typeof body.closeInDays === 'number' ? body.closeInDays : null;
     if (closeInDays !== null && (!Number.isInteger(closeInDays) || closeInDays < 1 || closeInDays > 365)) {
       return NextResponse.json({ error: 'closeInDays must be an integer between 1 and 365' }, { status: 400 });
@@ -168,7 +180,13 @@ export async function PATCH(request: Request, context: RouteContext) {
       ),
     ]);
 
-    const poll = await serializePoll(id, admin.id);
+    if (body.visibility !== undefined) {
+      revalidatePath('/');
+      revalidatePath('/polls');
+      revalidatePath(`/polls/${id}`);
+    }
+
+    const poll = await serializePoll(id, admin.id, { includePrivate: true });
     return NextResponse.json({ ok: true, poll });
   } catch (error) {
     console.error('[api/admin/polls/[id]] PATCH failed', error);

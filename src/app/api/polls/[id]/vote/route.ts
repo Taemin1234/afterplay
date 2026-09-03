@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getAuthenticatedUser, upsertDbUser } from '@/lib/music-list-api';
+import { publicPollWhere } from '@/lib/music-poll-access';
 import { isPollClosed, serializePoll } from '@/lib/music-polls';
 
 export const runtime = 'nodejs';
@@ -31,7 +32,7 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     const poll = await prisma.musicPoll.findFirst({
-      where: { id, deletedAt: null },
+      where: publicPollWhere({ id }),
       select: {
         id: true,
         status: true,

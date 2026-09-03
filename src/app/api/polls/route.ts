@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getAuthenticatedUser } from '@/lib/music-list-api';
+import { publicPollWhere } from '@/lib/music-poll-access';
 import { serializePollListItem, sortPollListItemsOpenFirst } from '@/lib/music-polls';
 
 export const runtime = 'nodejs';
@@ -82,8 +83,7 @@ export async function GET(request: Request) {
     ];
 
     const polls = await prisma.musicPoll.findMany({
-      where: {
-        deletedAt: null,
+      where: publicPollWhere({
         ...(status === 'OPEN' || status === 'CLOSED' ? { status } : {}),
         ...(itemType === 'TRACK' || itemType === 'ALBUM' ? { itemType } : {}),
         ...(query
@@ -95,7 +95,7 @@ export async function GET(request: Request) {
               },
             }
           : {}),
-      },
+      }),
       select: { id: true },
       orderBy: { createdAt: 'desc' },
       take,

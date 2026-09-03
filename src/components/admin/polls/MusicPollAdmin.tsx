@@ -2,11 +2,12 @@
 
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { CalendarClock, Check, Edit3, Plus, RotateCcw, Search, Trash2, X } from 'lucide-react';
+import { CalendarClock, Check, Edit3, Eye, EyeOff, Plus, RotateCcw, Search, Trash2, X } from 'lucide-react';
 import Button from '@/components/ui/atoms/Button';
 
 type PollItemType = 'TRACK' | 'ALBUM';
 type PollStatus = 'OPEN' | 'CLOSED';
+type PollVisibility = 'PUBLIC' | 'PRIVATE';
 
 type MusicSearchItem = {
   id: string;
@@ -44,6 +45,7 @@ type AdminPoll = {
   description: string | null;
   itemType: PollItemType;
   status: PollStatus;
+  visibility: PollVisibility;
   isClosed: boolean;
   startsAt: string | null;
   endsAt: string | null;
@@ -115,6 +117,7 @@ export default function MusicPollAdmin() {
   const [listSearchInput, setListSearchInput] = useState('');
   const [listSearch, setListSearch] = useState('');
   const [listType, setListType] = useState<'ALL' | PollItemType>('ALL');
+  const [listVisibility, setListVisibility] = useState<'ALL' | PollVisibility>('ALL');
 
   const [itemType, setItemType] = useState<PollItemType>('TRACK');
   const [title, setTitle] = useState('');
@@ -151,6 +154,7 @@ export default function MusicPollAdmin() {
       const params = new URLSearchParams({ take: '50' });
       if (listSearch) params.set('q', listSearch);
       if (listType !== 'ALL') params.set('itemType', listType);
+      if (listVisibility !== 'ALL') params.set('visibility', listVisibility);
 
       const response = await fetch(`/api/admin/polls?${params.toString()}`, { cache: 'no-store' });
       if (!response.ok) {
@@ -165,7 +169,7 @@ export default function MusicPollAdmin() {
     } finally {
       setIsLoadingPolls(false);
     }
-  }, [listSearch, listType]);
+  }, [listSearch, listType, listVisibility]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -638,6 +642,16 @@ export default function MusicPollAdmin() {
           <h2 className="text-lg font-semibold text-white">투표 목록</h2>
           <div className="flex flex-col gap-2 sm:flex-row">
             <select
+              value={listVisibility}
+              onChange={(e) => setListVisibility(e.target.value as 'ALL' | PollVisibility)}
+              aria-label="공개 상태 필터"
+              className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
+            >
+              <option value="ALL">전체 공개 상태</option>
+              <option value="PUBLIC">공개</option>
+              <option value="PRIVATE">비공개</option>
+            </select>
+            <select
               value={listType}
               onChange={(e) => setListType(e.target.value as 'ALL' | PollItemType)}
               className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
@@ -676,6 +690,15 @@ export default function MusicPollAdmin() {
                         <span className="rounded border border-white/10 px-2 py-1 text-slate-300">{itemTypeLabel(poll.itemType)}</span>
                         <span className={`rounded px-2 py-1 ${poll.isClosed ? 'bg-red-500/15 text-red-200' : 'bg-point/10 text-point'}`}>
                           {statusLabel(poll)}
+                        </span>
+                        <span
+                          className={`rounded px-2 py-1 ${
+                            poll.visibility === 'PRIVATE'
+                              ? 'border border-point/30 bg-point/10 text-point'
+                              : 'border border-white/10 bg-white/5 text-slate-300'
+                          }`}
+                        >
+                          {poll.visibility === 'PRIVATE' ? '비공개' : '공개'}
                         </span>
                         <span className="text-slate-500">생성 {formatDate(poll.createdAt)}</span>
                         <span className="text-slate-500">마감 {formatDate(poll.endsAt)}</span>
@@ -800,6 +823,29 @@ export default function MusicPollAdmin() {
                               disabled={isPending}
                             >
                               수정
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              color="white"
+                              size="sm"
+                              icon={
+                                poll.visibility === 'PRIVATE'
+                                  ? <Eye className="h-4 w-4" />
+                                  : <EyeOff className="h-4 w-4" />
+                              }
+                              onClick={() =>
+                                patchPoll(
+                                  poll.id,
+                                  { visibility: poll.visibility === 'PRIVATE' ? 'PUBLIC' : 'PRIVATE' },
+                                  poll.visibility === 'PRIVATE'
+                                    ? '투표가 공개되었습니다.'
+                                    : '투표가 비공개되었습니다.'
+                                )
+                              }
+                              disabled={isPending}
+                            >
+                              {poll.visibility === 'PRIVATE' ? '공개로 전환' : '비공개로 전환'}
                             </Button>
                             {!poll.isClosed ? (
                               <>

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getAuthenticatedUser } from '@/lib/music-list-api';
+import { publicPollWhere } from '@/lib/music-poll-access';
 import { serializePoll, serializePollListItem } from '@/lib/music-polls';
 
 export const runtime = 'nodejs';
@@ -35,15 +36,14 @@ export async function GET(_request: Request, context: RouteContext) {
     };
 
     const relatedPolls = await prisma.musicPoll.findMany({
-      where: {
+      where: publicPollWhere({
         id: { not: poll.id },
-        deletedAt: null,
         ...activePollWhere,
         itemType: poll.itemType,
         options: {
           some: optionTargetWhere,
         },
-      },
+      }),
       select: { id: true },
       orderBy: { createdAt: 'desc' },
       take: 6,
@@ -51,16 +51,15 @@ export async function GET(_request: Request, context: RouteContext) {
 
     const relatedIds = relatedPolls.map((item) => item.id);
     const otherPolls = await prisma.musicPoll.findMany({
-      where: {
+      where: publicPollWhere({
         id: { notIn: [poll.id, ...relatedIds] },
-        deletedAt: null,
         ...activePollWhere,
         NOT: {
           options: {
             some: optionTargetWhere,
           },
         },
-      },
+      }),
       select: { id: true },
       orderBy: { createdAt: 'desc' },
       take: 3,

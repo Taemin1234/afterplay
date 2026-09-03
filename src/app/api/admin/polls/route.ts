@@ -22,6 +22,7 @@ export async function GET(request: Request) {
     const query = searchParams.get('q')?.trim();
     const status = searchParams.get('status');
     const itemType = searchParams.get('itemType');
+    const visibility = searchParams.get('visibility');
     const take = Math.min(Math.max(Number(searchParams.get('take') ?? 30), 1), 50);
 
     const polls = await prisma.musicPoll.findMany({
@@ -29,6 +30,7 @@ export async function GET(request: Request) {
         deletedAt: null,
         ...(status === 'OPEN' || status === 'CLOSED' ? { status } : {}),
         ...(itemType === 'TRACK' || itemType === 'ALBUM' ? { itemType } : {}),
+        ...(visibility === 'PUBLIC' || visibility === 'PRIVATE' ? { visibility } : {}),
         ...(query
           ? {
               options: {
@@ -47,7 +49,9 @@ export async function GET(request: Request) {
       take,
     });
 
-    const items = await Promise.all(polls.map((poll) => serializePollListItem(poll.id, admin.id)));
+    const items = await Promise.all(
+      polls.map((poll) => serializePollListItem(poll.id, admin.id, { includePrivate: true }))
+    );
     return NextResponse.json(items.filter(Boolean));
   } catch (error) {
     console.error('[api/admin/polls] GET failed', error);
@@ -101,7 +105,7 @@ export async function POST(request: Request) {
       select: { id: true },
     });
 
-    const item = await serializePollListItem(poll.id, admin.id);
+    const item = await serializePollListItem(poll.id, admin.id, { includePrivate: true });
     return NextResponse.json({ ok: true, poll: item }, { status: 201 });
   } catch (error) {
     console.error('[api/admin/polls] POST failed', error);

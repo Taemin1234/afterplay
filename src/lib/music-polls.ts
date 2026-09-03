@@ -1,7 +1,13 @@
 import prisma from '@/lib/prisma';
+import { publicPollWhere } from '@/lib/music-poll-access';
 
 export type PollItemTypeValue = 'TRACK' | 'ALBUM';
 export type PollStatusValue = 'OPEN' | 'CLOSED';
+export type PollVisibilityValue = 'PUBLIC' | 'PRIVATE';
+
+type PollAccessOptions = {
+  includePrivate?: boolean;
+};
 
 export type PollMusicItemPayload = {
   id: string;
@@ -292,7 +298,7 @@ export async function getPollResults(pollId: string): Promise<{ totalVotes: numb
 
 export async function fetchPollMetadata(id: string): Promise<PollMetadata | null> {
   const poll = await prisma.musicPoll.findFirst({
-    where: { id, deletedAt: null },
+    where: publicPollWhere({ id }),
     select: {
       title: true,
       description: true,
@@ -317,9 +323,15 @@ export async function fetchPollMetadata(id: string): Promise<PollMetadata | null
   };
 }
 
-export async function serializePoll(pollId: string, viewerUserId?: string | null) {
+export async function serializePoll(
+  pollId: string,
+  viewerUserId?: string | null,
+  access: PollAccessOptions = {}
+) {
   const poll = await prisma.musicPoll.findFirst({
-    where: { id: pollId, deletedAt: null },
+    where: access.includePrivate
+      ? { id: pollId, deletedAt: null }
+      : publicPollWhere({ id: pollId }),
     include: {
       createdBy: {
         select: { id: true, nickname: true, role: true },
@@ -353,6 +365,7 @@ export async function serializePoll(pollId: string, viewerUserId?: string | null
     description: poll.description,
     itemType: poll.itemType,
     status: poll.status,
+    visibility: poll.visibility,
     isClosed: pollIsClosed,
     startsAt: poll.startsAt?.toISOString() ?? null,
     endsAt: poll.endsAt?.toISOString() ?? null,
@@ -396,8 +409,12 @@ export async function serializePoll(pollId: string, viewerUserId?: string | null
   };
 }
 
-export async function serializePollListItem(pollId: string, viewerUserId?: string | null) {
-  const poll = await serializePoll(pollId, viewerUserId);
+export async function serializePollListItem(
+  pollId: string,
+  viewerUserId?: string | null,
+  access: PollAccessOptions = {}
+) {
+  const poll = await serializePoll(pollId, viewerUserId, access);
   if (!poll) return null;
 
   return {
@@ -406,6 +423,7 @@ export async function serializePollListItem(pollId: string, viewerUserId?: strin
     description: poll.description,
     itemType: poll.itemType,
     status: poll.status,
+    visibility: poll.visibility,
     isClosed: poll.isClosed,
     startsAt: poll.startsAt,
     endsAt: poll.endsAt,

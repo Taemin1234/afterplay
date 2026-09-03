@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import PollListClient from '@/components/polls/PollListClient';
 import { getAuthenticatedUser } from '@/lib/music-list-api';
+import { publicPollWhere } from '@/lib/music-poll-access';
 import prisma from '@/lib/prisma';
 import { serializePollListItem, sortPollListItemsOpenFirst } from '@/lib/music-polls';
 
@@ -38,7 +39,7 @@ export const metadata: Metadata = {
 export default async function PollsPage() {
   const user = await getAuthenticatedUser();
   const polls = await prisma.musicPoll.findMany({
-    where: { deletedAt: null },
+    where: publicPollWhere(),
     select: { id: true },
     orderBy: { createdAt: 'desc' },
     take: 50,

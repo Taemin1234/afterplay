@@ -7,6 +7,7 @@ import MusicListGrid from '@/components/ui/organisms/MusicListGrid';
 import PollCard from '@/components/polls/PollCard';
 import { fetchListItems } from '@/lib/music-lists';
 import { getAuthenticatedUser } from '@/lib/music-list-api';
+import { publicPollWhere } from '@/lib/music-poll-access';
 import { serializePollListItem } from '@/lib/music-polls';
 import prisma from '@/lib/prisma';
 import { buildUrl, SITE_DESCRIPTION, SITE_NAME_KO } from '@/lib/seo';
@@ -64,7 +65,7 @@ export default async function Home() {
   const [user, pollRows, listResult, weeklyResult, featuredResult] = await Promise.all([
     getAuthenticatedUser(),
     prisma.musicPoll.findMany({
-      where: { deletedAt: null },
+      where: publicPollWhere(),
       select: { id: true },
       orderBy: { createdAt: 'desc' },
       take: 4,

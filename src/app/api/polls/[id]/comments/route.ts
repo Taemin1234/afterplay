@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { getAuthenticatedUser, upsertDbUser } from '@/lib/music-list-api';
 import { handleCommentActions, type MusicDetailActionPayload } from '@/lib/music-detail-route-helpers';
 import { fetchCommentPage, fetchReplyPage } from '@/lib/comment-pagination';
+import { publicPollWhere } from '@/lib/music-poll-access';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -17,7 +18,7 @@ export async function GET(request: Request, context: RouteContext) {
   try {
     const { id } = await context.params;
     const poll = await prisma.musicPoll.findFirst({
-      where: { id, deletedAt: null },
+      where: publicPollWhere({ id }),
       select: { id: true },
     });
     if (!poll) {
@@ -49,7 +50,7 @@ export async function POST(request: Request, context: RouteContext) {
     const body = (await request.json()) as MusicDetailActionPayload;
     const [poll, dbUser] = await Promise.all([
       prisma.musicPoll.findFirst({
-        where: { id, deletedAt: null },
+        where: publicPollWhere({ id }),
         select: { id: true },
       }),
       prisma.user.findUnique({
