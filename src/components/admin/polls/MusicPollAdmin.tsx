@@ -148,6 +148,7 @@ export default function MusicPollAdmin() {
   const [musicSearchInput, setMusicSearchInput] = useState('');
   const [musicResults, setMusicResults] = useState<MusicSearchItem[]>([]);
   const [isSearchingMusic, setIsSearchingMusic] = useState(false);
+  const [musicSearchError, setMusicSearchError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
   const [editingPollId, setEditingPollId] = useState<string | null>(null);
@@ -205,6 +206,7 @@ export default function MusicPollAdmin() {
     setSelectedOptions(emptyOptionSlots);
     setMusicResults([]);
     setMusicSearchInput('');
+    setMusicSearchError(null);
     setSelectedSlot(0);
   }, [itemType]);
 
@@ -213,12 +215,14 @@ export default function MusicPollAdmin() {
     if (query.length < 2) {
       setMusicResults([]);
       setIsSearchingMusic(false);
+      setMusicSearchError(null);
       return;
     }
 
     let ignore = false;
     const timer = window.setTimeout(async () => {
       setIsSearchingMusic(true);
+      setMusicSearchError(null);
       try {
         const response = await fetch(`/api/music/search?type=${itemType === 'TRACK' ? 'track' : 'album'}&q=${encodeURIComponent(query)}`, {
           cache: 'no-store',
@@ -227,7 +231,10 @@ export default function MusicPollAdmin() {
         const data = (await response.json()) as MusicSearchItem[];
         if (!ignore) setMusicResults(data);
       } catch {
-        if (!ignore) setMusicResults([]);
+        if (!ignore) {
+          setMusicResults([]);
+          setMusicSearchError('음악 검색 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+        }
       } finally {
         if (!ignore) setIsSearchingMusic(false);
       }
@@ -249,6 +256,7 @@ export default function MusicPollAdmin() {
     setSelectedSlot(0);
     setMusicSearchInput('');
     setMusicResults([]);
+    setMusicSearchError(null);
   };
 
   const selectMusicItem = (item: MusicSearchItem) => {
@@ -267,6 +275,7 @@ export default function MusicPollAdmin() {
     setSelectedSlot(selectedSlot === 0 ? 1 : 0);
     setMusicSearchInput('');
     setMusicResults([]);
+    setMusicSearchError(null);
   };
 
   const removeSelectedOption = (slot: 0 | 1) => {
@@ -512,53 +521,59 @@ export default function MusicPollAdmin() {
           </div>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-[1fr_1fr_220px]">
-          <label className="space-y-1">
-            <span className="text-xs font-medium text-slate-400">제목</span>
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              maxLength={120}
-              className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-point"
-            />
-          </label>
-          <label className="space-y-1">
-            <span className="text-xs font-medium text-slate-400">간단 설명</span>
-            <input
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              maxLength={500}
-              className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-point"
-            />
-          </label>
-          <label className="space-y-1">
-            <span className="text-xs font-medium text-slate-400">기간</span>
-            <div className="flex h-[38px] items-center gap-2 rounded-md border border-slate-700 bg-slate-950 px-3 text-sm text-white">
+        <div className="grid gap-3 md:grid-cols-[1fr_220px]">
+          <div>
+            <label className="space-y-1">
+              <span className="text-xs font-medium text-slate-400">제목</span>
               <input
-                id="poll-unlimited"
-                type="checkbox"
-                checked={isUnlimited}
-                onChange={(e) => setIsUnlimited(e.target.checked)}
-                className="h-4 w-4 accent-point"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                maxLength={120}
+                className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-point"
               />
-              <label htmlFor="poll-unlimited" className="text-slate-200">
-                무기한
+            </label>
+            <label className="space-y-1">
+              <span className="text-xs font-medium text-slate-400">간단 설명</span>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                maxLength={500}
+                rows={4}
+                className="w-full resize-y rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-point"
+              />
+            </label>
+          </div>
+          <div>
+             <label className="space-y-1">
+              <span className="text-xs font-medium text-slate-400">기간</span>
+              <div className="flex h-[38px] items-center gap-2 rounded-md border border-slate-700 bg-slate-950 px-3 text-sm text-white">
+                <input
+                  id="poll-unlimited"
+                  type="checkbox"
+                  checked={isUnlimited}
+                  onChange={(e) => setIsUnlimited(e.target.checked)}
+                  className="h-4 w-4 accent-point"
+                />
+                <label htmlFor="poll-unlimited" className="text-slate-200">
+                  무기한
+                </label>
+              </div>
+            </label>
+
+            {!isUnlimited ? (
+              <label className="space-y-1">
+                <span className="text-xs font-medium text-slate-400">마감일</span>
+                <input
+                  type="datetime-local"
+                  value={endsAt}
+                  onChange={(e) => setEndsAt(e.target.value)}
+                  className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-point"
+                />
               </label>
-            </div>
-          </label>
+            ) : null}
+          </div>
         </div>
 
-        {!isUnlimited ? (
-          <label className="block max-w-xs space-y-1">
-            <span className="text-xs font-medium text-slate-400">마감일</span>
-            <input
-              type="datetime-local"
-              value={endsAt}
-              onChange={(e) => setEndsAt(e.target.value)}
-              className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-point"
-            />
-          </label>
-        ) : null}
 
         <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
           <div className="grid gap-3 sm:grid-cols-2">
@@ -618,7 +633,7 @@ export default function MusicPollAdmin() {
                         onChange={(e) => updateSelectedOptionDescription(slot, e.target.value)}
                         maxLength={500}
                         placeholder={`후보 ${slot + 1} 설명`}
-                        className="h-20 w-full resize-none rounded-md border border-slate-700 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-point"
+                        className="h-50 w-full resize-none rounded-md border border-slate-700 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-point"
                       />
                       <input
                         value={option.youtubeUrl}
@@ -652,7 +667,10 @@ export default function MusicPollAdmin() {
             </label>
             <div className="mt-3 max-h-72 overflow-y-auto rounded-md border border-white/10">
               {isSearchingMusic ? <p className="px-3 py-4 text-center text-sm text-slate-400">검색 중...</p> : null}
-              {!isSearchingMusic && musicResults.length === 0 ? (
+              {!isSearchingMusic && musicSearchError ? (
+                <p className="px-3 py-4 text-center text-sm text-red-400">{musicSearchError}</p>
+              ) : null}
+              {!isSearchingMusic && !musicSearchError && musicResults.length === 0 ? (
                 <p className="px-3 py-4 text-center text-sm text-slate-500">검색어를 입력하면 결과가 표시됩니다.</p>
               ) : null}
               {musicResults.map((item) => (
