@@ -3,6 +3,11 @@ export interface MusicContentItem {
   name: string;
   artist: string;
   albumImageUrl: string;
+  artistId?: string;
+  albumId?: string;
+  spotifyName?: string;
+  spotifyArtistName?: string;
+  spotifyAlbumName?: string;
 }
 
 export interface TextContentBlock {

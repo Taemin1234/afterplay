@@ -1,15 +1,17 @@
 ﻿'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import Button from '../ui/atoms/Button';
 
-type MusicAliasType = 'TRACK_ARTIST' | 'TRACK_TITLE' | 'ALBUM_ARTIST' | 'ALBUM_TITLE';
+type MusicAliasType = 'TRACK_ARTIST' | 'TRACK_TITLE' | 'ALBUM_ARTIST' | 'ALBUM_TITLE' | 'ARTIST_NAME';
 
 type AliasItem = {
   id: number;
   type: MusicAliasType;
   canonical: string;
-  alias: string;
+  alias: string | null;
+  spotifyId: string | null;
+  context: string | null;
+  imageUrl: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -23,14 +25,8 @@ type AliasListResponse = {
 
 const pageSize = 20;
 
-const typeOptions: Array<{ value: MusicAliasType; label: string }> = [
-  { value: 'TRACK_ARTIST', label: '아티스트' },
-  { value: 'TRACK_TITLE', label: '곡 제목' },
-  { value: 'ALBUM_TITLE', label: '앨범 제목' },
-];
-
 function getTypeLabel(type: MusicAliasType) {
-  if (type === 'TRACK_ARTIST' || type === 'ALBUM_ARTIST') return '아티스트';
+  if (type === 'TRACK_ARTIST' || type === 'ALBUM_ARTIST' || type === 'ARTIST_NAME') return '가수명';
   if (type === 'TRACK_TITLE') return '곡 제목';
   return '앨범 제목';
 }
@@ -44,13 +40,7 @@ export default function SearchAliasAdmin() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
 
-  const [type, setType] = useState<MusicAliasType>('TRACK_ARTIST');
-  const [canonical, setCanonical] = useState('');
-  const [alias, setAlias] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
-
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [editCanonical, setEditCanonical] = useState('');
   const [editAlias, setEditAlias] = useState('');
 
   const totalPages = useMemo(() => Math.max(1, Math.ceil(total / pageSize)), [total]);
@@ -100,36 +90,6 @@ export default function SearchAliasAdmin() {
     loadItems(page);
   }, [loadItems, page]);
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    setIsSaving(true);
-    setError(null);
-
-    try {
-      const response = await fetch('/api/admin/search-aliases', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type, canonical, alias }),
-      });
-
-      if (!response.ok) {
-        const data = (await response.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(data?.error ?? '별칭을 추가하지 못했습니다.');
-      }
-
-      setCanonical('');
-      setAlias('');
-      setPage(1);
-      await loadItems(1);
-    } catch (e) {
-      const message = e instanceof Error ? e.message : '별칭을 추가하지 못했습니다.';
-      setError(message);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   const handleDelete = async (id: number) => {
     setError(null);
 
@@ -157,24 +117,22 @@ export default function SearchAliasAdmin() {
 
   const startEdit = (item: AliasItem) => {
     setEditingId(item.id);
-    setEditCanonical(item.canonical);
-    setEditAlias(item.alias);
+    setEditAlias(item.alias ?? '');
   };
 
   const cancelEdit = () => {
     setEditingId(null);
-    setEditCanonical('');
     setEditAlias('');
   };
 
-  const saveEdit = async (id: number) => {
+  const saveEdit = async (item: AliasItem) => {
     setError(null);
 
     try {
-      const response = await fetch(`/api/admin/search-aliases/${id}`, {
+      const response = await fetch(`/api/admin/search-aliases/${item.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ canonical: editCanonical, alias: editAlias }),
+        body: JSON.stringify({ canonical: item.canonical, alias: editAlias }),
       });
 
       if (!response.ok) {
@@ -191,40 +149,11 @@ export default function SearchAliasAdmin() {
   };
 
   return (
-    <section className='mx-auto w-full max-w-4xl space-y-6'>
-      <h1 className='text-xl font-semibold text-white'>검색 별칭 관리자</h1>
-
-      <form onSubmit={handleCreate} className='grid gap-3 rounded-lg border border-white/10 bg-white/5 p-4 md:grid-cols-4'>
-        <select
-          value={type}
-          onChange={(e) => setType(e.target.value as MusicAliasType)}
-          className='rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white'
-        >
-          {typeOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-
-        <input
-          value={canonical}
-          onChange={(e) => setCanonical(e.target.value)}
-          placeholder='원본명 (예: Buzz)'
-          className='rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white'
-        />
-
-        <input
-          value={alias}
-          onChange={(e) => setAlias(e.target.value)}
-          placeholder='별칭 (예: 버즈)'
-          className='rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white'
-        />
-
-        <Button type='submit' variant='outline' size='sm' disabled={isSaving} className='bg-point/10 justify-center  disabled:opacity-50'>
-          {isSaving ? '저장 중...' : '별칭 추가'}
-        </Button>
-      </form>
+    <section className='mx-auto w-full max-w-6xl space-y-6'>
+      <div>
+        <h1 className='text-xl font-semibold text-white'>음악 한글명 관리자</h1>
+        <p className='mt-1 text-sm text-slate-400'>등록된 Spotify 곡·앨범·가수의 한글 표시명을 관리합니다.</p>
+      </div>
 
       {error ? <p className='text-sm text-red-300'>{error}</p> : null}
 
@@ -233,7 +162,7 @@ export default function SearchAliasAdmin() {
           <input
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder='원본명 또는 별칭 검색'
+            placeholder='Spotify ID, 원본명 또는 한글명 검색'
             className='min-w-0 flex-1 rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-point'
           />
           {searchInput ? (
@@ -252,7 +181,7 @@ export default function SearchAliasAdmin() {
       </div>
 
       {isLoading ? (
-        <p className='text-sm text-slate-400'>별칭 목록을 불러오는 중...</p>
+        <p className='text-sm text-slate-400'>음악 이름 목록을 불러오는 중...</p>
       ) : (
         <>
           <div className='overflow-x-auto rounded-lg border border-white/10'>
@@ -260,8 +189,10 @@ export default function SearchAliasAdmin() {
               <thead className='bg-black/30 text-slate-300'>
                 <tr>
                   <th className='px-3 py-2 text-left font-medium'>유형</th>
+                  <th className='px-3 py-2 text-left font-medium'>Spotify ID</th>
                   <th className='px-3 py-2 text-left font-medium'>원본명</th>
-                  <th className='px-3 py-2 text-left font-medium'>별칭</th>
+                  <th className='px-3 py-2 text-left font-medium'>관련 정보</th>
+                  <th className='px-3 py-2 text-left font-medium'>한글명</th>
                   <th className='px-3 py-2 text-left font-medium'>수정일</th>
                   <th className='px-3 py-2 text-right font-medium'>작업</th>
                 </tr>
@@ -269,8 +200,8 @@ export default function SearchAliasAdmin() {
               <tbody className='divide-y divide-white/10'>
                 {items.length === 0 ? (
                   <tr className='bg-black/10'>
-                    <td colSpan={5} className='px-3 py-8 text-center text-slate-400'>
-                      표시할 별칭이 없습니다.
+                    <td colSpan={7} className='px-3 py-8 text-center text-slate-400'>
+                      표시할 음악 이름이 없습니다.
                     </td>
                   </tr>
                 ) : null}
@@ -280,17 +211,13 @@ export default function SearchAliasAdmin() {
                   return (
                     <tr key={item.id} className='bg-black/10'>
                       <td className='px-3 py-2 text-slate-200'>{getTypeLabel(item.type)}</td>
-                      <td className='px-3 py-2'>
-                        {isEditing ? (
-                          <input
-                            value={editCanonical}
-                            onChange={(e) => setEditCanonical(e.target.value)}
-                            className='w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-white'
-                          />
-                        ) : (
-                          <span className='text-slate-100'>{item.canonical}</span>
-                        )}
+                      <td className='max-w-36 truncate px-3 py-2 font-mono text-xs text-slate-400' title={item.spotifyId ?? undefined}>
+                        {item.spotifyId ?? '수동 등록'}
                       </td>
+                      <td className='px-3 py-2'>
+                        <span className='text-slate-100'>{item.canonical}</span>
+                      </td>
+                      <td className='px-3 py-2 text-slate-400'>{item.context ?? '-'}</td>
                       <td className='px-3 py-2'>
                         {isEditing ? (
                           <input
@@ -299,7 +226,7 @@ export default function SearchAliasAdmin() {
                             className='w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-white'
                           />
                         ) : (
-                          <span className='text-slate-100'>{item.alias}</span>
+                          <span className={item.alias ? 'text-slate-100' : 'text-amber-300'}>{item.alias ?? '미등록'}</span>
                         )}
                       </td>
                       <td className='px-3 py-2 text-slate-400'>{new Date(item.updatedAt).toLocaleString('ko-KR')}</td>
@@ -308,7 +235,7 @@ export default function SearchAliasAdmin() {
                           <div className='inline-flex gap-2'>
                             <button
                               type='button'
-                              onClick={() => saveEdit(item.id)}
+                              onClick={() => saveEdit(item)}
                               className='rounded-md border border-point/40 bg-point/10 px-2 py-1 text-xs text-point'
                             >
                               저장

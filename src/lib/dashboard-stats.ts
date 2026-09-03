@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+import { getLocalizedNames, localizedName } from '@/lib/music-localization';
 
 type DateRange = {
   start: Date;
@@ -246,8 +247,10 @@ export async function getUserDashboardStats(userId: string): Promise<UserDashboa
         select: {
           track: {
             select: {
+              spotifyId: true,
               title: true,
               artist: true,
+              artistSpotifyId: true,
             },
           },
         },
@@ -259,14 +262,27 @@ export async function getUserDashboardStats(userId: string): Promise<UserDashboa
         select: {
           album: {
             select: {
+              spotifyId: true,
               title: true,
               artist: true,
+              artistSpotifyId: true,
             },
           },
         },
       }),
       getUserSummaryStats(userId),
     ]);
+
+  const localizedNames = await getLocalizedNames([
+    ...trackRows.flatMap((row) => [
+      { type: 'TRACK_TITLE' as const, spotifyId: row.track.spotifyId, canonical: row.track.title },
+      { type: 'ARTIST_NAME' as const, spotifyId: row.track.artistSpotifyId, canonical: row.track.artist },
+    ]),
+    ...albumRows.flatMap((row) => [
+      { type: 'ALBUM_TITLE' as const, spotifyId: row.album.spotifyId, canonical: row.album.title },
+      { type: 'ARTIST_NAME' as const, spotifyId: row.album.artistSpotifyId, canonical: row.album.artist },
+    ]),
+  ]);
 
   let mostLikedPlaylist: PopularPlaylist | null = null;
   let mostViewedPlaylist: PopularPlaylist | null = null;
@@ -293,15 +309,15 @@ export async function getUserDashboardStats(userId: string): Promise<UserDashboa
   const albumCounter = new Map<string, number>();
 
   for (const row of trackRows) {
-    const artist = row.track.artist.trim();
-    const title = row.track.title.trim();
+    const artist = localizedName(localizedNames, 'ARTIST_NAME', row.track.artistSpotifyId, row.track.artist).trim();
+    const title = localizedName(localizedNames, 'TRACK_TITLE', row.track.spotifyId, row.track.title).trim();
     artistCounter.set(artist, (artistCounter.get(artist) ?? 0) + 1);
     trackCounter.set(title, (trackCounter.get(title) ?? 0) + 1);
   }
 
   for (const row of albumRows) {
-    const artist = row.album.artist.trim();
-    const title = row.album.title.trim();
+    const artist = localizedName(localizedNames, 'ARTIST_NAME', row.album.artistSpotifyId, row.album.artist).trim();
+    const title = localizedName(localizedNames, 'ALBUM_TITLE', row.album.spotifyId, row.album.title).trim();
     artistCounter.set(artist, (artistCounter.get(artist) ?? 0) + 1);
     albumCounter.set(title, (albumCounter.get(title) ?? 0) + 1);
   }

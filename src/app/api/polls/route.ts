@@ -15,8 +15,9 @@ function compactTerm(value: string) {
   return normalizeTerm(value).replace(/\s+/g, '').toLowerCase();
 }
 
-function addSearchTerms(terms: Set<string>, ...values: string[]) {
+function addSearchTerms(terms: Set<string>, ...values: Array<string | null | undefined>) {
   for (const value of values) {
+    if (!value) continue;
     const normalized = normalizeTerm(value);
     if (!normalized) continue;
 
@@ -54,7 +55,7 @@ export async function GET(request: Request) {
 
       for (const row of aliasRows) {
         const matchesQuery =
-          compactTerm(row.canonical).includes(compactQuery) || compactTerm(row.alias).includes(compactQuery);
+          compactTerm(row.canonical).includes(compactQuery) || (row.alias ? compactTerm(row.alias).includes(compactQuery) : false);
         if (!matchesQuery) continue;
 
         const isArtistAlias =

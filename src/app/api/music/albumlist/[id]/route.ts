@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { fetchAlbumListDetail } from '@/lib/music-lists';
 import prisma from '@/lib/prisma';
+import { registerMusicLocalizations } from '@/lib/music-localization';
 import {
   getAuthenticatedUser,
   type ListPayloadInput,
@@ -481,18 +482,21 @@ export async function PATCH(request: Request, context: RouteContext) {
             update: {
               title: item.name,
               artist: item.artist,
+              artistSpotifyId: item.artistId,
               coverImage: item.albumImageUrl ?? '',
             },
             create: {
               spotifyId: item.id,
               title: item.name,
               artist: item.artist,
+              artistSpotifyId: item.artistId,
               coverImage: item.albumImageUrl ?? '',
             },
             select: { id: true, spotifyId: true },
           })
         )
       );
+      await registerMusicLocalizations(tx, 'album', musicItems);
 
       const albums = await tx.album.findMany({
         where: { spotifyId: { in: musicItems.map((item) => item.id) } },

@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+import { getLocalizedNames, localizedName } from '@/lib/music-localization';
 import { parseStoredContentBlocks } from '@/lib/music-list-content';
 import type { StoredMusicListContentBlock } from '@/types/music-list-content';
 import type { SerializedComment } from '@/lib/comment-threads';
@@ -668,6 +669,9 @@ export type PlaylistDetail = {
     title: string;
     artist: string;
     albumImageUrl: string;
+    artistId: string | null;
+    spotifyName: string;
+    spotifyArtistName: string;
   }>;
 };
 
@@ -701,6 +705,9 @@ export type AlbumListDetail = {
     title: string;
     artist: string;
     albumImageUrl: string;
+    artistId: string | null;
+    spotifyName: string;
+    spotifyArtistName: string;
   }>;
 };
 
@@ -877,6 +884,7 @@ export async function fetchPlaylistDetail(
               spotifyId: true,
               title: true,
               artist: true,
+              artistSpotifyId: true,
               albumCover: true,
             },
           },
@@ -886,14 +894,22 @@ export async function fetchPlaylistDetail(
   });
 
   if (!playlist) return null;
-  const featuredSettings = await prisma.featuredItem.findMany({
-    where: {
-      kind: 'PLAYLIST',
-      refId: playlist.id,
-      isActive: true,
-    },
-    select: { sectionId: true },
-  });
+  const [featuredSettings, localizedNames] = await Promise.all([
+    prisma.featuredItem.findMany({
+      where: {
+        kind: 'PLAYLIST',
+        refId: playlist.id,
+        isActive: true,
+      },
+      select: { sectionId: true },
+    }),
+    getLocalizedNames(
+      playlist.tracks.flatMap((entry) => [
+        { type: 'TRACK_TITLE' as const, spotifyId: entry.track.spotifyId, canonical: entry.track.title },
+        { type: 'ARTIST_NAME' as const, spotifyId: entry.track.artistSpotifyId, canonical: entry.track.artist },
+      ])
+    ),
+  ]);
 
   return {
     kind: 'PLAYLIST',
@@ -922,9 +938,12 @@ export async function fetchPlaylistDetail(
     musicItems: playlist.tracks.map((entry) => ({
       id: entry.track.spotifyId,
       order: entry.order,
-      title: entry.track.title,
-      artist: entry.track.artist,
+      title: localizedName(localizedNames, 'TRACK_TITLE', entry.track.spotifyId, entry.track.title),
+      artist: localizedName(localizedNames, 'ARTIST_NAME', entry.track.artistSpotifyId, entry.track.artist),
       albumImageUrl: entry.track.albumCover,
+      artistId: entry.track.artistSpotifyId,
+      spotifyName: entry.track.title,
+      spotifyArtistName: entry.track.artist,
     })),
   };
 }
@@ -1005,6 +1024,7 @@ export async function fetchAlbumListDetail(
               spotifyId: true,
               title: true,
               artist: true,
+              artistSpotifyId: true,
               coverImage: true,
             },
           },
@@ -1014,14 +1034,22 @@ export async function fetchAlbumListDetail(
   });
 
   if (!albumList) return null;
-  const featuredSettings = await prisma.featuredItem.findMany({
-    where: {
-      kind: 'ALBUM_LIST',
-      refId: albumList.id,
-      isActive: true,
-    },
-    select: { sectionId: true },
-  });
+  const [featuredSettings, localizedNames] = await Promise.all([
+    prisma.featuredItem.findMany({
+      where: {
+        kind: 'ALBUM_LIST',
+        refId: albumList.id,
+        isActive: true,
+      },
+      select: { sectionId: true },
+    }),
+    getLocalizedNames(
+      albumList.albums.flatMap((entry) => [
+        { type: 'ALBUM_TITLE' as const, spotifyId: entry.album.spotifyId, canonical: entry.album.title },
+        { type: 'ARTIST_NAME' as const, spotifyId: entry.album.artistSpotifyId, canonical: entry.album.artist },
+      ])
+    ),
+  ]);
 
   return {
     kind: 'ALBUM_LIST',
@@ -1050,9 +1078,12 @@ export async function fetchAlbumListDetail(
     musicItems: albumList.albums.map((entry) => ({
       id: entry.album.spotifyId,
       order: entry.order,
-      title: entry.album.title,
-      artist: entry.album.artist,
+      title: localizedName(localizedNames, 'ALBUM_TITLE', entry.album.spotifyId, entry.album.title),
+      artist: localizedName(localizedNames, 'ARTIST_NAME', entry.album.artistSpotifyId, entry.album.artist),
       albumImageUrl: entry.album.coverImage,
+      artistId: entry.album.artistSpotifyId,
+      spotifyName: entry.album.title,
+      spotifyArtistName: entry.album.artist,
     })),
   };
 }

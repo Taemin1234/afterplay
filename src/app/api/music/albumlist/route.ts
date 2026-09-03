@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { registerMusicLocalizations } from '@/lib/music-localization';
 import {
   getAuthenticatedUser,
   type ListPayloadInput,
@@ -48,6 +49,28 @@ export async function POST(req: Request) {
 
     const result = await prisma.$transaction(
       async (tx) => {
+        await Promise.all(
+          musicItems.map((item) =>
+            tx.album.upsert({
+              where: { spotifyId: item.id },
+              update: {
+                title: item.name,
+                artist: item.artist,
+                artistSpotifyId: item.artistId,
+                coverImage: item.albumImageUrl ?? '',
+              },
+              create: {
+                spotifyId: item.id,
+                title: item.name,
+                artist: item.artist,
+                artistSpotifyId: item.artistId,
+                coverImage: item.albumImageUrl ?? '',
+              },
+            })
+          )
+        );
+        await registerMusicLocalizations(tx, 'album', musicItems);
+
         const albumList = await tx.albumList.create({
           data: {
             title,
@@ -59,15 +82,7 @@ export async function POST(req: Request) {
               create: musicItems.map((item, i) => ({
                 order: i,
                 album: {
-                  connectOrCreate: {
-                    where: { spotifyId: item.id },
-                    create: {
-                      spotifyId: item.id,
-                      title: item.name,
-                      artist: item.artist,
-                      coverImage: item.albumImageUrl ?? '',
-                    },
-                  },
+                  connect: { spotifyId: item.id },
                 },
               })),
             },

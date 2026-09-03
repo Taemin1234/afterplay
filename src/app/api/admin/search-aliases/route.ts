@@ -4,7 +4,7 @@ import { getAdminUserOrNull } from '@/lib/admin-auth';
 import prisma from '@/lib/prisma';
 
 type CreateAliasBody = {
-  type?: 'TRACK_ARTIST' | 'TRACK_TITLE' | 'ALBUM_ARTIST' | 'ALBUM_TITLE';
+  type?: 'TRACK_ARTIST' | 'TRACK_TITLE' | 'ALBUM_ARTIST' | 'ALBUM_TITLE' | 'ARTIST_NAME';
   canonical?: string;
   alias?: string;
 };
@@ -36,6 +36,8 @@ export async function GET(request: Request) {
           OR: [
             { canonical: { contains: query, mode: 'insensitive' as const } },
             { alias: { contains: query, mode: 'insensitive' as const } },
+            { spotifyId: { contains: query, mode: 'insensitive' as const } },
+            { context: { contains: query, mode: 'insensitive' as const } },
           ],
         }
       : undefined;
@@ -44,7 +46,7 @@ export async function GET(request: Request) {
       prisma.musicSearchAlias.count({ where }),
       prisma.musicSearchAlias.findMany({
         where,
-        orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+        orderBy: [{ alias: { sort: 'asc', nulls: 'first' } }, { updatedAt: 'desc' }, { id: 'desc' }],
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
@@ -71,7 +73,7 @@ export async function POST(request: Request) {
     const canonical = normalizeText(body.canonical);
     const alias = normalizeText(body.alias);
 
-    if (!type || !['TRACK_ARTIST', 'TRACK_TITLE', 'ALBUM_ARTIST', 'ALBUM_TITLE'].includes(type)) {
+    if (!type || !['TRACK_ARTIST', 'TRACK_TITLE', 'ALBUM_ARTIST', 'ALBUM_TITLE', 'ARTIST_NAME'].includes(type)) {
       return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
     }
 

@@ -28,6 +28,11 @@ type MusicSearchItem = {
   artist: string;
   albumImageUrl: string;
   releaseDate?: string | null;
+  artistId?: string;
+  albumId?: string;
+  spotifyName?: string;
+  spotifyArtistName?: string;
+  spotifyAlbumName?: string;
 };
 
 type SelectedPollOption = {

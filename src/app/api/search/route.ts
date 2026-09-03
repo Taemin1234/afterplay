@@ -202,7 +202,7 @@ export async function GET(request: Request) {
     const compactQuery = compactTerm(query);
     const matchedAliasRows = aliasRows.filter((row) => {
       const canonicalCompact = compactTerm(row.canonical);
-      const aliasCompact = compactTerm(row.alias);
+      const aliasCompact = row.alias ? compactTerm(row.alias) : '';
       return canonicalCompact.includes(compactQuery) || aliasCompact.includes(compactQuery);
     });
 

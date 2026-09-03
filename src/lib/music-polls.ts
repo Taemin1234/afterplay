@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+import { getLocalizedNames, localizedName, registerMusicLocalizations } from '@/lib/music-localization';
 import { publicPollWhere } from '@/lib/music-poll-access';
 
 export type PollItemTypeValue = 'TRACK' | 'ALBUM';
@@ -15,6 +16,11 @@ export type PollMusicItemPayload = {
   artist: string;
   albumImageUrl: string;
   releaseDate?: string | null;
+  artistId?: string;
+  albumId?: string;
+  spotifyName?: string;
+  spotifyArtistName?: string;
+  spotifyAlbumName?: string;
 };
 
 export type PollOptionPayload = {
@@ -161,6 +167,8 @@ function normalizePollOption(option: PollOptionPayload): PollOptionPayload | { e
   const artist = item.artist?.trim();
   const albumImageUrl = item.albumImageUrl?.trim() ?? '';
   const releaseDate = item.releaseDate?.trim() || null;
+  const spotifyName = item.spotifyName?.trim() || name;
+  const spotifyArtistName = item.spotifyArtistName?.trim() || artist;
 
   if (!id || !name || !artist) {
     return { error: 'option id, name, and artist are required' };
@@ -180,10 +188,15 @@ function normalizePollOption(option: PollOptionPayload): PollOptionPayload | { e
     youtubeUrl: youtubeVideoId,
     musicItem: {
       id,
-      name,
-      artist,
+      name: spotifyName,
+      artist: spotifyArtistName,
       albumImageUrl,
       releaseDate,
+      artistId: item.artistId?.trim() || undefined,
+      albumId: item.albumId?.trim() || undefined,
+      spotifyName,
+      spotifyArtistName,
+      spotifyAlbumName: item.spotifyAlbumName?.trim() || undefined,
     },
   };
 }
@@ -228,18 +241,21 @@ export async function upsertPollMusicItems(itemType: PollItemTypeValue, options:
           update: {
             title: option.musicItem.name,
             artist: option.musicItem.artist,
+            artistSpotifyId: option.musicItem.artistId,
             albumCover: option.musicItem.albumImageUrl,
           },
           create: {
             spotifyId: option.musicItem.id,
             title: option.musicItem.name,
             artist: option.musicItem.artist,
+            artistSpotifyId: option.musicItem.artistId,
             albumCover: option.musicItem.albumImageUrl,
           },
           select: { id: true },
         })
       )
     );
+    await registerMusicLocalizations(prisma, 'track', options.map((option) => option.musicItem));
 
     const tracks = await prisma.track.findMany({
       where: { spotifyId: { in: options.map((option) => option.musicItem.id) } },
@@ -255,18 +271,21 @@ export async function upsertPollMusicItems(itemType: PollItemTypeValue, options:
         update: {
           title: option.musicItem.name,
           artist: option.musicItem.artist,
+          artistSpotifyId: option.musicItem.artistId,
           coverImage: option.musicItem.albumImageUrl,
         },
         create: {
           spotifyId: option.musicItem.id,
           title: option.musicItem.name,
           artist: option.musicItem.artist,
+          artistSpotifyId: option.musicItem.artistId,
           coverImage: option.musicItem.albumImageUrl,
         },
         select: { id: true },
       })
     )
   );
+  await registerMusicLocalizations(prisma, 'album', options.map((option) => option.musicItem));
 
   const albums = await prisma.album.findMany({
     where: { spotifyId: { in: options.map((option) => option.musicItem.id) } },
@@ -311,9 +330,11 @@ export async function fetchPollMetadata(id: string): Promise<PollMetadata | null
     select: {
       title: true,
       description: true,
+      itemType: true,
       options: {
         orderBy: { order: 'asc' },
         select: {
+          spotifyId: true,
           titleSnapshot: true,
           imageUrlSnapshot: true,
           youtubeVideoId: true,
@@ -323,12 +344,18 @@ export async function fetchPollMetadata(id: string): Promise<PollMetadata | null
   });
 
   if (!poll) return null;
+  const titleType = poll.itemType === 'TRACK' ? 'TRACK_TITLE' : 'ALBUM_TITLE';
+  const localizedNames = await getLocalizedNames(
+    poll.options.map((option) => ({ type: titleType, spotifyId: option.spotifyId, canonical: option.titleSnapshot }))
+  );
 
   return {
     title: poll.title,
     description: poll.description,
     imageUrl: poll.options.find((option) => option.imageUrlSnapshot)?.imageUrlSnapshot ?? null,
-    optionTitles: poll.options.map((option) => option.titleSnapshot),
+    optionTitles: poll.options.map((option) =>
+      localizedName(localizedNames, titleType, option.spotifyId, option.titleSnapshot)
+    ),
   };
 }
 
@@ -357,6 +384,13 @@ export async function serializePoll(
   });
 
   if (!poll) return null;
+  const titleType = poll.itemType === 'TRACK' ? 'TRACK_TITLE' : 'ALBUM_TITLE';
+  const localizedNames = await getLocalizedNames(
+    poll.options.flatMap((option) => [
+      { type: titleType, spotifyId: option.spotifyId, canonical: option.titleSnapshot },
+      { type: 'ARTIST_NAME' as const, canonical: option.artistSnapshot },
+    ])
+  );
 
   const viewerVote = viewerUserId
     ? await prisma.musicPollVote.findUnique({
@@ -388,8 +422,8 @@ export async function serializePoll(
         id: option.id,
         order: option.order,
         spotifyId: option.spotifyId,
-        title: option.titleSnapshot,
-        artist: option.artistSnapshot,
+        title: localizedName(localizedNames, titleType, option.spotifyId, option.titleSnapshot),
+        artist: localizedName(localizedNames, 'ARTIST_NAME', null, option.artistSnapshot),
         imageUrl: option.imageUrlSnapshot,
         releaseDate: option.releaseDateSnapshot,
         description: option.description,

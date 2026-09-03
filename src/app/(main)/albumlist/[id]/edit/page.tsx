@@ -44,6 +44,11 @@ export default async function EditAlbumListPage({ params }: { params: Promise<{ 
               name: music.title,
               artist: music.artist,
               albumImageUrl: music.albumImageUrl,
+              artistId: music.artistId ?? undefined,
+              albumId: music.id,
+              spotifyName: music.spotifyName,
+              spotifyArtistName: music.spotifyArtistName,
+              spotifyAlbumName: music.spotifyName,
             },
           }] : [];
         }),

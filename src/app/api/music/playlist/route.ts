@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { registerMusicLocalizations } from '@/lib/music-localization';
 import {
   getAuthenticatedUser,
   type ListPayloadInput,
@@ -62,15 +63,27 @@ export async function POST(req: Request) {
           },
         });
 
-        await tx.track.createMany({
-          data: musicItems.map((item) => ({
-            spotifyId: item.id,
-            title: item.name,
-            artist: item.artist,
-            albumCover: item.albumImageUrl ?? '',
-          })),
-          skipDuplicates: true,
-        });
+        await Promise.all(
+          musicItems.map((item) =>
+            tx.track.upsert({
+              where: { spotifyId: item.id },
+              update: {
+                title: item.name,
+                artist: item.artist,
+                artistSpotifyId: item.artistId,
+                albumCover: item.albumImageUrl ?? '',
+              },
+              create: {
+                spotifyId: item.id,
+                title: item.name,
+                artist: item.artist,
+                artistSpotifyId: item.artistId,
+                albumCover: item.albumImageUrl ?? '',
+              },
+            })
+          )
+        );
+        await registerMusicLocalizations(tx, 'track', musicItems);
 
         const tracks = await tx.track.findMany({
           where: { spotifyId: { in: musicItems.map((item) => item.id) } },

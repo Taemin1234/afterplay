@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
+import { expandSpotifySearchQueries, getLocalizedNames, localizedName } from '@/lib/music-localization';
 import { searchSpotify, type SpotifySearchType } from '@/lib/spotify';
 
 type SpotifySearchItem = {
   id: string;
   name: string;
-  artists?: Array<{ name: string }>;
-  album?: { images?: Array<{ url: string }> };
+  artists?: Array<{ id: string; name: string }>;
+  album?: { id: string; name: string; images?: Array<{ url: string }> };
   images?: Array<{ url: string }>;
 };
 
@@ -52,22 +53,53 @@ export async function GET(request: Request) {
   }
 
   try {
-    const data = await searchSpotify(query, type, { market });
+    const searchQueries = await expandSpotifySearchQueries(query, type);
+    const responses = await Promise.all(searchQueries.map((searchQuery) => searchSpotify(searchQuery, type, { market })));
     // 우리 UI 규격으로 변환
-    const items =
+    const items = responses.flatMap((data) =>
       type === 'track'
         ? data?.tracks?.items ?? []
         : type === 'album'
           ? data?.albums?.items ?? []
-          : data?.artists?.items ?? [];
+          : data?.artists?.items ?? []
+    );
 
-    const results = (items as SpotifySearchItem[]).map((item) => ({
-      id: item.id,
-      name: item.name,
-      artist: item.artists?.[0]?.name ?? '',
-      albumImageUrl:
-        type === 'track' ? item.album?.images?.[0]?.url : item.images?.[0]?.url,
-    }));
+    const spotifyItems = [...new Map((items as SpotifySearchItem[]).map((item) => [item.id, item])).values()].slice(0, 10);
+    const localizationRequests = spotifyItems.flatMap((item) => {
+      const artist = item.artists?.[0];
+      return [
+        {
+          type: type === 'track' ? 'TRACK_TITLE' as const : type === 'album' ? 'ALBUM_TITLE' as const : 'ARTIST_NAME' as const,
+          spotifyId: item.id,
+          canonical: item.name,
+        },
+        ...(artist && type !== 'artist'
+          ? [{ type: 'ARTIST_NAME' as const, spotifyId: artist.id, canonical: artist.name }]
+          : []),
+      ];
+    });
+    const localizedNames = await getLocalizedNames(localizationRequests);
+
+    const results = spotifyItems.map((item) => {
+      const artist = item.artists?.[0];
+      const entityAliasType = type === 'track' ? 'TRACK_TITLE' : type === 'album' ? 'ALBUM_TITLE' : 'ARTIST_NAME';
+      const spotifyArtistName = artist?.name ?? '';
+
+      return {
+        id: item.id,
+        name: localizedName(localizedNames, entityAliasType, item.id, item.name),
+        spotifyName: item.name,
+        artist: artist
+          ? localizedName(localizedNames, 'ARTIST_NAME', artist.id, artist.name)
+          : '',
+        spotifyArtistName,
+        artistId: artist?.id,
+        albumId: type === 'track' ? item.album?.id : type === 'album' ? item.id : undefined,
+        spotifyAlbumName: type === 'track' ? item.album?.name : type === 'album' ? item.name : undefined,
+        albumImageUrl:
+          type === 'track' ? item.album?.images?.[0]?.url : item.images?.[0]?.url,
+      };
+    });
 
     return NextResponse.json(results);
   } catch (error) {

@@ -12,6 +12,11 @@ export interface MusicItemPayload {
   name: string;
   artist: string;
   albumImageUrl: string;
+  artistId?: string;
+  albumId?: string;
+  spotifyName?: string;
+  spotifyArtistName?: string;
+  spotifyAlbumName?: string;
 }
 
 export interface ListPayloadInput {
@@ -139,9 +144,14 @@ export function validateAndNormalizeListPayload(
       ) {
         const normalizedItem = {
           id: item.id.trim(),
-          name: item.name.trim(),
-          artist: item.artist.trim(),
+          name: item.spotifyName?.trim() || item.name.trim(),
+          artist: item.spotifyArtistName?.trim() || item.artist.trim(),
           albumImageUrl: item.albumImageUrl.trim(),
+          artistId: item.artistId?.trim() || undefined,
+          albumId: item.albumId?.trim() || undefined,
+          spotifyName: item.spotifyName?.trim() || item.name.trim(),
+          spotifyArtistName: item.spotifyArtistName?.trim() || item.artist.trim(),
+          spotifyAlbumName: item.spotifyAlbumName?.trim() || undefined,
         };
         if (usedMusicIds.has(normalizedItem.id)) return;
         usedMusicIds.add(normalizedItem.id);

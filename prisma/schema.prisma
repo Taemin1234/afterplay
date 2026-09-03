@@ -115,12 +115,12 @@ model Follow {
 // Playlist (곡 단위)
 // --------------------------------------------------------
 model Playlist {
-  id         String     @id @default(uuid()) @db.Uuid
-  title      String
-  story      String     @db.Text
-  contentBlocks Json    @default("[]")
-  visibility Visibility @default(PUBLIC)
-  viewCount  Int        @default(0)
+  id            String     @id @default(uuid()) @db.Uuid
+  title         String
+  story         String     @db.Text
+  contentBlocks Json       @default("[]")
+  visibility    Visibility @default(PUBLIC)
+  viewCount     Int        @default(0)
 
   authorId String @db.Uuid
   author   User   @relation(fields: [authorId], references: [id], onDelete: Restrict)
@@ -144,8 +144,9 @@ model Playlist {
 
 // Spotify Track 캐시 테이블(Spotify 트랙 정보를 서비스 DB에 캐시)
 model Track {
-  id        String @id @default(uuid()) @db.Uuid
-  spotifyId String @unique
+  id              String  @id @default(uuid()) @db.Uuid
+  spotifyId       String  @unique
+  artistSpotifyId String?
 
   title      String
   artist     String
@@ -179,12 +180,12 @@ model PlaylistTrack {
 // AlbumList (앨범 단위) - Playlist와 동일 시스템
 // --------------------------------------------------------
 model AlbumList {
-  id         String     @id @default(uuid()) @db.Uuid
-  title      String
-  story      String     @db.Text
-  contentBlocks Json    @default("[]")
-  visibility Visibility @default(PUBLIC)
-  viewCount  Int        @default(0)
+  id            String     @id @default(uuid()) @db.Uuid
+  title         String
+  story         String     @db.Text
+  contentBlocks Json       @default("[]")
+  visibility    Visibility @default(PUBLIC)
+  viewCount     Int        @default(0)
 
   authorId String @db.Uuid
   author   User   @relation(fields: [authorId], references: [id], onDelete: Restrict)
@@ -208,8 +209,9 @@ model AlbumList {
 
 // Spotify Album 캐시 테이블(Spotify 앨범 정보를 서비스 DB에 캐시)
 model Album {
-  id        String @id @default(uuid()) @db.Uuid
-  spotifyId String @unique
+  id              String  @id @default(uuid()) @db.Uuid
+  spotifyId       String  @unique
+  artistSpotifyId String?
 
   title      String
   artist     String
@@ -667,13 +669,18 @@ model MusicSearchAlias {
   id        Int            @id @default(autoincrement())
   type      MusicAliasType
   canonical String
-  alias     String
+  alias     String?
+  spotifyId String?
+  context   String?
+  imageUrl  String?
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
 
   @@unique([type, canonical, alias])
+  @@unique([type, spotifyId])
   @@index([alias])
   @@index([canonical])
+  @@index([spotifyId])
 }
 
 // --------------------------------------------------------

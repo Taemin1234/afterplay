@@ -9,6 +9,11 @@ interface SearchMusicItem {
     name: string;
     artist: string;
     albumImageUrl: string;
+    artistId?: string;
+    albumId?: string;
+    spotifyName?: string;
+    spotifyArtistName?: string;
+    spotifyAlbumName?: string;
 }
 
 interface SearchMusicProps {

@@ -44,6 +44,9 @@ export default async function EditPlaylistPage({ params }: { params: Promise<{ i
               name: music.title,
               artist: music.artist,
               albumImageUrl: music.albumImageUrl,
+              artistId: music.artistId ?? undefined,
+              spotifyName: music.spotifyName,
+              spotifyArtistName: music.spotifyArtistName,
             },
           }] : [];
         }),
