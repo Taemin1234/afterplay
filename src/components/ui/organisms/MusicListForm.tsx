@@ -14,7 +14,6 @@ import SearchBar from '@/components/ui/molecules/SearchBar';
 import TypeSelector from '@/components/ui/molecules/TypeSelector';
 import SearchMusic from '@/components/ui/organisms/SearchMusic';
 import type { FeaturedSectionOption } from '@/lib/music-lists';
-import { normalizeTextBlockContent } from '@/lib/music-list-content';
 import type { MusicContentItem, MusicListContentBlock } from '@/types/music-list-content';
 
 type SearchType = 'track' | 'album';
@@ -121,7 +120,7 @@ export default function MusicListForm({
   const handleChangeTextBlock = (id: string, content: string) => {
     setContentBlocks((prev) => prev.map((block) => (
       block.id === id && block.type === 'text'
-        ? { ...block, content: normalizeTextBlockContent(content) }
+        ? { ...block, content }
         : block
     )));
   };
@@ -415,7 +414,7 @@ export default function MusicListForm({
           ) : null}
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-400">태그 (최대 10개)</label>
+            <label className="text-sm font-medium text-gray-400">태그 ({form.tags.length}/10)</label>
             <div className="mt-3">
               <SearchBar
                 variant="form"
