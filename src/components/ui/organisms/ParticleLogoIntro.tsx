@@ -132,18 +132,23 @@ export default function ParticleLogoIntro() {
   const particlesRef = useRef<Particle[]>([]);
   const brandVisibleRef = useRef(false);
   const [shouldPlay, setShouldPlay] = useState(false);
-  const [isVisible, setIsVisible] = useState(false); 
+  const [isVisible, setIsVisible] = useState(true);
   const [isLeaving, setIsLeaving] = useState(false);
   const [isBrandVisible, setIsBrandVisible] = useState(false);
   const [brandTop, setBrandTop] = useState("calc(50% + 150px)");
 
   useEffect(() => {
-    if (window.localStorage.getItem(INTRO_SEEN_KEY) === "true") return;
+    if (window.sessionStorage.getItem(INTRO_SEEN_KEY) === "true") {
+      const frameId = window.requestAnimationFrame(() => {
+        setIsVisible(false);
+      });
 
-    window.localStorage.setItem(INTRO_SEEN_KEY, "true");
+      return () => window.cancelAnimationFrame(frameId);
+    }
+
+    window.sessionStorage.setItem(INTRO_SEEN_KEY, "true");
     const frameId = window.requestAnimationFrame(() => {
       setShouldPlay(true);
-      setIsVisible(true);
     });
 
     return () => window.cancelAnimationFrame(frameId);
@@ -273,7 +278,7 @@ export default function ParticleLogoIntro() {
 
   return (
     <div
-      className={`fixed inset-0 z-[100] overflow-hidden bg-[#0e0e0e] transition-opacity duration-300 ${
+      className={`fixed inset-0 z-[100] overflow-hidden bg-[#0e0e0e] transition-opacity duration-[400ms] ${
         isLeaving ? "pointer-events-none opacity-0" : "opacity-100"
       }`}
       aria-label="dustpeakclub intro animation"
