@@ -79,14 +79,27 @@ export default function PollCard({
       </div>
 
       <div className="space-y-3 p-4">
-        <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-         <div className='flex gap-1'>
-            <span className="rounded border border-white/10 px-2 py-1 text-slate-300">{itemTypeLabel(poll.itemType)}</span>
-            <span className={`rounded px-2 py-1 ${poll.isClosed ? 'bg-gray-500 text-white' : 'bg-point/10 text-point'}`}>
+        <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] sm:text-xs">
+          <div className="flex gap-1">
+            <span className="rounded border border-white/10 px-1.5 py-0.5 text-slate-300 sm:px-2 sm:py-1">
+              {itemTypeLabel(poll.itemType)}
+            </span>
+            <span
+              className={`rounded px-1.5 py-0.5 sm:px-2 sm:py-1 ${
+                poll.isClosed
+                  ? 'bg-gray-500 text-white'
+                  : 'bg-point/10 text-point'
+              }`}
+            >
               {statusLabel(poll)}
             </span>
-         </div>
-          {poll.viewerVote ? <span className="rounded bg-green1 px-2 py-1 text-slate">투표완료</span> : null}
+          </div>
+
+          {poll.viewerVote ? (
+            <span className="rounded bg-green1 px-1.5 py-0.5 text-slate sm:px-2 sm:py-1">
+              투표완료
+            </span>
+          ) : null}
         </div>
 
         <div>
