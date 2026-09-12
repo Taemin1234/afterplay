@@ -25,6 +25,10 @@ type AdminPollPatchPayload = PollPayloadInput & {
   status?: 'OPEN' | 'CLOSED';
   visibility?: PollVisibilityValue;
   closeInDays?: number;
+  optionDescriptions?: Array<{
+    optionId: string;
+    description?: string | null;
+  }>;
   optionYouTubeUrls?: Array<{
     optionId: string;
     youtubeUrl?: string | null;
@@ -154,15 +158,31 @@ export async function PATCH(request: Request, context: RouteContext) {
       (option): option is { optionId: string; youtubeVideoId: string | null } => 'optionId' in option
     );
 
+    if (body.optionDescriptions !== undefined && !Array.isArray(body.optionDescriptions)) {
+      return NextResponse.json({ error: 'optionDescriptions must be an array' }, { status: 400 });
+    }
+    const optionDescriptionUpdates: Array<{ optionId: string; description: string | null }> = [];
+    for (const option of body.optionDescriptions ?? []) {
+      if (!option || typeof option.optionId !== 'string' ||
+          (option.description != null && typeof option.description !== 'string')) {
+        return NextResponse.json({ error: 'Invalid option description' }, { status: 400 });
+      }
+      const description = option.description?.trim() || null;
+      if (description && description.length > POLL_DESCRIPTION_MAX_LENGTH) {
+        return NextResponse.json({ error: `description must be ${POLL_DESCRIPTION_MAX_LENGTH} characters or less` }, { status: 400 });
+      }
+      optionDescriptionUpdates.push({ optionId: option.optionId, description });
+    }
+
     const pollOptionIds =
-      validNormalizedOptionUpdates.length > 0
+      validNormalizedOptionUpdates.length > 0 || optionDescriptionUpdates.length > 0
         ? await prisma.musicPollOption.findMany({
             where: { pollId: id },
             select: { id: true },
           })
         : [];
     const validPollOptionIds = new Set(pollOptionIds.map((option) => option.id));
-    const hasUnknownOption = validNormalizedOptionUpdates.some((option) => !validPollOptionIds.has(option.optionId));
+    const hasUnknownOption = [...validNormalizedOptionUpdates, ...optionDescriptionUpdates].some((option) => !validPollOptionIds.has(option.optionId));
     if (hasUnknownOption) {
       return NextResponse.json({ error: 'optionId does not belong to this poll' }, { status: 400 });
     }
@@ -176,6 +196,12 @@ export async function PATCH(request: Request, context: RouteContext) {
         prisma.musicPollOption.update({
           where: { id: option.optionId },
           data: { youtubeVideoId: option.youtubeVideoId },
+        })
+      ),
+      ...optionDescriptionUpdates.map((option) =>
+        prisma.musicPollOption.update({
+          where: { id: option.optionId },
+          data: { description: option.description },
         })
       ),
     ]);

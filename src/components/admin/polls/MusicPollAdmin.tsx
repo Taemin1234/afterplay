@@ -82,6 +82,7 @@ type EditablePollState = {
   endsAt: string;
   isUnlimited: boolean;
   optionYouTubeUrls: Record<string, string>;
+  optionDescriptions: Record<string, string>;
 };
 
 const emptyOptionSlots: [SelectedPollOption | null, SelectedPollOption | null] = [null, null];
@@ -369,6 +370,7 @@ export default function MusicPollAdmin() {
       description: poll.description ?? '',
       endsAt: toDatetimeLocal(poll.endsAt),
       isUnlimited: !poll.endsAt,
+      optionDescriptions: Object.fromEntries(poll.options.map((option) => [option.id, option.description ?? ''])),
       optionYouTubeUrls: Object.fromEntries(poll.options.map((option) => [option.id, formatYouTubeUrl(option.youtubeVideoId)])),
     });
   };
@@ -391,6 +393,7 @@ export default function MusicPollAdmin() {
         body: JSON.stringify({
           title: editState.title,
           description: editState.description,
+          optionDescriptions: Object.entries(editState.optionDescriptions).map(([optionId, description]) => ({ optionId, description })),
           endsAt: editState.isUnlimited ? null : fromDatetimeLocal(editState.endsAt),
           optionYouTubeUrls: pollId
             ? Object.entries(editState.optionYouTubeUrls).map(([optionId, youtubeUrl]) => ({ optionId, youtubeUrl }))
@@ -778,10 +781,12 @@ export default function MusicPollAdmin() {
                             onChange={(e) => setEditState({ ...editState, title: e.target.value })}
                             className="w-full rounded-md border border-slate-700 bg-black px-3 py-2 text-sm text-white"
                           />
-                          <input
+                          <textarea
                             value={editState.description}
                             onChange={(e) => setEditState({ ...editState, description: e.target.value })}
-                            className="w-full rounded-md border border-slate-700 bg-black px-3 py-2 text-sm text-white"
+                            maxLength={500}
+                            placeholder="투표 설명"
+                            className="h-50 w-full resize-none rounded-md border border-slate-700 bg-black px-3 py-2 text-sm text-white outline-none focus:border-point"
                           />
                           <div className="flex flex-wrap items-center gap-3">
                             <label className="inline-flex items-center gap-2 text-sm text-slate-300">
@@ -811,7 +816,7 @@ export default function MusicPollAdmin() {
                       )}
 
                       <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                        {poll.options.map((option) => (
+                        {poll.options.map((option, index) => (
                           <div key={option.id} className="min-w-0 rounded-md border border-white/10 bg-black/25 p-2">
                             <div className="flex min-w-0 items-center gap-3">
                               <Image
@@ -827,6 +832,21 @@ export default function MusicPollAdmin() {
                                 <p className="mt-1 text-xs text-slate-500">{option.result?.percentage ?? 0}%</p>
                               </div>
                             </div>
+                            {isEditing && editState ? (
+                              <textarea
+                                value={editState.optionDescriptions[option.id] ?? ''}
+                                onChange={(e) => setEditState({
+                                  ...editState,
+                                  optionDescriptions: { ...editState.optionDescriptions, [option.id]: e.target.value },
+                                })}
+                                maxLength={500}
+                                aria-label={`후보 ${index + 1} 설명`}
+                                placeholder={`후보 ${index + 1} 설명`}
+                                className="mt-2 h-50 w-full resize-none rounded-md border border-slate-700 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-point"
+                              />
+                            ) : option.description ? (
+                              <p className="mt-2 whitespace-pre-wrap break-words text-sm text-slate-400">{option.description}</p>
+                            ) : null}
                             {isEditing && editState ? (
                               <input
                                 value={editState.optionYouTubeUrls[option.id] ?? ''}
