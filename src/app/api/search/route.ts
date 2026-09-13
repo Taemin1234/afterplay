@@ -208,7 +208,7 @@ export async function GET(request: Request) {
 
     for (const row of matchedAliasRows) {
       // 아티스트 별칭은 트랙/앨범 검색에 공통으로 확장
-      if (row.type === 'TRACK_ARTIST' || row.type === 'ALBUM_ARTIST') {
+      if (row.type === 'TRACK_ARTIST' || row.type === 'ALBUM_ARTIST' || row.type === 'ARTIST_NAME') {
         pushTerms(trackTerms, row.canonical, row.alias);
         pushTerms(albumTerms, row.canonical, row.alias);
         continue;
